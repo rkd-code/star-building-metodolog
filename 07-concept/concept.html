@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сводная концепция агента «Кодификатор» v1.0 (MVP)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --card-sub: #1a243d;
+      --border: #233354;
+      --border-light: #334b77;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --blue: #38bdf8;
+      --blue-bg: rgba(56, 189, 248, 0.12);
+      --green: #34d399;
+      --green-bg: rgba(52, 211, 153, 0.12);
+      --amber: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --purple: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.12);
+      --red: #f87171;
+      --red-bg: rgba(248, 113, 113, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Боковая навигация */
+    aside {
+      width: 280px;
+      background: #0f1626;
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 16px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-list {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+
+    .nav-link:hover {
+      background: var(--card-sub);
+      color: #fff;
+    }
+
+    .nav-link.active {
+      background: var(--blue-bg);
+      color: var(--blue);
+      border-left: 3px solid var(--blue);
+    }
+
+    /* Основное содержимое */
+    main {
+      flex-grow: 1;
+      padding: 36px 40px 100px 40px;
+      max-width: 1100px;
+    }
+
+    .header-banner {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(192, 132, 252, 0.08));
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 36px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .badge-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(192, 132, 252, 0.3); }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .header-desc {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      max-width: 800px;
+    }
+
+    /* Блоки разделов */
+    .section-block {
+      margin-bottom: 44px;
+      scroll-margin-top: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-num {
+      width: 26px;
+      height: 26px;
+      background: var(--blue);
+      color: #0b0f19;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    /* Карточки */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 26px;
+      margin-bottom: 18px;
+    }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* Сетки */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    /* Списки и таблицы */
+    .feature-list {
+      list-style: none;
+      margin: 10px 0;
+    }
+
+    .feature-list li {
+      padding: 6px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .feature-list li strong {
+      color: #f8fafc;
+    }
+
+    .bullet {
+      color: var(--blue);
+      font-size: 14px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0;
+      background: #0f1626;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .data-table th {
+      background: #182238;
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #182238;
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+
+    .highlight-box {
+      background: #0e172a;
+      border-left: 3px solid var(--blue);
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .clarify-tag {
+      background: var(--amber-bg);
+      color: var(--amber);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .ref-tag {
+      background: var(--blue-bg);
+      color: var(--blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="layout">
+    
+    <!-- Боковая панель -->
+    <aside>
+      <div class="brand">
+        <span>🏗️</span> Агент «Кодификатор»
+      </div>
+      <div class="brand-sub">
+        Star Building • Версия 1.0 (MVP)
+      </div>
+
+      <ul class="nav-list">
+        <li class="nav-item"><a href="#sec-passport" class="nav-link active"><span>1.</span> Паспорт проекта</a></li>
+        <li class="nav-item"><a href="#sec-core" class="nav-link"><span>2.</span> Обязательное Ядро</a></li>
+        <li class="nav-item"><a href="#sec-standard" class="nav-link"><span>3.</span> Стандарт 5 разделов</a></li>
+        <li class="nav-item"><a href="#sec-data-model" class="nav-link"><span>4.</span> Модель данных</a></li>
+        <li class="nav-item"><a href="#sec-tests" class="nav-link"><span>5.</span> Приемочные тесты</a></li>
+        <li class="nav-item"><a href="#sec-env" class="nav-link"><span>6.</span> Окружение и сервер</a></li>
+        <li class="nav-item"><a href="#sec-integrations" class="nav-link"><span>7.</span> Внешние интеграции</a></li>
+        <li class="nav-item"><a href="#sec-tools" class="nav-link"><span>8.</span> Инструменты агента</a></li>
+        <li class="nav-item"><a href="#sec-assumptions" class="nav-link"><span>9.</span> Реестр допущений</a></li>
+      </ul>
+    </aside>
+
+    <!-- Основной контент -->
+    <main>
+
+      <!-- Шапка -->
+      <div class="header-banner">
+        <div class="badge-row">
+          <span class="badge badge-blue">⚡ Сводная концепция</span>
+          <span class="badge badge-green">Готовность к ревью</span>
+          <span class="badge badge-purple">Пилот: 5–10 документов</span>
+        </div>
+        <h1>Единый паспорт архитектуры агента «Кодификатор»</h1>
+        <p class="header-desc">
+          Полная спецификация решения: от входного сырого черновика до утверждения регламента, структуры базы знаний, проверок безопасности и серверных инструментов.
+        </p>
+      </div>
+
+      <!-- Раздел 1. Паспорт проекта -->
+      <section id="sec-passport" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">1</span> Главный паспорт проекта и цели
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Назначение и ценность для компании</h3>
+          <p>Автоматическая трансформация неструктурированных, эмоциональных и неполных черновиков руководителей и прорабов в строгие корпоративные регламенты.</p>
+          
+          <div class="grid-3" style="margin-top: 16px;">
+            <div class="highlight-box">
+              <strong style="color: #fff; display:block; margin-bottom:4px;">⏱️ Скорость</strong>
+              Сокращение времени первичной сборки регламента с 3–5 дней до 5 минут.
+            </div>
+            <div class="highlight-box">
+              <strong style="color: #fff; display:block; margin-bottom:4px;">🛡️ Качество</strong>
+              0 противоречий с Кодексом, Коммуникациями и Оргструктурой компании.
+            </div>
+            <div class="highlight-box">
+              <strong style="color: #fff; display:block; margin-bottom:4px;">🔍 Честность</strong>
+              Недостающие параметры не выдумываются, а помечаются меткой <span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ]</span>.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Главный принцип версии 1.0 (MVP)</h3>
+          <p>
+            <strong>«Урезаем не качество, а охват».</strong> Вместо попытки охватить сразу все 45 регламентов компании, в первую версию берется пилотная группа из 5–10 документов (3 документа Обязательного Ядра + 2–7 самых конфликтных операционных процессов стройки).
+          </p>
+        </div>
+      </section>
+
+      <!-- Раздел 2. Обязательное Ядро -->
+      <section id="sec-core" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">2</span> База знаний и Обязательное Ядро (Core)
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>3 базовых регламента компании (Фундамент валидации)</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Код</th>
+                <th>Название</th>
+                <th>Функция в валидации</th>
+                <th>Обязательные ссылки</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="ref-tag">РЕГ-001</span></td>
+                <td><strong>Кодекс компании</strong></td>
+                <td>Приоритет качества конструкций, антикоррупционный контроль, запрет фальсификаций.</td>
+                <td>Раздел «Ответственность за качество»</td>
+              </tr>
+              <tr>
+                <td><span class="ref-tag">РЕГ-002</span></td>
+                <td><strong>Регламент коммуникаций</strong></td>
+                <td>Официальные каналы связи (Telegram), регламентные сроки ответов, матрица эскалации.</td>
+                <td>Пункт 3.2 (Чаты), Пункт 4.1 (Эскалация)</td>
+              </tr>
+              <tr>
+                <td><span class="ref-tag">РЕГ-003</span></td>
+                <td><strong>Оргструктура</strong></td>
+                <td>Реестр утвержденных должностей. Запрет на генерацию несуществующих ролей.</td>
+                <td>Штатная сетка подразделений</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>Файловая организация базы знаний на диске</h3>
+          <ul class="feature-list">
+            <li><span class="bullet">▪</span> <strong>00_РЕЕСТР/reestr-reglamentov.md:</strong> Сводная таблица регламентов и Матрица владения процессами компании.</li>
+            <li><span class="bullet">▪</span> <strong>01_КАРТОЧКИ/:</strong> Компактные выжимки процессов для быстрой автоматической сверки связей.</li>
+            <li><span class="bullet">▪</span> <strong>02_ПОЛНЫЕ-ТЕКСТЫ/:</strong> Полные утвержденные нормативные тексты документов.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Раздел 3. Стандарт 5 разделов -->
+      <section id="sec-standard" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">3</span> Стандарт выходного документа (5 разделов)
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Обязательная структура любого создаваемого регламента</h3>
+          
+          <div class="feature-list">
+            <div class="highlight-box" style="margin-bottom: 10px;">
+              <strong style="color: var(--blue);">1. Цель и ключевые результаты (Key Results)</strong>
+              Границы процесса (вход и выход) + только измеримые опережающие показатели (100% фиксации, 0 нарушений, конкретные часы SLA).
+            </div>
+            <div class="highlight-box" style="margin-bottom: 10px;">
+              <strong style="color: var(--blue);">2. Область применения и роли (Матрица ответственности)</strong>
+              Контур действия площадок + таблица ролей строго из <span class="ref-tag">РЕГ-003</span> с разделением: Исполнитель, Ответственный, Контролер, Информируемый.
+            </div>
+            <div class="highlight-box" style="margin-bottom: 10px;">
+              <strong style="color: var(--blue);">3. Пошаговый алгоритм выполнения</strong>
+              Четкая хронология шагов («Кто ➔ Что ➔ В какой срок ➔ Куда результат») с описанием ветвлений при сбоях и браке.
+            </div>
+            <div class="highlight-box" style="margin-bottom: 10px;">
+              <strong style="color: var(--blue);">4. Контроль и точки аудита</strong>
+              Периодический контроль технадзором, стоп-факторы (запрет заливки/выдачи) и маршруты эскалации по <span class="ref-tag">РЕГ-002 (п. 4.1)</span>.
+            </div>
+            <div class="highlight-box">
+              <strong style="color: var(--blue);">5. Документооборот, формы и шаблоны</strong>
+              Таблица всех сопутствующих артефактов: наименование документа, место хранения, формат шаблона.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Раздел 4. Модель данных -->
+      <section id="sec-data-model" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">4</span> Информационная модель данных
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Сущности системы</h3>
+            <ul class="feature-list">
+              <li><span class="bullet">▪</span> <strong>Регламент (РЕГ-ХХХ):</strong> Полный нормативный документ (статусы: Черновик ➔ Утвержден).</li>
+              <li><span class="bullet">▪</span> <strong>Карточка (КАРТ-РЕГ-ХХХ):</strong> Сжатая выжимка (входы, выходы, роли, сроки).</li>
+              <li><span class="bullet">▪</span> <strong>Должность (ДОЛЖ-ХХХ):</strong> Официальные позиции из оргструктуры и синонимы сленга.</li>
+              <li><span class="bullet">▪</span> <strong>Черновик (ЧЕРН-ХХХ):</strong> Исходный текст автора с метаданными подачи.</li>
+              <li><span class="bullet">▪</span> <strong>Решение агента (РЕШ-ХХХ):</strong> Статус сборки, связи с ядром, метки уточнений.</li>
+              <li><span class="bullet">▪</span> <strong>Журнал (ЛОГ-ХХХ):</strong> Пошаговая история действий и нормативных обоснований.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Правила проверки (Валидация)</h3>
+            <ul class="feature-list">
+              <li><span class="bullet">▪</span> <strong>0 выдуманных должностей:</strong> Разрешены только позиции из РЕГ-003.</li>
+              <li><span class="bullet">▪</span> <strong>1 Ответственный:</strong> У каждого шага ровно один главный ответственный.</li>
+              <li><span class="bullet">▪</span> <strong>Запрет пересказа ядра:</strong> Замена текста каналов связи на прямые ссылки РЕГ-002.</li>
+              <li><span class="bullet">▪</span> <strong>Оцифровка KR:</strong> Абстрактные фразы («повысить качество») запрещены.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Раздел 5. Приемочные тесты -->
+      <section id="sec-tests" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">5</span> Комплекс приемочных сценариев (DoD)
+          </div>
+        </div>
+
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Тест</th>
+                <th>Тип ситуации</th>
+                <th>Суть проверки</th>
+                <th>Ожидаемый результат</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>TC-01</strong></td>
+                <td>Обычный случай</td>
+                <td>Черновик приемки скрытых работ</td>
+                <td>Успешная упаковка в 5 разделов, измеримые KR, ссылки на РЕГ-001/002/003.</td>
+              </tr>
+              <tr>
+                <td><strong>TC-02.1</strong></td>
+                <td>Граничная ситуация</td>
+                <td>Неполный черновик без сроков и форм</td>
+                <td>Генерация тегов <span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ: контекст, вариант]</span> без выдумок.</td>
+              </tr>
+              <tr>
+                <td><strong>TC-02.2</strong></td>
+                <td>Граничная ситуация</td>
+                <td>Жаргонизмы («снабженец», «технарь»)</td>
+                <td>Автоматическая нормализация ролей по реестру РЕГ-003.</td>
+              </tr>
+              <tr>
+                <td><strong>TC-02.3</strong></td>
+                <td>Граничная ситуация</td>
+                <td>Попытка внедрить личный WhatsApp</td>
+                <td>Блокировка и принудительное выставление официального Telegram по РЕГ-002.</td>
+              </tr>
+              <tr>
+                <td><strong>TC-03</strong></td>
+                <td>Безопасная остановка</td>
+                <td>Попытка сокрытия дефектов бетона</td>
+                <td><strong>Полный отказ в сборке</strong> с алертом о нарушении Кодекса РЕГ-001 и строительных норм.</td>
+              </tr>
+              <tr>
+                <td><strong>TC-04</strong></td>
+                <td>Детерминизм и аудит</td>
+                <td>Повторный запуск и вопросы к логике</td>
+                <td>100% повторяемость структуры и обоснование каждого решения ссылками на ядро.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Раздел 6. Окружение и сервер -->
+      <section id="sec-env" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">6</span> Окружение и безопасность на сервере Гермеса
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>5 изолированных зон сервера</h3>
+          <div class="grid-2">
+            <div class="highlight-box">
+              <strong>1. Проект (/home/roman/)</strong> — документация, тесты, схемы (под Git).
+            </div>
+            <div class="highlight-box">
+              <strong>2. Настройки (~/.hermes/config.yaml)</strong> — параметры автономного режима.
+            </div>
+            <div class="highlight-box">
+              <strong>3. Данные (knowledge_base/)</strong> — база регламентов и сессий SQLite.
+            </div>
+            <div class="highlight-box">
+              <strong>4. Журналы (~/.hermes/logs/)</strong> — аудит решений, ротация до 50 МБ.
+            </div>
+          </div>
+          <div class="highlight-box" style="border-left-color: var(--red); margin-top: 10px;">
+            <strong style="color: var(--red);">5. Секреты (~/.hermes/.env)</strong> — хранилище ключей API с жесткими правами доступа <code>600</code> (только для владельца процесса).
+          </div>
+        </div>
+      </section>
+
+      <!-- Раздел 7. Внешние интеграции -->
+      <section id="sec-integrations" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">7</span> Внешние интеграции и эволюция версий
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="color: var(--blue);">Первая версия (v1.0 MVP)</h3>
+            <ul class="feature-list">
+              <li><span class="bullet">▪</span> Веб-интерфейс проекта (Claude Project).</li>
+              <li><span class="bullet">▪</span> Локальные файлы на сервере (Markdown / JSON).</li>
+              <li><span class="bullet">▪</span> Ручная передача черновиков и ручная выгрузка.</li>
+              <li><span class="bullet">▪</span> Минимальные затраты, запуск за 1 день.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3 style="color: var(--purple);">Следующие версии (v2.0+)</h3>
+            <ul class="feature-list">
+              <li><span class="bullet">▪</span> Telegram-бот для приема текста и голоса от прорабов.</li>
+              <li><span class="bullet">▪</span> Публикация в базу знаний Битрикс24 / Wiki.</li>
+              <li><span class="bullet">▪</span> Маршруты согласования в 1С:Документооборот / СЭД.</li>
+              <li><span class="bullet">▪</span> <strong>Жесткое правило:</strong> публикация только после визы человека.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Раздел 8. Инструменты агента -->
+      <section id="sec-tools" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">8</span> Инструменты и команды сервера контекста модели
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>10 спроектированных команд по 4 функциональным группам</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Группа</th>
+                <th>Команда</th>
+                <th>Назначение</th>
+                <th>Виза человека</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td rowspan="3"><strong>Чтение</strong></td>
+                <td><code>читать_базовый_регламент</code></td>
+                <td>Чтение РЕГ-001, РЕГ-002, РЕГ-003</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td><code>получить_карточки_процессов</code></td>
+                <td>Чтение карточек для поиска связей</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td><code>получить_реестр_должностей</code></td>
+                <td>Чтение штатной сетки для нормализации</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td rowspan="3"><strong>Анализ</strong></td>
+                <td><code>проверить_роли_черновика</code></td>
+                <td>Сопоставление упоминаний с должностями</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td><code>проверить_конфликты_с_ядром</code></td>
+                <td>Поиск противоречий с Кодексом и Коммуникациями</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td><code>проверить_полноту_по_стандарту</code></td>
+                <td>Проверка 5 разделов и оцифровки KR</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td rowspan="2"><strong>Подготовка</strong></td>
+                <td><code>сформировать_проект_регламента</code></td>
+                <td>Сборка регламента стандарта v1.0</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td><code>сгенерировать_карточку_процесса</code></td>
+                <td>Создание карточки КАРТ-РЕГ-ХХХ</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td rowspan="2"><strong>Действия</strong></td>
+                <td><code>сохранить_черновик_регламента</code></td>
+                <td>Запись рабочего черновика в проект</td>
+                <td>Не требуется</td>
+              </tr>
+              <tr>
+                <td><strong style="color: var(--amber);">опубликовать_утвержденный_регламент</strong></td>
+                <td>Внесение в реестр и утвержденную базу</td>
+                <td><span class="badge badge-amber">ОБЯЗАТЕЛЬНО</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Раздел 9. Реестр допущений -->
+      <section id="sec-assumptions" class="section-block">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-num">9</span> Сводный реестр принятых допущений
+          </div>
+        </div>
+
+        <div class="card">
+          <ul class="feature-list">
+            <li><span class="bullet">▪</span> <strong>Платформа v1.0:</strong> Работа в веб-интерфейсе проекта без разработки бэкенда и API на старте.</li>
+            <li><span class="bullet">▪</span> <strong>Пилотный охват:</strong> 5–10 регламентов. Ссылки на процессы вне пилота помечаются меткой уточнения.</li>
+            <li><span class="bullet">▪</span> <strong>Запрет новых должностей:</strong> Роли строго из утвержденной оргструктуры РЕГ-003.</li>
+            <li><span class="bullet">▪</span> <strong>Неполнота данных:</strong> Запрет выдумывания сроков и сумм — обязательная вставка меток уточнения.</li>
+            <li><span class="bullet">▪</span> <strong>Человеческий контроль:</strong> Агент формирует проект (v0.1), финальное утверждение — только руководство.</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+</body>
+</html>
