@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Модель данных системы «Кодификатор»</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-sub: #182234;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.15);
+      --accent-green: #10b981;
+      --accent-green-bg: rgba(16, 185, 129, 0.12);
+      --accent-amber: #f59e0b;
+      --accent-amber-bg: rgba(245, 158, 11, 0.12);
+      --accent-purple: #8b5cf6;
+      --accent-purple-bg: rgba(139, 92, 246, 0.12);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      font-size: 14px;
+      padding: 24px 20px 80px 20px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* Шапка */
+    header {
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 20px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-blue { background: var(--primary-glow); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-green { background: var(--accent-green-bg); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-amber { background: var(--accent-amber-bg); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-purple { background: var(--accent-purple-bg); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+    .header-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .header-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 900px;
+    }
+
+    /* Схема потока */
+    .flow-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+
+    .flow-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #60a5fa;
+    }
+
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      position: relative;
+    }
+
+    .flow-step-box {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      position: relative;
+    }
+
+    .flow-step-num {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .flow-step-name {
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .flow-step-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Сетка сущностей */
+    .entities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .entity-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .entity-header {
+      padding: 16px 20px;
+      background: var(--bg-card-sub);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .entity-name {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .entity-body {
+      padding: 20px;
+      flex-grow: 1;
+    }
+
+    .field-list {
+      list-style: none;
+      margin-bottom: 16px;
+    }
+
+    .field-item {
+      padding: 6px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .field-item:last-child {
+      border-bottom: none;
+    }
+
+    .field-name {
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .field-type {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #94a3b8;
+    }
+
+    .entity-rules {
+      background: #111827;
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-left: 3px solid var(--primary);
+    }
+
+    .entity-rules strong {
+      color: #f1f5f9;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Таблица */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0;
+      background: #111827;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+      background: #1f2937;
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12px;
+    }
+
+    .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1f2937;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <header>
+      <div class="badge-row">
+        <span class="badge badge-blue">📐 Модель данных</span>
+        <span class="badge badge-green">🏗️ Star Building</span>
+        <span class="badge badge-purple">Версия 1.0 (Пилот)</span>
+      </div>
+      <h1 class="header-title">Информационная модель системы «Кодификатор»</h1>
+      <p class="header-desc">
+        Наглядное представление всех сущностей, их полей, стабильных идентификаторов, статусов и взаимосвязей.
+      </p>
+    </header>
+
+    <!-- Поток данных -->
+    <div class="flow-card">
+      <div class="flow-title">
+        <span>🔄</span> Сквозной поток превращения данных
+      </div>
+      <div class="flow-steps">
+        <div class="flow-step-box">
+          <span class="flow-step-num">1</span>
+          <div class="flow-step-name">Входной черновик</div>
+          <div class="flow-step-desc">Сырой текст от автора (прораба или руководителя) с описанием процесса.</div>
+        </div>
+        <div class="flow-step-box">
+          <span class="flow-step-num">2</span>
+          <div class="flow-step-name">Решение агента</div>
+          <div class="flow-step-desc">Анализ ролей, связей с ядром и выявление недостающих данных.</div>
+        </div>
+        <div class="flow-step-box">
+          <span class="flow-step-num">3</span>
+          <div class="flow-step-name">Проект регламента (v0.1)</div>
+          <div class="flow-step-desc">Стандартизация по 5 обязательным разделам с метками уточнений.</div>
+        </div>
+        <div class="flow-step-box">
+          <span class="flow-step-num">4</span>
+          <div class="flow-step-name">Утверждение и Карточка</div>
+          <div class="flow-step-desc">Подписание руководством, создание сжатой карточки и запись в реестр.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Карточки сущностей -->
+    <div class="entities-grid">
+      
+      <!-- Сущность 1 -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <span class="entity-name" style="color: #60a5fa;">
+            <span>📄</span> Регламент
+          </span>
+          <span class="badge badge-blue">РЕГ-ХХХ</span>
+        </div>
+        <div class="entity-body">
+          <ul class="field-list">
+            <li class="field-item"><span class="field-name">Идентификатор</span><span class="field-type">строка (РЕГ-004)</span></li>
+            <li class="field-item"><span class="field-name">Название</span><span class="field-type">строка</span></li>
+            <li class="field-item"><span class="field-name">Статус</span><span class="field-type">Черновик / Утвержден</span></li>
+            <li class="field-item"><span class="field-name">Владелец процесса</span><span class="field-type">ссылка на Должность</span></li>
+            <li class="field-item"><span class="field-name">Ключевые показатели (KR)</span><span class="field-type">список чисел/сроков</span></li>
+            <li class="field-item"><span class="field-name">Матрица ответственности</span><span class="field-type">таблица ролей</span></li>
+            <li class="field-item"><span class="field-name">Шаги алгоритма</span><span class="field-type">список этапов</span></li>
+            <li class="field-item"><span class="field-name">Точки контроля</span><span class="field-type">список стоп-факторов</span></li>
+            <li class="field-item"><span class="field-name">Документооборот</span><span class="field-type">таблица форм</span></li>
+          </ul>
+          <div class="entity-rules">
+            <strong>Правило проверки:</strong>
+            Строго 5 обязательных разделов. Показатели только измеримые (числа, часы, проценты).
+          </div>
+        </div>
+      </div>
+
+      <!-- Сущность 2 -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <span class="entity-name" style="color: #34d399;">
+            <span>🗂️</span> Карточка регламента
+          </span>
+          <span class="badge badge-green">КАРТ-РЕГ-ХХХ</span>
+        </div>
+        <div class="entity-body">
+          <ul class="field-list">
+            <li class="field-item"><span class="field-name">Идентификатор</span><span class="field-type">строка (КАРТ-РЕГ-004)</span></li>
+            <li class="field-item"><span class="field-name">Ссылка на регламент</span><span class="field-type">код (РЕГ-004)</span></li>
+            <li class="field-item"><span class="field-name">Владелец процесса</span><span class="field-type">должность</span></li>
+            <li class="field-item"><span class="field-name">Триггер входа</span><span class="field-type">событие / документ</span></li>
+            <li class="field-item"><span class="field-name">Результат выхода</span><span class="field-type">акт / накладная</span></li>
+            <li class="field-item"><span class="field-name">Участвующие роли</span><span class="field-type">список ролей</span></li>
+            <li class="field-item"><span class="field-name">Связи с ядром</span><span class="field-type">список ссылок</span></li>
+          </ul>
+          <div class="entity-rules">
+            <strong>Правило проверки:</strong>
+            Создается для каждого утвержденного регламента для быстрой автоматической сверки связей.
+          </div>
+        </div>
+      </div>
+
+      <!-- Сущность 3 -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <span class="entity-name" style="color: #c084fc;">
+            <span>👤</span> Должность / Роль
+          </span>
+          <span class="badge badge-purple">ДОЛЖ-ХХХ</span>
+        </div>
+        <div class="entity-body">
+          <ul class="field-list">
+            <li class="field-item"><span class="field-name">Идентификатор</span><span class="field-type">строка (ДОЛЖ-ПРОРАБ)</span></li>
+            <li class="field-item"><span class="field-name">Официальное название</span><span class="field-type">строка по РЕГ-003</span></li>
+            <li class="field-item"><span class="field-name">Подразделение</span><span class="field-type">служба / отдел</span></li>
+            <li class="field-item"><span class="field-name">Разговорные синонимы</span><span class="field-type">«снабженец», «технарь»</span></li>
+          </ul>
+          <div class="entity-rules">
+            <strong>Правило проверки:</strong>
+            Агенту запрещено выдумывать новые должности. Все роли берутся только из регламента оргструктуры РЕГ-003.
+          </div>
+        </div>
+      </div>
+
+      <!-- Сущность 4 -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <span class="entity-name" style="color: #fbbf24;">
+            <span>📥</span> Входной черновик
+          </span>
+          <span class="badge badge-amber">ЧЕРН-ХХХ</span>
+        </div>
+        <div class="entity-body">
+          <ul class="field-list">
+            <li class="field-item"><span class="field-name">Идентификатор</span><span class="field-type">строка с датой</span></li>
+            <li class="field-item"><span class="field-name">Автор</span><span class="field-type">ФИО + должность</span></li>
+            <li class="field-item"><span class="field-name">Исходный текст</span><span class="field-type">сырой текст</span></li>
+            <li class="field-item"><span class="field-name">Время подачи</span><span class="field-type">дата и время</span></li>
+            <li class="field-item"><span class="field-name">Статус</span><span class="field-type">Новый / Обработан</span></li>
+          </ul>
+          <div class="entity-rules">
+            <strong>Правило проверки:</strong>
+            Хранит оригинальный текст автора в неизменном виде для обеспечения полной прозрачности и аудита.
+          </div>
+        </div>
+      </div>
+
+      <!-- Сущность 5 -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <span class="entity-name" style="color: #38bdf8;">
+            <span>🤖</span> Решение агента
+          </span>
+          <span class="badge badge-blue">РЕШ-ХХХ</span>
+        </div>
+        <div class="entity-body">
+          <ul class="field-list">
+            <li class="field-item"><span class="field-name">Ссылка на черновик</span><span class="field-type">код черновика</span></li>
+            <li class="field-item"><span class="field-name">Статус решения</span><span class="field-type">Успех / Остановка</span></li>
+            <li class="field-item"><span class="field-name">Созданный регламент</span><span class="field-type">код проекта</span></li>
+            <li class="field-item"><span class="field-name">Список уточнений</span><span class="field-type">метки неполноты</span></li>
+            <li class="field-item"><span class="field-name">Предотвращенные сбои</span><span class="field-type">список правок</span></li>
+          </ul>
+          <div class="entity-rules">
+            <strong>Правило проверки:</strong>
+            Фиксирует все несоответствия и подсвечивает метки «Требует уточнения» вместо додумывания фактов.
+          </div>
+        </div>
+      </div>
+
+      <!-- Сущность 6 -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <span class="entity-name" style="color: #94a3b8;">
+            <span>📜</span> Журнал действий
+          </span>
+          <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #cbd5e1;">ЛОГ-ХХХ</span>
+        </div>
+        <div class="entity-body">
+          <ul class="field-list">
+            <li class="field-item"><span class="field-name">Время события</span><span class="field-type">метка времени</span></li>
+            <li class="field-item"><span class="field-name">Тип действия</span><span class="field-type">шаг обработки</span></li>
+            <li class="field-item"><span class="field-name">Описание результата</span><span class="field-type">текст отчета</span></li>
+            <li class="field-item"><span class="field-name">Обоснование</span><span class="field-type">ссылка на РЕГ-001..003</span></li>
+          </ul>
+          <div class="entity-rules">
+            <strong>Правило проверки:</strong>
+            Гарантирует 100% объяснимость каждого принятого агентом решения.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Таблица связей -->
+    <div class="flow-card">
+      <div class="flow-title">
+        <span>🔗</span> Сводная матрица взаимосвязей сущностей
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Исходная сущность</th>
+            <th>Связанная сущность</th>
+            <th>Тип связи</th>
+            <th>Смысл и назначение связи</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Входной черновик</strong></td>
+            <td>Решение агента</td>
+            <td>Один к Одному</td>
+            <td>Каждый черновик порождает ровно одно решение по обработке</td>
+          </tr>
+          <tr>
+            <td><strong>Решение агента</strong></td>
+            <td>Регламент (Черновик)</td>
+            <td>Один к Одному</td>
+            <td>Успешное решение создает структурированный регламент по 5 разделам</td>
+          </tr>
+          <tr>
+            <td><strong>Регламент</strong></td>
+            <td>Должность / Роль</td>
+            <td>Многие ко Многим</td>
+            <td>В регламенте участвуют роли только из официальной структуры РЕГ-003</td>
+          </tr>
+          <tr>
+            <td><strong>Утвержденный регламент</strong></td>
+            <td>Карточка регламента</td>
+            <td>Один к Одному</td>
+            <td>Сжатая выжимка для быстрого поиска противоречий и сверки</td>
+          </tr>
+          <tr>
+            <td><strong>Карточки регламентов</strong></td>
+            <td>Реестр компании</td>
+            <td>Многие к Одному</td>
+            <td>Все карточки объединяются в общую матрицу владения процессами</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>
