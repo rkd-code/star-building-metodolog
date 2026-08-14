@@ -1,0 +1,36 @@
+# Шаблон конфигурации агента на сервере Гермеса (config_template.yaml)
+# Содержит параметры работы системы. НЕ содержит ключей доступа!
+
+# Настройки языковой модели
+model:
+  default: "основная-модель"
+  context_length: 32768
+
+# Поведение агента
+agent:
+  max_turns: 90
+  verify_on_stop: true
+
+# Параметры подтверждений и безопасности
+approvals:
+  mode: "off"                       # Автономный режим без блокирующих диалогов
+  destructive_slash_confirm: false
+  mcp_reload_confirm: false
+  cron_mode: "allow"
+
+# Долгосрочная память
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  write_approval: false
+  memory_char_limit: 2200
+  user_char_limit: 1375
+
+# Безопасность и сокрытие данных
+security:
+  redact_secrets: true             # Автоматическое сокрытие ключей в логах
+
+# Настройки отображения
+display:
+  language: "ru"
+  show_reasoning: false
