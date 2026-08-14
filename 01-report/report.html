@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Прототип выдачи агента «Кодификатор» v1.0 (MVP)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-sub: #182234;
+      --bg-highlight: #334155;
+      --border-color: #334155;
+      --border-focus: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-glow: rgba(59, 130, 246, 0.15);
+      --accent-green: #10b981;
+      --accent-green-bg: rgba(16, 185, 129, 0.12);
+      --accent-amber: #f59e0b;
+      --accent-amber-bg: rgba(245, 158, 11, 0.12);
+      --accent-purple: #8b5cf6;
+      --accent-purple-bg: rgba(139, 92, 246, 0.12);
+      --accent-red: #ef4444;
+      --accent-red-bg: rgba(239, 68, 68, 0.12);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout */
+    .app-container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px 20px 80px 20px;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 20px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-blue { background: var(--primary-glow); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-amber { background: var(--accent-amber-bg); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-green { background: var(--accent-green-bg); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-purple { background: var(--accent-purple-bg); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+    .header-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .header-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 900px;
+    }
+
+    /* Tabs */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 10px 16px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      color: #60a5fa;
+      background: var(--primary-glow);
+      border-bottom: 2px solid var(--primary);
+    }
+
+    /* Views */
+    .tab-view {
+      display: none;
+    }
+    .tab-view.active {
+      display: block;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Layout for Side-by-side */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      background: var(--bg-card-sub);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-body {
+      padding: 24px;
+      flex-grow: 1;
+    }
+
+    /* Draft box styling */
+    .raw-draft-content {
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      color: #cbd5e1;
+      background: #111827;
+      padding: 18px;
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--accent-amber);
+      white-space: pre-line;
+      line-height: 1.6;
+    }
+
+    .draft-meta {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      border: 1px dashed var(--border-color);
+    }
+    .draft-meta div {
+      margin-bottom: 4px;
+    }
+    .draft-meta strong {
+      color: var(--text-muted);
+    }
+
+    /* Output document document styling */
+    .document-preview {
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-lg);
+      padding: 32px 36px;
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+
+    .doc-meta-banner {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(30, 41, 59, 0.5));
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 24px;
+    }
+
+    .doc-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .doc-meta-item strong {
+      color: var(--text-muted);
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .doc-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      margin-bottom: 20px;
+      line-height: 1.35;
+    }
+
+    .doc-section {
+      margin-bottom: 28px;
+    }
+
+    .doc-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(147, 197, 253, 0.2);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .doc-subsection-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin: 12px 0 6px 0;
+    }
+
+    .doc-list {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+    .doc-list li {
+      margin-bottom: 6px;
+      color: #cbd5e1;
+    }
+
+    /* Clarification Marker */
+    .clarify-tag {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      display: inline-block;
+      margin: 2px 0;
+    }
+
+    .ref-link {
+      color: #60a5fa;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0 16px 0;
+      background: #111827;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+      background: #1f2937;
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1f2937;
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .raci-badge {
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      display: inline-block;
+    }
+    .raci-r { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .raci-a { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .raci-c { background: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .raci-i { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.4); }
+
+    /* Highlights Card */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .feature-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+
+    .feature-box h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Checklist */
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .check-icon {
+      color: #34d399;
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header>
+      <div class="badge-row">
+        <span class="badge badge-blue">⚡ Прототип артефакта</span>
+        <span class="badge badge-purple">🤖 Агент «Кодификатор» v1.0</span>
+        <span class="badge badge-amber">🏗️ Контекст: Star Building</span>
+        <span class="badge badge-green">🎯 Формат: 5 разделов + RACI</span>
+      </div>
+      <h1 class="header-title">
+        <span>Прототип выдачи агента «Кодификатор»</span>
+      </h1>
+      <p class="header-desc">
+        Демонстрация трансформации неструктурированного черновика от руководителя в стандартизированный проект регламента по критериям ТЗ (v1.0 MVP).
+      </p>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-compare')">
+        <span>⚖️</span> Сравнение (Черновик vs Результат)
+      </button>
+      <button class="tab-btn" onclick="switchTab('tab-output')">
+        <span>📄</span> Готовый регламент (Вид пользователя)
+      </button>
+      <button class="tab-btn" onclick="switchTab('tab-schema')">
+        <span>📐</span> Описание полей и структуры (5 разделов)
+      </button>
+      <button class="tab-btn" onclick="switchTab('tab-assumptions')">
+        <span>📌</span> Допущения и рамки MVP
+      </button>
+      <button class="tab-btn" onclick="switchTab('tab-dod')">
+        <span>✅</span> Проверка DoD (Definition of Done)
+      </button>
+    </div>
+
+    <!-- TAB 1: Comparison View -->
+    <div id="tab-compare" class="tab-view active">
+      <div class="comparison-grid">
+        
+        <!-- Left: Raw User Input -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="color: #fbbf24;">
+              <span>📥</span> Входной черновик (Сырой текст от автора)
+            </span>
+            <span class="badge badge-amber">Сырые данные</span>
+          </div>
+          <div class="card-body">
+            <div class="draft-meta">
+              <div><strong>От кого:</strong> Руководитель проектов (Смирнов А.В.)</div>
+              <div><strong>Тема:</strong> Входной контроль стройматериалов на объекте</div>
+              <div><strong>Проблема:</strong> Эмоциональный стиль, нет четких ролей, абстрактная цель, отсутствие шаблонов.</div>
+            </div>
+            <div class="raw-draft-content">
+Коллеги, нужно срочно стандартизировать, как мы принимаем материалы на объектах, а то вечно привозят не тот бетон или арматуру без паспортов, а потом прораб не знает, с кого спрашивать.
+
+1. Когда поставщик привозит материалы на объект, прораб или начальник участка должен сразу всё проверить. Проверить накладные, сертификаты соответствия и паспорта качества. Если документов нет — машину не разгружать или разгружать отдельно в зону временного хранения (пусть снабжение само разбирается с поставщиком в течение дня).
+
+2. Обязательно визуально осмотреть: нет ли боя, ржавчины, повреждений упаковки. Если бетон — взять пробы и замерить осадку конуса, если арматура — проверить маркировку и диаметр штангенциркулем.
+
+3. Если всё ок — прораб расписывается в накладной (ТОРГ-12 / УПД), ставит штамп входного контроля и вносит запись в журнал входного контроля. В течение 3 часов надо скинуть скан/фото накладной в рабочий чат закупщикам и бухгалтерии.
+
+4. Если обнаружен брак или недостача — немедленно стоп приемка. Составить акт о выявленных дефектах/несоответствиях (по нашей форме), сфоткать со всех ракурсов, приложить фото к акту. Прораб звонит менеджеру отдела снабжения. Снабженец связывается с заводом/поставщиком и решает вопрос о замене или возврате.
+
+5. Срок составления акта — не позже 2 часов с момента обнаружения. Если поставщик не согласен, вызываем их представителя на объект в течение суток.
+
+6. Ответственные: прораб отвечает за качество и сохранность на площадке, снабженец — за претензионную работу с поставщиком, технадзор — выборочно проверяет журналы раз в неделю.
+
+Цель регламента — чтобы на объектах не было брака, простоев и потерь денег из-за некачественных материалов. Все должны работать слаженно и без задержек.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Processed Codified Result -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="color: #60a5fa;">
+              <span>🤖</span> Результат обработки агентом «Кодификатор»
+            </span>
+            <span class="badge badge-blue">Стандарт v1.0</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="doc-meta-banner">
+              <div class="doc-meta-grid">
+                <div class="doc-meta-item">
+                  <strong>Идентификатор</strong>
+                  <span style="font-family: var(--font-mono); color: #60a5fa;">REG-004-DRAFT</span>
+                </div>
+                <div class="doc-meta-item">
+                  <strong>Статус</strong>
+                  <span>Черновик для согласования (v0.1)</span>
+                </div>
+                <div class="doc-meta-item">
+                  <strong>Владелец процесса</strong>
+                  <span>Руководитель отдела снабжения / Начальник участка</span>
+                </div>
+                <div class="doc-meta-item">
+                  <strong>Связи с ядром</strong>
+                  <span><span class="ref-link">REG-001</span> <span class="ref-link">REG-002</span> <span class="ref-link">REG-003</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-title">1. Цель и Key Results (Измеримые метрики)</div>
+              <ul class="doc-list">
+                <li><strong>100%</strong> поступающих партий фиксируются в Журнале входного контроля в день прибытия.</li>
+                <li><strong>0 фактов</strong> укладки/монтажа материалов без паспортов качества и сертификатов.</li>
+                <li>SLA передачи скана УПД в контур учета — <strong>не более 3 часов</strong>.</li>
+                <li>SLA оформления коммерческого Акта дефектовки — <strong>не более 2 часов</strong>.</li>
+              </ul>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-title">2. Область применения и Матрица RACI</div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Роль (по REG-003)</th>
+                    <th>Функция</th>
+                    <th>RACI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Прораб / Начальник участка</strong></td>
+                    <td>Приемка ТС, сверка ТТН, замеры, ведение журнала</td>
+                    <td><span class="raci-badge raci-r">R (Исполнитель)</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Менеджер отдела снабжения</strong></td>
+                    <td>Претензионная работа с поставщиком, возврат/замена</td>
+                    <td><span class="raci-badge raci-a">A/R (Ответственный)</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Инженер стройконтроля (Технадзор)</strong></td>
+                    <td>Выборочный аудит соблюдения процедур и записей</td>
+                    <td><span class="raci-badge raci-c">C (Контроль)</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Бухгалтер материальной группы</strong></td>
+                    <td>Оприходование ТМЦ по сканам и оригиналам</td>
+                    <td><span class="raci-badge raci-i">I (Информируемый)</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-title">3. Пошаговый алгоритм и ветвления</div>
+              <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">
+                <strong>Этап 1. Документарная проверка:</strong> сверка ТТН/УПД. При отсутствии документов — разгрузка в зону карантина. Срок досыла поставщиком: <span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ: предельный срок, предлагается: до 18:00 тек. дня]</span>.
+              </p>
+              <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">
+                <strong>Этап 2. Инструментальный контроль:</strong> замер конуса (бетон), замер диаметра штангенциркулем (арматура). Прочие материалы: <span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ: перечень проверок для отделочных/фасадных материалов]</span>.
+              </p>
+              <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">
+                <strong>Этап 3. Действия при браке:</strong> остановка приемки, фиксация не менее 4 фото, оформление Акта за 2 часа, отправка в Telegram по стандарту <span class="ref-link">REG-002 (п. 3.2)</span>.
+              </p>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-title">4. Контроль и Эскалация</div>
+              <ul class="doc-list">
+                <li><strong>Еженедельный аудит:</strong> Технадзор проверяет журнал и остатки на складе.</li>
+                <li><strong>Стоп-фактор:</strong> Запрет выдачи материала субподрядчикам без штампа входного контроля.</li>
+                <li><strong>Эскалация:</strong> При срыве замены брака >24 часов — эскалация Руководителю проекта по <span class="ref-link">REG-002 (п. 4.1)</span>.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: Full Output Document View (Clean presentation for User) -->
+    <div id="tab-output" class="tab-view">
+      <div class="document-preview">
+        
+        <div class="doc-meta-banner">
+          <div class="doc-meta-grid">
+            <div class="doc-meta-item">
+              <strong>Код документа</strong>
+              <span style="font-family: var(--font-mono); color: #60a5fa; font-weight: 700; font-size: 14px;">REG-004-DRAFT</span>
+            </div>
+            <div class="doc-meta-item">
+              <strong>Статус документа</strong>
+              <span style="color: #fbbf24; font-weight: 600;">Черновик для согласования (v0.1)</span>
+            </div>
+            <div class="doc-meta-item">
+              <strong>Владелец процесса</strong>
+              <span>Руководитель отдела снабжения / Начальник участка</span>
+            </div>
+            <div class="doc-meta-item">
+              <strong>Базовые регламенты</strong>
+              <span><span class="ref-link">REG-001</span> <span class="ref-link">REG-002</span> <span class="ref-link">REG-003</span></span>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="doc-title">РЕГЛАМЕНТ: Входной контроль и приемка строительных материалов и конструкций на объекте</h2>
+
+        <!-- Раздел 1 -->
+        <div class="doc-section">
+          <div class="doc-section-title">1. Цель и ключевые результаты (Key Results)</div>
+          
+          <div class="doc-subsection-title">1.1. Назначение</div>
+          <p style="color: #cbd5e1; font-size: 13.5px; margin-bottom: 12px;">
+            Регламентирует единый порядок проверки сопроводительной документации, визуально-инструментального контроля, фиксации дефектов и оприходования поступающих строительных материалов на всех объектах строительства компании Star Building.
+          </p>
+
+          <div class="doc-subsection-title">1.2. Измеримые ключевые показатели (Key Results)</div>
+          <ul class="doc-list">
+            <li><strong>100%</strong> поступающих партий материалов зарегистрированы в Журнале входного контроля в день прибытия на площадку.</li>
+            <li><strong>0 фактов</strong> отпуска или укладки строительных материалов без паспортов качества и сертификатов соответствия.</li>
+            <li>Нормативный срок передачи скан-копии подписанной накладной в контур учета — <strong>не более 3 часов</strong> с момента разгрузки.</li>
+            <li>Срок оформления двустороннего коммерческого Акта о выявленных дефектах при обнаружении брака или недостачи — <strong>не более 2 часов</strong>.</li>
+          </ul>
+        </div>
+
+        <!-- Раздел 2 -->
+        <div class="doc-section">
+          <div class="doc-section-title">2. Область применения и роли</div>
+          
+          <div class="doc-subsection-title">2.1. Контур действия</div>
+          <p style="color: #cbd5e1; font-size: 13.5px; margin-bottom: 12px;">
+            Действует на всех действующих строительных площадках компании при взаимодействии Службы строительства, Отдела снабжения и Службы строительного контроля (технадзора).
+          </p>
+
+          <div class="doc-subsection-title">2.2. Матрица ответственности (RACI)</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 28%;">Роль по Оргструктуре (REG-003)</th>
+                <th style="width: 52%;">Функция в процессе</th>
+                <th style="width: 20%;">Тип участия (RACI)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Прораб / Начальник участка</strong></td>
+                <td>Встреча ТС, сверка накладных и сертификатов, визуальный осмотр, проведение замеров, ведение журнала входного контроля</td>
+                <td><span class="raci-badge raci-r">R — Исполнитель</span></td>
+              </tr>
+              <tr>
+                <td><strong>Менеджер отдела снабжения</strong></td>
+                <td>Претензионная работа с поставщиком, организация допоставки документов, оформление замены брака или возврата ТМЦ</td>
+                <td><span class="raci-badge raci-a">A/R — Ответственный</span></td>
+              </tr>
+              <tr>
+                <td><strong>Инженер стройконтроля (Технадзор)</strong></td>
+                <td>Выборочный регулярный аудит соблюдения процедур входного контроля и правильности ведения журналов на объекте</td>
+                <td><span class="raci-badge raci-c">C — Консультант / Аудит</span></td>
+              </tr>
+              <tr>
+                <td><strong>Бухгалтер материальной группы</strong></td>
+                <td>Оприходование ТМЦ в учетной системе на основании предоставленных сканов и оригиналов накладных (УПД)</td>
+                <td><span class="raci-badge raci-i">I — Информируемый</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Раздел 3 -->
+        <div class="doc-section">
+          <div class="doc-section-title">3. Пошаговый алгоритм выполнения</div>
+          
+          <div class="doc-subsection-title">Этап 1. Первичная документарная проверка</div>
+          <ul class="doc-list">
+            <li>При прибытии ТС на объект Прораб запрашивает комплект документов: ТТН/УПД (ТОРГ-12), паспорта качества, сертификаты соответствия.</li>
+            <li>Прораб сверяет номенклатуру, марку, объем и реквизиты партии.</li>
+            <li><strong>Сценарий А (Документы в порядке):</strong> Переход к физическому осмотру (Этап 2).</li>
+            <li><strong>Сценарий Б (Документы отсутствуют / ошибки):</strong> Разгрузка в изолированную зону временного (карантинного) хранения без права использования. Уведомление снабжения. Срок досыла документов: <span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ: регламентный срок для поставщика, предлагается: до 18:00 текущего рабочего дня]</span>.</li>
+          </ul>
+
+          <div class="doc-subsection-title">Этап 2. Физический и инструментальный контроль</div>
+          <ul class="doc-list">
+            <li><strong>Визуальный осмотр:</strong> целостность упаковок, отсутствие коррозии, трещин, механических повреждений и боя.</li>
+            <li><strong>Инструментальный замер:</strong>
+              <br>— <em>Бетонные смеси:</em> отбор контрольных образцов-кубов, замер осадки конуса (ОК) с фиксацией в журнале бетонных работ.
+              <br>— <em>Металлопрокат и арматура:</em> контрольный замер фактического диаметра штангенциркулем, сверка заводских бирок.
+              <br>— <em>Прочие строительные материалы:</em> <span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ: перечень инструментальных замеров для фасадных и отделочных материалов]</span>.
+            </li>
+          </ul>
+
+          <div class="doc-subsection-title">Этап 3. Действия при обнаружении дефектов или недостачи</div>
+          <ul class="doc-list">
+            <li>Прораб немедленно останавливает процедуру приемки.</li>
+            <li>Производится фотофиксация дефекта (минимум 4 фото со всех ракурсов с масштабной линейкой и биркой партии).</li>
+            <li>В течение <strong>2 часов</strong> составляется «Акт о выявленных дефектах и несоответствиях» <span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ: код формы шаблона в базе]</span>.</li>
+            <li>Прораб направляет акт и фотоматериалы в оперативный Telegram-чат объекта в соответствии с регламентом <span class="ref-link">REG-002 (п. 3.2)</span>.</li>
+            <li>Менеджер снабжения в течение <strong>1 рабочего часа</strong> направляет претензию заводу-изготовителю и согласует вызов представителя (прибытие — в течение 24 часов).</li>
+          </ul>
+
+          <div class="doc-subsection-title">Этап 4. Успешная приемка и передача данных</div>
+          <ul class="doc-list">
+            <li>Прораб подписывает накладную ТОРГ-12 / УПД, заверяет штампом входного контроля.</li>
+            <li>Вносится запись в Журнал входного контроля строительных материалов.</li>
+            <li>В течение <strong>3 часов</strong> качественный скан или фото накладной направляется в Telegram-канал объекта по стандарту <span class="ref-link">REG-002</span>.</li>
+          </ul>
+        </div>
+
+        <!-- Раздел 4 -->
+        <div class="doc-section">
+          <div class="doc-section-title">4. Контроль и точки аудита</div>
+          <ul class="doc-list">
+            <li><strong>Еженедельный выборочный контроль:</strong> Инженер строительного контроля производит сверку записей в журнале с фактическими остатками на складе объекта.</li>
+            <li><strong>Стоп-фактор:</strong> Категорически запрещен отпуск материалов подрядным организациям при отсутствии отметки в Журнале входного контроля.</li>
+            <li><strong>Эскалация разногласий:</strong> При задержке замены брака поставщиком свыше 24 часов — эскалация Руководителю проекта и Директору по закупкам по протоколу <span class="ref-link">REG-002 (п. 4.1)</span>.</li>
+          </ul>
+        </div>
+
+        <!-- Раздел 5 -->
+        <div class="doc-section">
+          <div class="doc-section-title">5. Документооборот, формы и шаблоны</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 5%;">№</th>
+                <th style="width: 35%;">Документ / Форма</th>
+                <th style="width: 35%;">Где хранится / Куда передается</th>
+                <th style="width: 25%;">Формат / Источник</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Журнал входного контроля материалов</td>
+                <td>Строительная площадка (штаб строительства)</td>
+                <td>Бумажный журнал типовой формы</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Скан подписанного УПД / ТОРГ-12</td>
+                <td>Telegram-канал объекта / Облачное хранилище</td>
+                <td>PDF / JPEG</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Акт о выявленных дефектах и несоответствиях</td>
+                <td>Отдел снабжения + архив объекта</td>
+                <td><span class="clarify-tag">[ТРЕБУЕТ УТОЧНЕНИЯ: шаблон docx]</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Акт отбора проб и испытаний бетона</td>
+                <td>Папка исполнительной документации объекта</td>
+                <td>Приложение к журналу бетонных работ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: Fields Description & Schema -->
+    <div id="tab-schema" class="tab-view">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📐 Спецификация обязательных полей регламента (5 разделов)</span>
+        </div>
+        <div class="card-body">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Раздел / Блок</th>
+                <th>Поле / Элемент</th>
+                <th>Назначение поля</th>
+                <th>Правило валидации агента</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td rowspan="4"><strong>Метаданные (Шапка)</strong></td>
+                <td>Код документа</td>
+                <td>Уникальный шифр в реестре регламентов</td>
+                <td>Маска <code>REG-XXX-DRAFT</code>. Присваивается автоматически.</td>
+              </tr>
+              <tr>
+                <td>Название</td>
+                <td>Отражение сути регламентируемого процесса</td>
+                <td>Глагольное существительное + предмет + контекст. Запрещены расплывчатые названия.</td>
+              </tr>
+              <tr>
+                <td>Владелец процесса</td>
+                <td>Ответственное лицо за соблюдение регламента</td>
+                <td>Берется <strong>строго из REG-003 (Оргструктура)</strong>. Выдуманные роли запрещены.</td>
+              </tr>
+              <tr>
+                <td>Связанные базовые регламенты</td>
+                <td>Прямые ссылки на ядро компании</td>
+                <td>Ссылки на <span class="ref-link">REG-001</span>, <span class="ref-link">REG-002</span>, <span class="ref-link">REG-003</span> вместо дублирования текста.</td>
+              </tr>
+              <tr>
+                <td rowspan="2"><strong>1. Цель и Key Results</strong></td>
+                <td>1.1. Назначение</td>
+                <td>Краткое описание границ процесса</td>
+                <td>1-2 предложения, строго определяющие вход и выход процесса.</td>
+              </tr>
+              <tr>
+                <td>1.2. Key Results (KR)</td>
+                <td>Измеримые числовые критерии эффективности</td>
+                <td><strong>Только цифры, часы, проценты</strong>. Абстрактные фразы («повысить качество») запрещены.</td>
+              </tr>
+              <tr>
+                <td rowspan="2"><strong>2. Область применения и роли</strong></td>
+                <td>2.1. Контур действия</td>
+                <td>Объекты и службы, где действует регламент</td>
+                <td>Список подразделений и площадок.</td>
+              </tr>
+              <tr>
+                <td>2.2. Матрица RACI</td>
+                <td>Таблица распределения ответственности</td>
+                <td>Роли строго из <code>REG-003</code>. У каждого шага ровно один <strong>A (Accountable)</strong>.</td>
+              </tr>
+              <tr>
+                <td><strong>3. Пошаговый алгоритм</strong></td>
+                <td>Этапы, шаги, ветвления</td>
+                <td>Хронологическая цепочка действий</td>
+                <td>Формат: «Кто -> Что -> В какой срок -> Куда результат». При нехватке данных: <code>[ТРЕБУЕТ УТОЧНЕНИЯ]</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>4. Контроль и аудит</strong></td>
+                <td>Аудит, Стоп-факторы, Эскалация</td>
+                <td>Точки проверки и протоколы сбоев</td>
+                <td>Периодичность аудита + стоп-триггеры + ссылка на эскалацию по <code>REG-002</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>5. Документооборот</strong></td>
+                <td>Таблица форм и артефактов</td>
+                <td>Реестр всех сопутствующих документов</td>
+                <td>Таблица из 4 колонок: №, Форма, Место хранения, Шаблон/Формат.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Assumptions -->
+    <div id="tab-assumptions" class="tab-view">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📌 Список допущений и архитектурных рамок (MVP v1.0)</span>
+          <span class="badge badge-purple">Зафиксировано в ТЗ</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="feature-grid">
+            <div class="feature-box">
+              <h4 style="color: #60a5fa;"><span>🏗️</span> Платформа Claude Project</h4>
+              <p>В рамках v1.0 не разрабатываются сложные боты или скрипты. Агент функционирует как проект в Claude с загруженной базой знаний (Project Knowledge) и системным промптом (Custom Instructions).</p>
+            </div>
+            <div class="feature-box">
+              <h4 style="color: #34d399;"><span>📚</span> Пилотная база знаний (5–10 док.)</h4>
+              <p>На этапе v1 кодифицируется только обязательное ядро (Кодекс, Коммуникации, Оргструктура) плюс 2–7 самых востребованных регламентов. Полная база из 45 документов будет подключена на v2.</p>
+            </div>
+            <div class="feature-box">
+              <h4 style="color: #fbbf24;"><span>🔍</span> Честный маркер [ТРЕБУЕТ УТОЧНЕНИЯ]</h4>
+              <p>Агент принципиально не выдумывает недостающие факты (сроки поставки, размеры штрафов, названия ГОСТов), а явно подсвечивает их методологу в формате квадратных скобок.</p>
+            </div>
+            <div class="feature-box">
+              <h4 style="color: #f87171;"><span>🚫</span> Запрет на новые должности</h4>
+              <p>Все должности и роли валидируются строго по файлу <code>REG-003 (Оргструктура)</code>. Если автор использует просторечное название, агент приводит его к штатной сетке.</p>
+            </div>
+            <div class="feature-box">
+              <h4 style="color: #c084fc;"><span>🔗</span> Принцип ссылочной целостности</h4>
+              <p>Правила эскалации и каналы коммуникации не переписываются своими словами, а адресуются прямыми ссылками на пункты <code>REG-002</code>, исключая рассинхрон документов.</p>
+            </div>
+            <div class="feature-box">
+              <h4 style="color: #38bdf8;"><span>👥</span> Ручное утверждение человеком</h4>
+              <p>Выходной документ является черновиком v0.1. Агент не публикует регламенты в боевые системы (Bitrix24/ЭДО) — финальное согласование всегда остается за руководством.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: DoD Checklist -->
+    <div id="tab-dod" class="tab-view">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">✅ Проверка критериев готовности (Definition of Done v1.0)</span>
+          <span class="badge badge-green">100% Соответствие ТЗ</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="checklist-item">
+            <span class="check-icon">✔</span>
+            <div>
+              <strong style="color: #f8fafc;">Фиксированная структура из 5 разделов</strong>
+              <p style="color: #94a3b8; font-size: 13px;">Регламент строго разбит на Цели/KR, Роли/RACI, Алгоритм, Контроль и Документооборот.</p>
+            </div>
+          </div>
+
+          <div class="checklist-item">
+            <span class="check-icon">✔</span>
+            <div>
+              <strong style="color: #f8fafc;">Отсутствие выдуманных должностей</strong>
+              <p style="color: #94a3b8; font-size: 13px;">Все роли сопоставлены с реальной структурой: Прораб, Начальник участка, Менеджер снабжения, Инженер технадзора.</p>
+            </div>
+          </div>
+
+          <div class="checklist-item">
+            <span class="check-icon">✔</span>
+            <div>
+              <strong style="color: #f8fafc;">Точные ссылки на базовые регламенты ядра</strong>
+              <p style="color: #94a3b8; font-size: 13px;">Присутствуют прямые ссылки на REG-001 (Кодекс), REG-002 (Коммуникации и эскалация), REG-003 (Оргструктура) без самовольного пересказа.</p>
+            </div>
+          </div>
+
+          <div class="checklist-item">
+            <span class="check-icon">✔</span>
+            <div>
+              <strong style="color: #f8fafc;">Маркировка недостающих параметров тегом [ТРЕБУЕТ УТОЧНЕНИЯ]</strong>
+              <p style="color: #94a3b8; font-size: 13px;">Нехватка шаблонов актов и регламентных сроков поставщика честно подсвечена для автора/методолога.</p>
+            </div>
+          </div>
+
+          <div class="checklist-item">
+            <span class="check-icon">✔</span>
+            <div>
+              <strong style="color: #f8fafc;">Измеримые Key Results (KR)</strong>
+              <p style="color: #94a3b8; font-size: 13px;">Вместо абстрактных фраз заданы жесткие метрики: 100% партий в журнале, 0 нарушений, SLA 3 часа на отправку УПД, SLA 2 часа на акт.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      // Hide all tabs
+      const tabs = document.querySelectorAll('.tab-view');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      
+      // Deactivate all buttons
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      // Activate target tab and button
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) {
+        targetTab.classList.add('active');
+      }
+      
+      // Find button corresponding to event or tabId
+      buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(tabId)) {
+          btn.classList.add('active');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
