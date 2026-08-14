@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Пошаговый план разработки агента «Кодификатор»</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --card-sub: #1a243d;
+      --border: #233354;
+      --border-focus: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --blue: #38bdf8;
+      --blue-bg: rgba(56, 189, 248, 0.12);
+      --green: #34d399;
+      --green-bg: rgba(52, 211, 153, 0.12);
+      --amber: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --purple: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      font-size: 14px;
+      padding: 30px 20px 80px 20px;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .badge-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(192, 132, 252, 0.3); }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .header-desc {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      max-width: 850px;
+    }
+
+    /* Шкала этапов */
+    .timeline {
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 31px;
+      top: 20px;
+      bottom: 40px;
+      width: 2px;
+      background: var(--border);
+      z-index: 1;
+    }
+
+    .stage-item {
+      position: relative;
+      display: flex;
+      gap: 24px;
+      margin-bottom: 40px;
+      z-index: 2;
+    }
+
+    .stage-icon-box {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: #0f1626;
+      border: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    }
+
+    .stage-1 .stage-icon-box { border-color: var(--amber); color: var(--amber); }
+    .stage-2 .stage-icon-box { border-color: var(--blue); color: var(--blue); }
+    .stage-3 .stage-icon-box { border-color: var(--purple); color: var(--purple); }
+    .stage-4 .stage-icon-box { border-color: var(--green); color: var(--green); }
+
+    .stage-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      flex-grow: 1;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+    }
+
+    .stage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .stage-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stage-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .grid-box {
+      background: var(--card-sub);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .grid-box-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .grid-box-val {
+      font-size: 13px;
+      color: #f1f5f9;
+      line-height: 1.4;
+    }
+
+    .deliverables-box {
+      background: #0f172a;
+      border-left: 3px solid var(--blue);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .deliverables-box strong {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <header>
+      <div class="badge-row">
+        <span class="badge badge-amber">🚀 Дорожная карта</span>
+        <span class="badge badge-blue">Эволюция: от MVP к Enterprise</span>
+        <span class="badge badge-green">Star Building</span>
+      </div>
+      <h1>Пошаговый план разработки агента «Кодификатор»</h1>
+      <p class="header-desc">
+        Поэтапное развертывание: от простейшего рабочего пилота за несколько дней до полномасштабного корпоративного ассистента со всеми внешними связями.
+      </p>
+    </header>
+
+    <div class="timeline">
+      
+      <!-- ЭТАП 1 -->
+      <div class="stage-item stage-1">
+        <div class="stage-icon-box">
+          <span>01</span>
+          <span style="font-size: 10px; text-transform:uppercase;">MVP</span>
+        </div>
+        <div class="stage-content">
+          <div class="stage-header">
+            <div class="stage-title">Этап 1. Быстрый пилот без разработки (v1.0 MVP)</div>
+            <span class="badge badge-amber">Срок: 2–3 дня • Запуск</span>
+          </div>
+          <p class="stage-desc">
+            Проверка ключевой гипотезы ценности на реальных черновиках без написания бэкенда и без затрат на разработку.
+          </p>
+
+          <div class="stage-grid">
+            <div class="grid-box">
+              <div class="grid-box-title">Среда выполнения</div>
+              <div class="grid-box-val">Проект в Claude (Project Knowledge + Системные инструкции)</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">База знаний</div>
+              <div class="grid-box-val">5–10 пилотных документов (Ядро: Кодекс, Коммуникации, Оргструктура + 2–7 частых процессов)</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">Пользователи</div>
+              <div class="grid-box-val">Методолог (заказчик) + узкий круг из 2–3 руководителей</div>
+            </div>
+          </div>
+
+          <div class="deliverables-box" style="border-left-color: var(--amber);">
+            <strong>Результат этапа:</strong> Готовый проект регламента по 5 разделам, 0 выдуманных должностей, измеримые показатели, подсветка белых пятен метками <code>[ТРЕБУЕТ УТОЧНЕНИЯ]</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТАП 2 -->
+      <div class="stage-item stage-2">
+        <div class="stage-icon-box">
+          <span>02</span>
+          <span style="font-size: 10px; text-transform:uppercase;">v1.1</span>
+        </div>
+        <div class="stage-content">
+          <div class="stage-header">
+            <div class="stage-title">Этап 2. Голосовой ввод и интерактивный диалог (v1.1)</div>
+            <span class="badge badge-blue">Срок: 1–2 недели</span>
+          </div>
+          <p class="stage-desc">
+            Упрощение подачи для прорабов на объектах и интерактивное закрытие недостающих данных до передачи методологу.
+          </p>
+
+          <div class="stage-grid">
+            <div class="grid-box">
+              <div class="grid-box-title">Входной формат</div>
+              <div class="grid-box-val">Текст + короткие голосовые аудиосообщения со стройплощадки</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">Логика диалога</div>
+              <div class="grid-box-val">Агент сам опрашивает автора по меткам неполноты (сроки, формы) с подсказками вариантов</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">База знаний</div>
+              <div class="grid-box-val">Расширение до 15–20 операционных регламентов стройки</div>
+            </div>
+          </div>
+
+          <div class="deliverables-box" style="border-left-color: var(--blue);">
+            <strong>Результат этапа:</strong> Автор сдает процесс голосом и в коротком диалоге с агентом закрывает все белые пятна. Методолог получает цельный готовый черновик.
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТАП 3 -->
+      <div class="stage-item stage-3">
+        <div class="stage-icon-box">
+          <span>03</span>
+          <span style="font-size: 10px; text-transform:uppercase;">v1.5</span>
+        </div>
+        <div class="stage-content">
+          <div class="stage-header">
+            <div class="stage-title">Этап 3. Полный охват и автоматический аудит базы (v1.5)</div>
+            <span class="badge badge-purple">Срок: 3–4 недели</span>
+          </div>
+          <p class="stage-desc">
+            Масштабирование на всю компанию, оцифровка всех 45 регламентов и подключение сервера инструментов.
+          </p>
+
+          <div class="stage-grid">
+            <div class="grid-box">
+              <div class="grid-box-title">Объем базы знаний</div>
+              <div class="grid-box-val">Все 45 регламентов компании (полные тексты + сжатые карточки в реестре)</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">Инструменты агента</div>
+              <div class="grid-box-val">Сервер контекста модели (10 команд: чтение, проверка ролей, сверка связей, экспорт)</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">Версионность</div>
+              <div class="grid-box-val">Двухуровневая модель версий: 0.1 ➔ 1.0 ➔ 1.x ➔ 2.0</div>
+            </div>
+          </div>
+
+          <div class="deliverables-box" style="border-left-color: var(--purple);">
+            <strong>Результат этапа:</strong> Полная оцифрованная база стандартов. Автоматический аудит коллизий и регулярная сверка раз в 6 месяцев.
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТАП 4 -->
+      <div class="stage-item stage-4">
+        <div class="stage-icon-box">
+          <span>04</span>
+          <span style="font-size: 10px; text-transform:uppercase;">v2.0</span>
+        </div>
+        <div class="stage-content">
+          <div class="stage-header">
+            <div class="stage-title">Этап 4. Полноценный корпоративный агент (v2.0 Enterprise)</div>
+            <span class="badge badge-green">Целевое состояние</span>
+          </div>
+          <p class="stage-desc">
+            Бесшовная интеграция во все рабочие контуры строительной компании: мессенджеры, корпоративный портал и документооборот.
+          </p>
+
+          <div class="stage-grid">
+            <div class="grid-box">
+              <div class="grid-box-title">Интерфейс для всех</div>
+              <div class="grid-box-val">Telegram-бот для прорабов, начальников участков и субподрядчиков</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">База знаний Битрикс24</div>
+              <div class="grid-box-val">Авто-публикация утвержденных регламентов в корпоративную Wiki</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">ЭДО (1С:ДО / СЭД)</div>
+              <div class="grid-box-val">Автоматический запуск маршрутов согласования и электронных подписей</div>
+            </div>
+            <div class="grid-box">
+              <div class="grid-box-title">Синхронизация штата</div>
+              <div class="grid-box-val">Авто-обновление оргструктуры и должностей из 1С:ЗУП</div>
+            </div>
+          </div>
+
+          <div class="deliverables-box" style="border-left-color: var(--green);">
+            <strong>Итоговый агент:</strong> Прораб надиктовывает процесс в Telegram ➔ Агент уточняет детали ➔ Методолог визирует ➔ 1С согласует с руководством ➔ Регламент публикуется в Битрикс24 и чаты объектов.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
