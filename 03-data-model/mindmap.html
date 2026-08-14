@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Карта связей и сущностей системы «Кодификатор»</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #151d30;
+      --border: #22304e;
+      --text: #f1f5f9;
+      --text-muted: #8fa0bc;
+      --blue: #38bdf8;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --purple: #c084fc;
+      --red: #f87171;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1340px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Интерактивная карта связей */
+    .map-wrapper {
+      background: #0f1626;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      margin-bottom: 24px;
+    }
+
+    svg {
+      width: 100%;
+      height: 720px;
+      display: block;
+    }
+
+    /* Стили узлов SVG */
+    .node-group {
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .node-group:hover {
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.6));
+    }
+
+    .node-rect {
+      rx: 10;
+      ry: 10;
+      stroke-width: 2;
+      transition: all 0.2s ease;
+    }
+
+    .node-title {
+      font-size: 13px;
+      font-weight: 700;
+      fill: #ffffff;
+      pointer-events: none;
+    }
+
+    .node-subtitle {
+      font-size: 10.5px;
+      fill: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .edge-line {
+      fill: none;
+      stroke-width: 2;
+      stroke-dasharray: 4;
+      animation: dash 30s linear infinite;
+      opacity: 0.65;
+    }
+
+    .edge-label {
+      font-size: 10px;
+      font-weight: 600;
+      fill: var(--text-muted);
+      background: #0b0f19;
+    }
+
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+
+    /* Панель детального описания */
+    .detail-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .detail-col h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+
+    .detail-col p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <header>
+      <div>
+        <h1>Граф связей сущностей системы «Кодификатор»</h1>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+          Интерактивная карта: потоки данных, ядро базы знаний и жизненный цикл регламентов
+        </p>
+      </div>
+      
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background: var(--amber);"></span> Входные данные</div>
+        <div class="legend-item"><span class="dot" style="background: var(--blue);"></span> Решения и проверки</div>
+        <div class="legend-item"><span class="dot" style="background: var(--purple);"></span> Базовое Ядро</div>
+        <div class="legend-item"><span class="dot" style="background: var(--green);"></span> Регламенты и Реестр</div>
+      </div>
+    </header>
+
+    <div class="map-wrapper">
+      <svg viewBox="0 0 1200 700">
+        <defs>
+          <linearGradient id="grad-core" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e1b4b" />
+            <stop offset="100%" stop-color="#312e81" />
+          </linearGradient>
+          <linearGradient id="grad-draft" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#451a03" />
+            <stop offset="100%" stop-color="#78350f" />
+          </linearGradient>
+          <linearGradient id="grad-agent" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#082f49" />
+            <stop offset="100%" stop-color="#0369a1" />
+          </linearGradient>
+          <linearGradient id="grad-reg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#064e3b" />
+            <stop offset="100%" stop-color="#047857" />
+          </linearGradient>
+          
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+          </marker>
+        </defs>
+
+        <!-- Связи (Линии графа) -->
+        
+        <!-- Черновик -> Решение агента -->
+        <path d="M 230 180 C 350 180, 350 350, 470 350" class="edge-line" stroke="#fbbf24" marker-end="url(#arrow)" />
+        <text x="310" y="245" class="edge-label">Передача текста</text>
+
+        <!-- Черновик -> Журнал действий -->
+        <path d="M 230 180 C 230 290, 230 450, 230 520" class="edge-line" stroke="#64748b" marker-end="url(#arrow)" />
+        <text x="240" y="380" class="edge-label">Фиксация шагов</text>
+
+        <!-- Ядро (РЕГ-001, 002, 003) -> Решение агента -->
+        <path d="M 600 130 C 600 220, 600 240, 600 310" class="edge-line" stroke="#c084fc" marker-end="url(#arrow)" />
+        <text x="610" y="220" class="edge-label">Сверка с ядром</text>
+
+        <!-- Должность (РЕГ-003) -> Регламент (Матрица ответственности) -->
+        <path d="M 720 100 C 850 100, 850 250, 850 310" class="edge-line" stroke="#c084fc" marker-end="url(#arrow)" />
+        <text x="800" y="190" class="edge-label">Штатные роли</text>
+
+        <!-- Решение агента -> Проект регламента v0.1 -->
+        <path d="M 730 350 C 800 350, 800 350, 850 350" class="edge-line" stroke="#38bdf8" marker-end="url(#arrow)" />
+        <text x="740" y="340" class="edge-label">Генерация 5 разделов</text>
+
+        <!-- Проект регламента -> Утвержденный регламент -->
+        <path d="M 970 390 C 970 450, 970 470, 970 510" class="edge-line" stroke="#34d399" marker-end="url(#arrow)" />
+        <text x="980" y="460" class="edge-label">Утверждение</text>
+
+        <!-- Утвержденный регламент -> Карточка регламента -->
+        <path d="M 850 550 C 750 550, 750 550, 680 550" class="edge-line" stroke="#34d399" marker-end="url(#arrow)" />
+        <text x="710" y="540" class="edge-label">Сжатие карточки</text>
+
+        <!-- Карточка регламента -> Сводный Реестр -->
+        <path d="M 460 550 C 400 550, 400 550, 350 550" class="edge-line" stroke="#34d399" marker-end="url(#arrow)" />
+        <text x="370" y="540" class="edge-label">Внесение в реестр</text>
+
+        <!-- УЗЛЫ ГРАФА -->
+
+        <!-- 1. Входной черновик -->
+        <g class="node-group" transform="translate(40, 130)" onclick="alert('Входной черновик: сырой текст от прораба/руководителя')">
+          <rect width="190" height="95" class="node-rect" fill="url(#grad-draft)" stroke="#fbbf24" />
+          <text x="16" y="32" class="node-title">📥 Входной черновик</text>
+          <text x="16" y="54" class="node-subtitle">Идентификатор: ЧЕРН-ХХХ</text>
+          <text x="16" y="72" class="node-subtitle">Автор, Текст, Дата подачи</text>
+        </g>
+
+        <!-- 2. Журнал действий -->
+        <g class="node-group" transform="translate(130, 510)">
+          <rect width="190" height="90" class="node-rect" fill="#1e293b" stroke="#64748b" />
+          <text x="16" y="32" class="node-title">📜 Журнал действий</text>
+          <text x="16" y="52" class="node-subtitle">Идентификатор: ЛОГ-ХХХ</text>
+          <text x="16" y="70" class="node-subtitle">Аудит, Обоснования шагов</text>
+        </g>
+
+        <!-- 3. Обязательное Ядро (Центральный верх) -->
+        <g class="node-group" transform="translate(460, 40)">
+          <rect width="270" height="110" class="node-rect" fill="url(#grad-core)" stroke="#c084fc" />
+          <text x="16" y="30" class="node-title">🏛️ Обязательное Ядро (Core)</text>
+          <text x="16" y="52" class="node-subtitle">• РЕГ-001 Кодекс (Качество, Этика)</text>
+          <text x="16" y="70" class="node-subtitle">• РЕГ-002 Коммуникации (Чаты, Эскалация)</text>
+          <text x="16" y="88" class="node-subtitle">• РЕГ-003 Оргструктура (Должности)</text>
+        </g>
+
+        <!-- 4. Решение агента «Кодификатор» (Центр) -->
+        <g class="node-group" transform="translate(470, 305)">
+          <rect width="250" height="100" class="node-rect" fill="url(#grad-agent)" stroke="#38bdf8" />
+          <text x="16" y="30" class="node-title">🤖 Решение «Кодификатора»</text>
+          <text x="16" y="50" class="node-subtitle">Идентификатор: РЕШ-ХХХ</text>
+          <text x="16" y="68" class="node-subtitle">• Проверка ролей по РЕГ-003</text>
+          <text x="16" y="86" class="node-subtitle">• Метки [ТРЕБУЕТ УТОЧНЕНИЯ]</text>
+        </g>
+
+        <!-- 5. Проект регламента v0.1 -->
+        <g class="node-group" transform="translate(850, 305)">
+          <rect width="240" height="95" class="node-rect" fill="#134e4a" stroke="#2dd4bf" />
+          <text x="16" y="30" class="node-title">📄 Проект регламента v0.1</text>
+          <text x="16" y="50" class="node-subtitle">РЕГ-ХХХ-ЧЕРНОВИК</text>
+          <text x="16" y="68" class="node-subtitle">Строго 5 обязательных разделов</text>
+          <text x="16" y="84" class="node-subtitle">Матрица ответственности (RACI)</text>
+        </g>
+
+        <!-- 6. Утвержденный регламент -->
+        <g class="node-group" transform="translate(850, 510)">
+          <rect width="240" height="90" class="node-rect" fill="url(#grad-reg)" stroke="#34d399" />
+          <text x="16" y="30" class="node-title">⚖️ Утвержденный регламент</text>
+          <text x="16" y="50" class="node-subtitle">Идентификатор: РЕГ-ХХХ</text>
+          <text x="16" y="70" class="node-subtitle">Юридическая сила, Подпись</text>
+        </g>
+
+        <!-- 7. Карточка регламента -->
+        <g class="node-group" transform="translate(470, 510)">
+          <rect width="210" height="90" class="node-rect" fill="#1f2937" stroke="#34d399" />
+          <text x="16" y="30" class="node-title">🗂️ Карточка регламента</text>
+          <text x="16" y="50" class="node-subtitle">КАРТ-РЕГ-ХХХ</text>
+          <text x="16" y="70" class="node-subtitle">Входы, Выходы, Связи, Сроки</text>
+        </g>
+
+        <!-- 8. Сводный реестр компании -->
+        <g class="node-group" transform="translate(130, 510)" style="display:none;">
+          <!-- Placeholder -->
+        </g>
+
+      </svg>
+    </div>
+
+    <!-- Пояснительный блок -->
+    <div class="detail-card">
+      <div class="detail-col">
+        <h3>1. Входящий поток и контроль</h3>
+        <p>Черновик от автора поступает в агент. Каждое действие логируется в Журнале действий с указанием нормативного обоснования.</p>
+      </div>
+      <div class="detail-col">
+        <h3>2. Проверка через Ядро</h3>
+        <p>Агент сопоставляет текст с Кодексом (РЕГ-001), Коммуникациями (РЕГ-002) и Оргструктурой (РЕГ-003). Роли нормализуются, каналы фиксируются.</p>
+      </div>
+      <div class="detail-col">
+        <h3>3. Регламент и Реестр</h3>
+        <p>Генерируется проект регламента по 5 разделам. После утверждения человеком создается сжатая карточка для реестра и автоматических проверок.</p>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
