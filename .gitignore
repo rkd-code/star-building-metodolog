@@ -6,6 +6,8 @@
 .local/
 .npm/
 .ssh/
+.gnupg/
+.gitconfig
 *.log
 .bash_logout
 .bashrc
