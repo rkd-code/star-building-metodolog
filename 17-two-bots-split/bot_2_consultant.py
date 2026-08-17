@@ -26,8 +26,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("bot_consultant")
 
-# Токен второго бота (будет заполнен при получении от пользователя)
-TOKEN = os.environ.get("TELEGRAM_CONSULTANT_TOKEN", "")
+TOKEN = "8928901139:AAFE9qOWDKYQJb7OXtfEeLqfCaSSD0yvAB0"
 
 api_key = None
 with open('/home/roman/.hermes/.env') as f:
