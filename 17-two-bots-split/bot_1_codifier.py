@@ -167,11 +167,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await msg.reply_chat_action("typing")
     try:
         reply_text = await process_draft_request(text_content, author_name)
-        if len(reply_text) <= 4000:
-            await msg.reply_text(reply_text, parse_mode="Markdown")
-        else:
-            for chunk in [reply_text[i:i+4000] for i in range(0, len(reply_text), 4000)]:
+        chunks = [reply_text[i:i+4000] for i in range(0, len(reply_text), 4000)]
+        for chunk in chunks:
+            try:
                 await msg.reply_text(chunk, parse_mode="Markdown")
+            except Exception as parse_err:
+                logger.warning(f"Ошибка Markdown, отправка без разметки: {parse_err}")
+                await msg.reply_text(chunk)
     except Exception as e:
         logger.error(f"Ошибка кодификации: {e}")
         await msg.reply_text(f"⚠ Ошибка обработки черновика: {e}")
