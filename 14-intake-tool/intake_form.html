@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Форма подачи черновика регламента — Star Building</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --border: #233354;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --blue: #38bdf8;
+      --blue-hover: #0284c7;
+      --green: #34d399;
+      --amber: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 30px 20px; line-height: 1.6; }
+    .container { max-width: 800px; margin: 0 auto; }
+
+    header { margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    h1 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    p { font-size: 13.5px; color: var(--text-muted); }
+
+    .form-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 8px; }
+    .hint { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13.5px;
+      outline: none;
+      transition: border 0.15s ease;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+    }
+
+    textarea { height: 160px; resize: vertical; }
+
+    .file-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      background: #090e1a;
+      cursor: pointer;
+      transition: border 0.15s ease;
+    }
+
+    .file-dropzone:hover { border-color: var(--blue); }
+
+    .btn-submit {
+      background: var(--blue);
+      color: #0b0f19;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s ease;
+    }
+
+    .btn-submit:hover { background: var(--blue-hover); }
+
+    .info-banner {
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 3px solid var(--blue);
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-top: 24px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>📥 Подача черновика регламента в Star Building</h1>
+      <p>Заполните форму или опишите процесс простыми словами. Агент автоматически приведет его к стандарту 5 разделов.</p>
+    </header>
+
+    <div class="form-card">
+      <form onsubmit="event.preventDefault(); alert('Черновик успешно принят и передан агенту на кодификацию!');">
+        
+        <div class="form-group">
+          <label>Автор (ФИО и ваша должность):</label>
+          <input type="text" placeholder="Например: Иванов К.С., Начальник участка №3" required>
+        </div>
+
+        <div class="form-group">
+          <label>Подразделение:</label>
+          <select required>
+            <option value="">Выберите подразделение...</option>
+            <option value="Служба строительства">Служба строительства</option>
+            <option value="Отдел снабжения">Отдел снабжения</option>
+            <option value="ПТО">Производственно-технический отдел (ПТО)</option>
+            <option value="Строительный контроль">Служба строительного контроля (Технадзор)</option>
+            <option value="Коммерческий блок">Коммерческий департамент / Продажи</option>
+            <option value="Бухгалтерия и финансы">Бухгалтерия и финансы</option>
+            <option value="Кадры и HR">Управление персоналом (HR)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Название или тема процесса:</label>
+          <input type="text" placeholder="Например: Порядок сдачи инструмента на склад" required>
+        </div>
+
+        <div class="form-group">
+          <label>Описание процесса (своими словами):</label>
+          <textarea placeholder="Опишите, как сейчас устроен процесс, кто за что отвечает, какие сроки и какие возникают проблемы..."></textarea>
+          <div class="hint">Можно описать шаги простым языком или вставить текст служебной записки.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Прикрепить документ (.docx / .pdf / аудио):</label>
+          <div class="file-dropzone">
+            <p style="color: #cbd5e1; font-size: 13px;">📎 Нажмите для выбора файла или перетащите его сюда</p>
+            <p style="font-size: 11.5px; color: #64748b; margin-top: 4px;">Поддерживаются: Word, PDF, аудиозаписи с диктофона</p>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">🚀 Отправить черновик на кодификацию</button>
+
+      </form>
+
+      <div class="info-banner">
+        <strong>Что произойдет дальше:</strong> Агент проверит текст по Оргструктуре и Кодексу, сформирует нормативный проект регламента и сохранит его в папку <code>01_В_РАБОТЕ</code> для согласования.
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
