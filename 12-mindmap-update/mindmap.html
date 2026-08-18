@@ -3,219 +3,423 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Актуальная карта связей Star Building</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <title>Интерактивная карта сущностей Star Building</title>
   <style>
     :root {
-      --bg: #070a12;
-      --card-bg: #0f172a;
+      --bg: #070a13;
+      --panel-bg: #0f172a;
+      --card-bg: #131d35;
       --border: #1e293b;
+      --border-bright: #334155;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --blue: #38bdf8;
       --green: #34d399;
       --amber: #fbbf24;
-      --purple: #a78bfa;
-      --rose: #fb7185;
+      --purple: #c084fc;
+      --pink: #f472b6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 24px; }
+    body { background-color: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-    header { text-align: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
-    h1 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-    p { font-size: 13px; color: var(--text-muted); }
-
-    .map-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 280px 1fr 280px;
-      gap: 20px;
-      align-items: start;
+    header {
+      padding: 14px 20px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
     }
 
-    .column { display: flex; flex-direction: column; gap: 16px; }
+    .header-left h1 { font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .header-left p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .badge-live { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(52, 211, 153, 0.15); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.3); }
 
-    .node-card {
+    .main-layout { flex: 1; display: flex; overflow: hidden; position: relative; }
+
+    /* Боковая панель деталей */
+    .sidebar-panel {
+      width: 320px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .sidebar-panel h3 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    
+    .filter-btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .filter-btn {
+      background: #1e293b;
+      border: 1px solid var(--border-bright);
+      color: var(--text-muted);
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover, .filter-btn.active { background: rgba(56, 189, 248, 0.15); color: var(--blue); border-color: var(--blue); }
+
+    .info-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 10px;
+    }
+    .info-card h4 { font-size: 13.5px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .info-card p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .info-card .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 8px; font-family: monospace; }
+
+    /* SVG холст */
+    .canvas-container {
+      flex: 1;
       position: relative;
+      background: radial-gradient(circle at center, #0f172a 0%, #070a13 100%);
+      overflow: hidden;
+      cursor: grab;
     }
+    .canvas-container:active { cursor: grabbing; }
 
-    .node-card.blue { border-color: rgba(56, 189, 248, 0.4); }
-    .node-card.green { border-color: rgba(52, 211, 153, 0.4); }
-    .node-card.amber { border-color: rgba(251, 191, 36, 0.4); }
-    .node-card.purple { border-color: rgba(167, 139, 250, 0.4); }
+    svg { width: 100%; height: 100%; }
 
-    .node-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .node-title { font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-    .node-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .node { cursor: pointer; transition: transform 0.15s ease; }
+    .node:hover rect, .node:hover circle { stroke: #38bdf8 !important; stroke-width: 2.5px !important; }
+    .node text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; pointer-events: none; }
+    
+    .edge { stroke-dasharray: 4,4; animation: dash 20s linear infinite; }
+    @keyframes dash { to { stroke-dashoffset: -100; } }
 
-    .badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
-    .badge-blue { background: rgba(56, 189, 248, 0.15); color: var(--blue); }
-    .badge-green { background: rgba(52, 211, 153, 0.15); color: var(--green); }
-    .badge-amber { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
-    .badge-purple { background: rgba(167, 139, 250, 0.15); color: var(--purple); }
-
-    .core-hub {
-      background: linear-gradient(180deg, #131d36 0%, #0d1527 100%);
-      border: 2px solid var(--blue);
-      border-radius: 16px;
-      padding: 24px;
-      text-align: center;
-      box-shadow: 0 0 35px rgba(56, 189, 248, 0.15);
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 6px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      padding: 6px;
+      border-radius: 8px;
     }
-    .core-hub h2 { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-    .core-hub p { font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; }
-
-    .hub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: left; }
-    .hub-box { background: #080d1a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 11.5px; }
-    .hub-box h4 { font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; }
-    .hub-box ul { list-style-position: inside; color: var(--text-muted); line-height: 1.5; }
-
-    .arrow-line {
-      text-align: center;
-      color: var(--blue);
-      font-size: 18px;
-      line-height: 1;
-      margin: 4px 0;
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      background: #1e293b;
+      border: 1px solid var(--border-bright);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+    .zoom-btn:hover { background: #334155; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>🗺️ Интерактивная карта связей и потоков данных</h1>
-    <p>Архитектура взаимодействия ботов, базы знаний, проверок на коллизии и двухконтурного хранения</p>
+    <div class="header-left">
+      <h1>🌐 Карта сущностей и связей Star Building</h1>
+      <p>100% автономная интерактивная схема (без внешних библиотек) • Кликните на узел для просмотра деталей</p>
+    </div>
+    <span class="badge-live">● 2 БОТА ОНЛАЙН НА СЕРВЕРЕ</span>
   </header>
 
-  <div class="map-container">
+  <div class="main-layout">
     
-    <!-- Левая колонка: Входящие каналы -->
-    <div class="column">
-      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--blue); letter-spacing: 0.05em;">ВХОДЯЩИЕ КАНАЛЫ (TELEGRAM)</div>
-      
-      <div class="node-card blue">
-        <div class="node-header">
-          <div class="node-title">📝 Бот 1: Кодификатор</div>
-          <span class="badge badge-blue">@ReglamentSB_bot</span>
-        </div>
-        <div class="node-desc">
-          • Прием голосовых черновиков (Whisper STT)<br>
-          • Прием файлов .docx / .pdf / фото схем<br>
-          • Заявки на разработку документов с нуля
-        </div>
+    <!-- Левая панель с описанием -->
+    <aside class="sidebar-panel">
+      <h3>Фильтр по слоям:</h3>
+      <div class="filter-btn-group">
+        <button class="filter-btn active" onclick="filterLayer('all')">Все слои</button>
+        <button class="filter-btn" onclick="filterLayer('bots')">Боты и вход</button>
+        <button class="filter-btn" onclick="filterLayer('core')">Ядро и Сверщик</button>
+        <button class="filter-btn" onclick="filterLayer('regs')">Регламенты</button>
+        <button class="filter-btn" onclick="filterLayer('storage')">Папки и Битрикс</button>
       </div>
 
-      <div class="arrow-line">⬇️</div>
-
-      <div class="node-card green">
-        <div class="node-header">
-          <div class="node-title">💼 Бот 2: Консультант</div>
-          <span class="badge badge-green">@star_building_help_bot</span>
-        </div>
-        <div class="node-desc">
-          • Вопросы сотрудников по работе и стройке<br>
-          • Пошаговые решения со ссылками на регламенты<br>
-          • Интерактивный запрос и выдача форм
-        </div>
+      <div class="info-card" id="detail-card">
+        <h4 id="card-title">Выберите узел на схеме</h4>
+        <p id="card-desc">Нажмите на любой блок, регламент, бота или стрелку, чтобы увидеть его подробное назначение и взаимосвязи.</p>
+        <span class="tag" id="card-tag" style="background: rgba(56, 189, 248, 0.15); color: var(--blue);">ИНФОРМАЦИЯ</span>
       </div>
 
-      <div class="node-card purple" style="margin-top: 10px;">
-        <div class="node-header">
-          <div class="node-title">📥 Папка приема</div>
-          <span class="badge badge-purple">03_ПРИЕМ</span>
-        </div>
-        <div class="node-desc">
-          Локальный файловый сброс документов на сервере для фоновой кодификации.
-        </div>
+      <div style="margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted);">
+        <strong>Подсказка:</strong> Зажмите левую кнопку мыши для перемещения карты, крутите колесико для приближения/отдаления.
       </div>
-    </div>
+    </aside>
 
-    <!-- Центральная колонка: Интеллектуальное ядро -->
-    <div class="column">
-      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--purple); letter-spacing: 0.05em; text-align: center;">ИНТЕЛЛЕКТУАЛЬНОЕ ЯДРО И БАЗА ЗНАНИЙ</div>
+    <!-- Холст SVG -->
+    <main class="canvas-container" id="canvas-wrapper">
+      <svg id="svg-canvas" viewBox="0 0 1400 900">
+        <defs>
+          <!-- Маркеры стрелок -->
+          <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+          </marker>
+          <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+          </marker>
+          <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#c084fc"/>
+          </marker>
+          <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24"/>
+          </marker>
+        </defs>
 
-      <div class="core-hub">
-        <h2>🏛️ Ядро Star Building (Gemini 3.7 Flash)</h2>
-        <p>10 действующих регламентов компании • Сквозная память диалогов • Проверка 0 галлюцинаций</p>
-        
-        <div class="hub-grid">
-          <div class="hub-box">
-            <h4>🔍 Модуль «Сверщик»</h4>
-            <ul>
-              <li>Сверка черновиков с РЕГ-001..010</li>
-              <li>Выявление коллизий сроков и ролей</li>
-              <li>Формирование блока вопросов</li>
-            </ul>
-          </div>
-          <div class="hub-box">
-            <h4>📄 Модуль документов</h4>
-            <ul>
-              <li>Выдача строго из реестра ФОРМА-ХХХ</li>
-              <li>Предварительный запрос согласия</li>
-              <li>Автозаполнение реквизитов</li>
-            </ul>
-          </div>
-        </div>
+        <g id="viewport-group" transform="translate(0, 0) scale(1)">
+          
+          <!-- СВЯЗИ (ЛИНИИ) -->
+          <!-- От сотрудников к ботам -->
+          <path d="M 220 220 L 320 220" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" class="edge" />
+          <path d="M 220 540 L 320 540" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" class="edge" />
+
+          <!-- От ботов к Ядру -->
+          <path d="M 520 220 L 680 340" stroke="#c084fc" stroke-width="2.5" marker-end="url(#arrow-purple)" />
+          <path d="M 520 540 L 680 440" stroke="#c084fc" stroke-width="2.5" marker-end="url(#arrow-purple)" />
+
+          <!-- Ядро к Сверщику -->
+          <path d="M 800 320 L 800 220" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrow-amber)" />
+
+          <!-- Ядро к Регламентам -->
+          <path d="M 920 380 L 1040 200" stroke="#64748b" stroke-width="1.5" />
+          <path d="M 920 390 L 1040 300" stroke="#64748b" stroke-width="1.5" />
+          <path d="M 920 400 L 1040 400" stroke="#64748b" stroke-width="1.5" />
+          <path d="M 920 410 L 1040 500" stroke="#64748b" stroke-width="1.5" />
+          <path d="M 920 420 L 1040 600" stroke="#64748b" stroke-width="1.5" />
+
+          <!-- Бот 1 к Папке 01_В_РАБОТЕ -->
+          <path d="M 420 160 C 420 80, 800 60, 1040 80" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow-green)" class="edge" />
+
+          <!-- Папка 01 к Папке 02 -->
+          <path d="M 1140 110 L 1140 160" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-green)" />
+
+          <!-- Папка 02 к Битрикс24 -->
+          <path d="M 1240 200 C 1320 200, 1320 740, 1240 760" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
+
+          <!-- УЗЛЫ (СЛОИ) -->
+
+          <!-- 1. ВХОДЯЩИЕ ПОТОКИ -->
+          <g class="node" onclick="showInfo('Сотрудники компании', 'Прорабы, инженеры ПТО, снабженцы, бухгалтеры и руководители. Отправляют черновики текстом, голосом или прикрепляют файлы .docx.', 'ВХОДНОЙ ПОТОК')">
+            <rect x="40" y="170" width="180" height="90" rx="10" fill="#0f172a" stroke="#0284c7" stroke-width="1.5"/>
+            <text x="130" y="205" fill="#38bdf8" font-weight="bold" font-size="13" text-anchor="middle">👷‍♂️ Авторы черновиков</text>
+            <text x="130" y="225" fill="#94a3b8" font-size="11" text-anchor="middle">Текст / Голос / .docx</text>
+            <text x="130" y="243" fill="#64748b" font-size="10" text-anchor="middle">Подача новых стандартов</text>
+          </g>
+
+          <g class="node" onclick="showInfo('Сотрудники с вопросами', 'Сотрудники на стройплощадках и в офисе, у которых возник рабочий инцидент (брак материала, задержка техники, оформление отпуска).', 'ВХОДНОЙ ПОТОК')">
+            <rect x="40" y="490" width="180" height="90" rx="10" fill="#0f172a" stroke="#0284c7" stroke-width="1.5"/>
+            <text x="130" y="525" fill="#38bdf8" font-weight="bold" font-size="13" text-anchor="middle">🙋‍♂️ Вопросы сотрудников</text>
+            <text x="130" y="545" fill="#94a3b8" font-size="11" text-anchor="middle">Голос / Текст / Фото</text>
+            <text x="130" y="563" fill="#64748b" font-size="10" text-anchor="middle">Запрос консультации</text>
+          </g>
+
+          <!-- 2. TELEGRAM-БОТЫ -->
+          <g class="node" onclick="showInfo('Бот 1: Кодификатор (@ReglamentSB_bot)', 'Принимает черновики, распознает речь через Whisper, сверяет с базой через Сверщик и формирует регламент по 5 разделам в папку 01_В_РАБОТЕ.', 'TELEGRAM БОТ • ОНЛАЙН')">
+            <rect x="320" y="160" width="200" height="110" rx="12" fill="#1e1b4b" stroke="#a855f7" stroke-width="2"/>
+            <text x="420" y="195" fill="#c084fc" font-weight="bold" font-size="14" text-anchor="middle">📝 Бот-Кодификатор</text>
+            <text x="420" y="218" fill="#e9d5ff" font-size="12" font-weight="600" text-anchor="middle">@ReglamentSB_bot</text>
+            <text x="420" y="240" fill="#a855f7" font-size="10.5" text-anchor="middle">Сборка по 5 разделам</text>
+            <text x="420" y="256" fill="#34d399" font-size="10" font-weight="bold" text-anchor="middle">● РАБОТАЕТ НА СЕРВЕРЕ</text>
+          </g>
+
+          <g class="node" onclick="showInfo('Бот 2: Консультант (@star_building_help_bot)', 'Отвечает на любые вопросы сотрудников со ссылками на пункты РЕГ-001..010, дает пошаговый порядок действий и предлагает заполнить служебную записку/акт.', 'TELEGRAM БОТ • ОНЛАЙН')">
+            <rect x="320" y="480" width="200" height="110" rx="12" fill="#1e1b4b" stroke="#a855f7" stroke-width="2"/>
+            <text x="420" y="515" fill="#c084fc" font-weight="bold" font-size="14" text-anchor="middle">💼 Бот-Консультант</text>
+            <text x="420" y="538" fill="#e9d5ff" font-size="12" font-weight="600" text-anchor="middle">@star_building_help_bot</text>
+            <text x="420" y="560" fill="#a855f7" font-size="10.5" text-anchor="middle">Решения + Служебки</text>
+            <text x="420" y="576" fill="#34d399" font-size="10" font-weight="bold" text-anchor="middle">● РАБОТАЕТ НА СЕРВЕРЕ</text>
+          </g>
+
+          <!-- 3. ИНТЕЛЛЕКТУАЛЬНОЕ ЯДРО -->
+          <g class="node" onclick="showInfo('Интеллектуальное Ядро Gemini 3.7 Flash', 'Обрабатывает логику, связывает контекст диалога с базой знаний регламентов и генерирует структурированные нормативные акты.', 'ИНТЕЛЛЕКТУАЛЬНОЕ ЯДРО')">
+            <rect x="680" y="320" width="240" height="150" rx="16" fill="#1e293b" stroke="#f59e0b" stroke-width="2.5"/>
+            <text x="800" y="360" fill="#fbbf24" font-weight="800" font-size="16" text-anchor="middle">🧠 Ядро Star Building</text>
+            <text x="800" y="385" fill="#cbd5e1" font-size="12" text-anchor="middle">Gemini 3.7 Flash Engine</text>
+            <text x="800" y="415" fill="#94a3b8" font-size="11" text-anchor="middle">• Сквозная память диалогов</text>
+            <text x="800" y="433" fill="#94a3b8" font-size="11" text-anchor="middle">• Запрет выдуманных должностей</text>
+            <text x="800" y="451" fill="#94a3b8" font-size="11" text-anchor="middle">• 0 галлюцинаций по формам</text>
+          </g>
+
+          <!-- СВЕРЩИК -->
+          <g class="node" onclick="showInfo('Модуль «Сверщик» (Поиск коллизий)', 'Автоматически сопоставляет каждый новый черновик со всеми 10 регламентами, выявляет нестыковки по срокам, функциям и формирует блок вопросов автору.', 'МОДУЛЬ АУДИТА')">
+            <rect x="690" y="130" width="220" height="90" rx="12" fill="#451a03" stroke="#f59e0b" stroke-width="2"/>
+            <text x="800" y="160" fill="#fbbf24" font-weight="bold" font-size="14" text-anchor="middle">🔍 Модуль «Сверщик»</text>
+            <text x="800" y="182" fill="#fed7aa" font-size="11" text-anchor="middle">Поиск коллизий SLA и ролей</text>
+            <text x="800" y="200" fill="#fb923c" font-size="10.5" text-anchor="middle">Блок вопросов автору/заказчику</text>
+          </g>
+
+          <!-- 4. РЕГЛАМЕНТЫ -->
+          <g class="node" onclick="showInfo('Базовое Ядро: РЕГ-001, РЕГ-002, РЕГ-003', 'РЕГ-001 Кодекс (качество, безопасность), РЕГ-002 Оргструктура (штатная сетка), РЕГ-003 Стратегия (цели 2030).', 'БАЗОВОЕ ЯДРО')">
+            <rect x="1040" y="270" width="200" height="70" rx="8" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
+            <text x="1140" y="298" fill="#c7d2fe" font-weight="bold" font-size="12" text-anchor="middle">🏛️ РЕГ-001..003: ЯДРО</text>
+            <text x="1140" y="318" fill="#94a3b8" font-size="10.5" text-anchor="middle">Кодекс • Структура • Стратегия</text>
+          </g>
+
+          <g class="node" onclick="showInfo('Методология: РЕГ-004, РЕГ-005', 'РЕГ-004 Регламент написания регламентов, РЕГ-005 Классификация видов регламентов.', 'МЕТОДОЛОГИЯ')">
+            <rect x="1040" y="360" width="200" height="70" rx="8" fill="#0f172a" stroke="#0ea5e9" stroke-width="1.5"/>
+            <text x="1140" y="388" fill="#7dd3fc" font-weight="bold" font-size="12" text-anchor="middle">📐 РЕГ-004..005: СТАНДАРТЫ</text>
+            <text x="1140" y="408" fill="#94a3b8" font-size="10.5" text-anchor="middle">Правила создания регламентов</text>
+          </g>
+
+          <g class="node" onclick="showInfo('Операционные регламенты: РЕГ-006, РЕГ-007, РЕГ-008, РЕГ-009', 'РЕГ-006 Договоры, РЕГ-007 Кадры, РЕГ-008 Мотивация и KPI, РЕГ-009 Топливные карты (ГСМ).', 'ОПЕРАЦИОННЫЙ БЛОК')">
+            <rect x="1040" y="450" width="200" height="85" rx="8" fill="#0f172a" stroke="#0ea5e9" stroke-width="1.5"/>
+            <text x="1140" y="478" fill="#7dd3fc" font-weight="bold" font-size="12" text-anchor="middle">⚙️ РЕГ-006..009: ПРОЦЕССЫ</text>
+            <text x="1140" y="498" fill="#94a3b8" font-size="10" text-anchor="middle">Договоры • Кадры • Премии • ГСМ</text>
+            <text x="1140" y="515" fill="#64748b" font-size="9.5" text-anchor="middle">Формы: ФОРМА-ДОГ/КАДР/МОТ/ГСМ</text>
+          </g>
+
+          <g class="node" onclick="showInfo('РЕГ-010: Клиентоориентированность', 'Стандарт клиентоориентированности и управления клиентским опытом (NPS >= 80%, закрытие жалоб за 24 ч). Находится на согласовании в папке 01_В_РАБОТЕ.', 'В СОГЛАСОВАНИИ')">
+            <rect x="1040" y="555" width="200" height="70" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="1.5"/>
+            <text x="1140" y="583" fill="#fcd34d" font-weight="bold" font-size="12" text-anchor="middle">🤝 РЕГ-010: КЛИЕНТЫ</text>
+            <text x="1140" y="603" fill="#fdba74" font-size="10" text-anchor="middle">Сервис • Рекламации 24 ч • NPS</text>
+          </g>
+
+          <!-- 5. ХРАНЕНИЕ И БИТРИКС24 -->
+          <g class="node" onclick="showInfo('Папка 01_В_РАБОТЕ', 'Рабочий контур на сервере: содержит все 10 регламентов + все новые черновики, находящиеся на согласовании рабочей группой.', 'ПАПКА 1')">
+            <rect x="1040" y="50" width="200" height="60" rx="8" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+            <text x="1140" y="78" fill="#6ee7b7" font-weight="bold" font-size="12" text-anchor="middle">📁 01_В_РАБОТЕ</text>
+            <text x="1140" y="96" fill="#a7f3d0" font-size="10" text-anchor="middle">10 регламентов + черновики v0.1</text>
+          </g>
+
+          <g class="node" onclick="showInfo('Папка 02_УТВЕРЖДЕНО', 'Золотой эталон: содержит только 9 регламентов с финальной подписью Генерального директора. Копирование сюда строго по подтверждению.', 'ПАПКА 2')">
+            <rect x="1040" y="160" width="200" height="60" rx="8" fill="#022c22" stroke="#10b981" stroke-width="2"/>
+            <text x="1140" y="188" fill="#34d399" font-weight="bold" font-size="12" text-anchor="middle">📁 02_УТВЕРЖДЕНО</text>
+            <text x="1140" y="206" fill="#6ee7b7" font-size="10" text-anchor="middle">9 эталонов с подписью CEO</text>
+          </g>
+
+          <g class="node" onclick="showInfo('Битрикс24 (Задачи и База знаний Wiki)', 'Интеграционный контур: автоматическое создание задач на согласование черновиков + публикация утвержденных регламентов в корпоративную Базу знаний.', 'КОРПОРАТИВНЫЙ ПОРТАЛ')">
+            <rect x="1040" y="730" width="200" height="80" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+            <text x="1140" y="760" fill="#38bdf8" font-weight="bold" font-size="14" text-anchor="middle">🏢 Битрикс24</text>
+            <text x="1140" y="780" fill="#94a3b8" font-size="10.5" text-anchor="middle">• Задачи согласования</text>
+            <text x="1140" y="796" fill="#94a3b8" font-size="10.5" text-anchor="middle">• База знаний (Wiki)</text>
+          </g>
+
+        </g>
+      </svg>
+
+      <!-- Кнопки зума -->
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoom(1.2)">+</button>
+        <button class="zoom-btn" onclick="zoom(0.8)">−</button>
+        <button class="zoom-btn" onclick="resetZoom()">⟲</button>
       </div>
-
-      <div class="node-card amber" style="margin-top: 10px;">
-        <div class="node-header">
-          <div class="node-title">📊 Сводный Реестр и Матрица владения</div>
-          <span class="badge badge-amber">РЕЕСТР-00</span>
-        </div>
-        <div class="node-desc">
-          Таблица 10 регламентов, закрепление владельцев процессов (CEO, COO, CFO, HRD, Supply Chain) и каталог обязательных форм в Markdown и Excel.
-        </div>
-      </div>
-    </div>
-
-    <!-- Правая колонка: Хранение и Корпоративный контур -->
-    <div class="column">
-      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--green); letter-spacing: 0.05em;">ХРАНЕНИЕ И БИТРИКС24</div>
-
-      <div class="node-card amber">
-        <div class="node-header">
-          <div class="node-title">📁 01_В_РАБОТЕ</div>
-          <span class="badge badge-amber">10 регламентов</span>
-        </div>
-        <div class="node-desc">
-          <strong>Рабочий контур:</strong> все утвержденные + согласуемые рабочей группой регламенты (включая РЕГ-010).
-        </div>
-      </div>
-
-      <div class="arrow-line">⬇️ Виза Генерального директора</div>
-
-      <div class="node-card green">
-        <div class="node-header">
-          <div class="node-title">📁 02_УТВЕРЖДЕНО</div>
-          <span class="badge badge-green">9 эталонов</span>
-        </div>
-        <div class="node-desc">
-          <strong>Золотой эталон:</strong> только регламенты с финальной подписью первого лица (РЕГ-001..009).
-        </div>
-      </div>
-
-      <div class="node-card blue" style="margin-top: 10px;">
-        <div class="node-header">
-          <div class="node-title">🏢 Битрикс24</div>
-          <span class="badge badge-blue">REST API</span>
-        </div>
-        <div class="node-desc">
-          • <strong>Задачи:</strong> авто-создание задач согласования черновиков на рабочую группу.<br>
-          • <strong>Wiki:</strong> публикация утвержденных регламентов в Базу знаний.
-        </div>
-      </div>
-    </div>
+    </main>
 
   </div>
 
+  <script>
+    // Информация об узлах
+    function showInfo(title, desc, tag) {
+      document.getElementById('card-title').innerText = title;
+      document.getElementById('card-desc').innerText = desc;
+      const tagEl = document.getElementById('card-tag');
+      tagEl.innerText = tag;
+      if (tag.includes('ОНЛАЙН')) {
+        tagEl.style.background = 'rgba(52, 211, 153, 0.15)';
+        tagEl.style.color = '#34d399';
+      } else if (tag.includes('В СОГЛАСОВАНИИ') || tag.includes('СВЕРЩИК')) {
+        tagEl.style.background = 'rgba(251, 191, 36, 0.15)';
+        tagEl.style.color = '#fbbf24';
+      } else {
+        tagEl.style.background = 'rgba(56, 189, 248, 0.15)';
+        tagEl.style.color = '#38bdf8';
+      }
+    }
+
+    // Фильтр по слоям
+    function filterLayer(layer) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const nodes = document.querySelectorAll('.node');
+      if (layer === 'all') {
+        nodes.forEach(n => n.style.opacity = '1');
+      } else {
+        nodes.forEach(n => {
+          n.style.opacity = '0.2';
+        });
+        if (layer === 'bots') {
+          nodes[0].style.opacity = '1';
+          nodes[1].style.opacity = '1';
+          nodes[2].style.opacity = '1';
+          nodes[3].style.opacity = '1';
+        } else if (layer === 'core') {
+          nodes[4].style.opacity = '1';
+          nodes[5].style.opacity = '1';
+        } else if (layer === 'regs') {
+          nodes[6].style.opacity = '1';
+          nodes[7].style.opacity = '1';
+          nodes[8].style.opacity = '1';
+          nodes[9].style.opacity = '1';
+        } else if (layer === 'storage') {
+          nodes[10].style.opacity = '1';
+          nodes[11].style.opacity = '1';
+          nodes[12].style.opacity = '1';
+        }
+      }
+    }
+
+    // Зум и панорамирование (Drag & Zoom)
+    let currentScale = 1;
+    let currentTranslateX = 0;
+    let currentTranslateY = 0;
+    let isDragging = false;
+    let startX, startY;
+
+    const viewport = document.getElementById('viewport-group');
+    const container = document.getElementById('canvas-wrapper');
+
+    function updateTransform() {
+      viewport.setAttribute('transform', `translate(${currentTranslateX}, ${currentTranslateY}) scale(${currentScale})`);
+    }
+
+    function zoom(factor) {
+      currentScale *= factor;
+      updateTransform();
+    }
+
+    function resetZoom() {
+      currentScale = 1;
+      currentTranslateX = 0;
+      currentTranslateY = 0;
+      updateTransform();
+    }
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      zoom(zoomFactor);
+    });
+
+    container.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.node') || e.target.closest('.zoom-controls')) return;
+      isDragging = true;
+      startX = e.clientX - currentTranslateX;
+      startY = e.clientY - currentTranslateY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      currentTranslateX = e.clientX - startX;
+      currentTranslateY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+  </script>
 </body>
 </html>
