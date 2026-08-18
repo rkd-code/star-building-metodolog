@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Бот 1: «Кодификатор регламентов Star Building» (Надежная версия v2.0)
-Улучшения:
-1. Хранение истории диалога (контекст уточняющих вопросов).
-2. Поддержка изображений и скриншотов через мультимодальный анализ.
-3. Увеличенные таймауты сети Telegram (защита от разрывов связи).
-4. Подробное логирование и автосохранение черновиков в папку 01_В_РАБОТЕ.
+Бот 1: «Кодификатор регламентов Star Building» (Версия v2.1 с модулем Сверщика)
+Функционал:
+1. Автоматическая сверка нового черновика со ВСЕМИ действующими регламентами (РЕГ-001..010).
+2. Выявление противоречий, пересечений сроков и ролей.
+3. Формирование блока коллизий и вопросов автору/заказчику.
+4. Упаковка регламента по 5 разделам в папку 01_В_РАБОТЕ.
 """
 
 import os
@@ -33,7 +33,6 @@ import faster_whisper
 import docx
 import pypdf
 
-# Логирование
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -42,7 +41,6 @@ logger = logging.getLogger("bot_codifier")
 
 TOKEN = "8314030408:AAFywrGRSZNpCLqC_Yv06REa1yCn0Eh43fc"
 
-# Инициализация Gemini
 api_key = None
 with open('/home/roman/.hermes/.env') as f:
     for line in f:
@@ -52,10 +50,8 @@ with open('/home/roman/.hermes/.env') as f:
 
 ai_client = genai.Client(api_key=api_key)
 
-# Память диалогов (до 10 последних реплик на каждого пользователя)
 user_histories = defaultdict(list)
 
-# Распознавание речи
 stt_model = None
 def get_stt():
     global stt_model
@@ -64,7 +60,6 @@ def get_stt():
         stt_model = faster_whisper.WhisperModel("base", device="cpu", compute_type="int8")
     return stt_model
 
-# Загрузка базы знаний
 def load_kb_context():
     kb_path = Path("/home/roman/knowledge_base")
     cards = []
@@ -73,14 +68,19 @@ def load_kb_context():
         for f in sorted(cards_dir.glob("*.md")):
             cards.append(f.read_text(encoding="utf-8"))
     
+    reestr_text = ""
+    reestr_file = kb_path / "00_РЕЕСТР/reestr-reglamentov.md"
+    if reestr_file.exists():
+        reestr_text = reestr_file.read_text(encoding="utf-8")
+
     instructions = ""
     inst_file = Path("/home/roman/04-environment/custom_instructions.md")
     if inst_file.exists():
         instructions = inst_file.read_text(encoding="utf-8")
         
-    return instructions, "\n\n---\n\n".join(cards)
+    return instructions, "\n\n---\n\n".join(cards), reestr_text
 
-SYSTEM_PROMPT, KB_CARDS = load_kb_context()
+SYSTEM_PROMPT, KB_CARDS, REESTR_TEXT = load_kb_context()
 
 async def transcribe_audio(file_path: str) -> str:
     loop = asyncio.get_event_loop()
@@ -94,43 +94,51 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id if update.effective_user else 0
     user_histories[user_id].clear()
     msg = (
-        "📝 **Бот-Кодификатор регламентов Star Building**\n\n"
-        "Я предназначен исключительно для **создания, доработки и кодификации регламентов** компании.\n\n"
-        "📌 **Как со мной работать:**\n"
-        "1. **Отправьте черновик процесса** (текстом, голосовым сообщением, файлом `.docx`/`.pdf` или фото схемы) — я упакую его в стандартный регламент по 5 разделам.\n"
-        "2. **Оставьте заявку на новый документ** (например: *«Нужна инструкция по приему инструмента на объекте»*) — я задам 3 целевых вопроса и сформирую первичный проект.\n"
-        "3. **Отвечайте на мои вопросы прямо в чате** — я помню контекст предыдущих сообщений и сам дополню документ!\n\n"
-        "Отправьте ваш черновик, аудио или тему документа!"
+        "📝 **Бот-Кодификатор и Сверщик регламентов Star Building**\n\n"
+        "Я создаю новые регламенты и **автоматически проверяю их на противоречия** с уже действующей базой компании (`РЕГ-001`..`РЕГ-010`).\n\n"
+        "📌 **Что я делаю при получении черновика:**\n"
+        "1. **Сверяю с базой:** нахожу пересечения по срокам, ролям и документам.\n"
+        "2. **Выделяю блок коллизий:** если есть нестыковки — прямо пишу, с каким регламентом конфликт и как его устранить.\n"
+        "3. **Упаковываю регламент:** оформляю процесс строго по стандарту 5 разделов в папку `01_В_РАБОТЕ`.\n\n"
+        "Отправьте черновик, аудиозапись или назовите тему документа!"
     )
     await update.message.reply_text(msg, parse_mode="Markdown")
 
 async def process_draft_request(user_text: str, author_name: str, user_id: int, image_bytes: bytes = None) -> str:
     loop = asyncio.get_event_loop()
     
-    # Формирование контекста диалога
     history = user_histories[user_id]
     history_str = ""
     if history:
-        history_str = "\n=== ИСТОРИЯ ПРЕДЫДУЩЕГО ДИАЛОГА С АВТОРОМ ===\n" + "\n".join(history[-8:]) + "\n"
+        history_str = "\n=== ИСТОРИЯ ДИАЛОГА С АВТОРОМ ===\n" + "\n".join(history[-8:]) + "\n"
 
     base_prompt = (
         f"{SYSTEM_PROMPT}\n\n"
-        f"=== БАЗА ЗНАНИЙ КОМПАНИИ (КАРТОЧКИ РЕГЛАМЕНТОВ РЕГ-001..010) ===\n{KB_CARDS}\n\n"
+        f"=== РЕЕСТР ДЕЙСТВУЮЩИХ РЕГЛАМЕНТОВ ===\n{REESTR_TEXT}\n\n"
+        f"=== БАЗА ЗНАНИЙ КОМПАНИИ (КАРТОЧКИ РЕГ-001..010) ===\n{KB_CARDS}\n\n"
         f"{history_str}\n"
-        f"=== ТЕКУЩЕЕ ОБРАЩЕНИЕ АВТОРА ===\n"
+        f"=== ВХОДЯЩИЙ ЧЕРНОВИК / ЗАЯВКА ОТ СОТРУДНИКА ===\n"
         f"Автор: {author_name}\n"
-        f"Входящий текст/ответ:\n{user_text}\n\n"
-        f"ЖЕСТКИЕ ТРЕБОВАНИЯ К ВЫДАЧЕ:\n"
-        f"1. Если у тебя достаточно информации (или автор ответил на твои уточняющие вопросы) — собери ПОЛНЫЙ проект регламента по стандарту 5 разделов (Код: РЕГ-XXX-ЧЕРНОВИК). "
-        f"Используй должности строго по РЕГ-002. Оставшиеся белые пятна отметь маркером: [ТРЕБУЕТ УТОЧНЕНИЯ: формулировка с типовым вариантом].\n"
-        f"2. Если автор только что подал краткую заявку с нуля — поблагодари и задай ровно 3 целевых вопроса (Исполнители, Шаги/Контроль, Сроки/Формы).\n"
-        f"3. Если автор ответил на твои вопросы — объедини его ответы с предыдущим черновиком и выдай обновленную версию регламента.\n"
-        f"Отвечай строго на русском языке, предельно аккуратно, уважительно и профессионально."
+        f"Текст/аудио черновика:\n{user_text}\n\n"
+        f"ОБЯЗАТЕЛЬНЫЙ АЛГОРИТМ КОДИФИКАЦИИ И СВЕРКИ:\n\n"
+        f"ШАГ 1: АВТОМАТИЧЕСКАЯ СВЕРКА С БАЗОЙ ЗНАНИЙ (СВЕРЩИК)\n"
+        f"- Сопоставь черновик с РЕГ-001 (Кодекс), РЕГ-002 (Оргструктура), РЕГ-006 (Договоры), РЕГ-007 (Кадры), РЕГ-009 (ГСМ), РЕГ-010 (Клиенты).\n"
+        f"- Если обнаружены противоречия по срокам, дублирование функций или несоответствие Кодексу — ОБЯЗАТЕЛЬНО сформируй в начале ответа блок:\n"
+        f"  «⚠️ АНАЛИЗ ПЕРЕСЕЧЕНИЙ И ПРОТИВОРЕЧИЙ:\n"
+        f"   • Пересечение/Конфликт с [РЕГ-ХХХ]: [в чем суть конфликта]\n"
+        f"   • Вопрос для заказчика/автора: [конкретный вопрос для устранения коллизии]»\n"
+        f"- Если противоречий нет — напиши: «✅ Сверка пройдена: противоречий с действующими регламентами РЕГ-001..010 не обнаружено.»\n\n"
+        f"ШАГ 2: СТАНДАРТИЗИРОВАННЫЙ ПРОЕКТ РЕГЛАМЕНТА (5 РАЗДЕЛОВ)\n"
+        f"- Оформи документ строго по 5 обязательным разделам (Код: РЕГ-XXX-ЧЕРНОВИК, статус v0.1).\n"
+        f"- Должности используй строго из РЕГ-002 (Оргструктура).\n"
+        f"- Недостающие сроки и лимиты пометь маркером [ТРЕБУЕТ УТОЧНЕНИЯ: формулировка вопроса с вариантом].\n\n"
+        f"ШАГ 3: ЕСЛИ ПРИСЛАНА ЗАЯВКА С НУЛЯ (НЕТ ШАГОВ ПРОЦЕССА)\n"
+        f"- Поблагодари автора и задай ровно 3 целевых вопроса (Исполнители, Шаги, Сроки/Формы).\n\n"
+        f"Отвечай строго на русском языке, предельно структурированно, грамотно и без воды."
     )
 
     def _call_ai():
         if image_bytes:
-            # Мультимодальный вызов (текст + картинка)
             from google.genai import types
             contents = [
                 types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
@@ -149,22 +157,20 @@ async def process_draft_request(user_text: str, author_name: str, user_id: int, 
 
     answer = await loop.run_in_executor(None, _call_ai)
     
-    # Сохраняем реплики в историю пользователя
     history.append(f"Автор ({author_name}): {user_text}")
     history.append(f"Кодификатор: {answer}")
     if len(history) > 12:
         user_histories[user_id] = history[-10:]
 
-    # Автосохранение черновика в папку 01_В_РАБОТЕ при наличии 5 разделов
     if "## 1." in answer and "## 2." in answer and "## 3." in answer:
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"draft_{author_name.replace(' ', '_')}_{timestamp}.md"
             draft_path = Path("/home/roman/knowledge_base/01_В_РАБОТЕ") / filename
             draft_path.write_text(answer, encoding="utf-8")
-            logger.info(f"Сохранен черновик в 01_В_РАБОТЕ: {filename}")
+            logger.info(f"Черновик сохранен в 01_В_РАБОТЕ: {filename}")
         except Exception as e:
-            logger.error(f"Не удалось сохранить черновик на диск: {e}")
+            logger.error(f"Ошибка сохранения черновика: {e}")
 
     return answer
 
@@ -180,7 +186,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     image_bytes = None
     
     try:
-        # 1. Голосовое сообщение
         if msg.voice or msg.audio:
             await msg.reply_chat_action("record_voice")
             audio_obj = msg.voice or msg.audio
@@ -195,17 +200,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     os.remove(tmp_path)
             await msg.reply_text(f"🎤 *Распознано:* «_{text_content}_»", parse_mode="Markdown")
 
-        # 2. Фотография / Скриншот
         elif msg.photo:
             await msg.reply_chat_action("typing")
-            photo = msg.photo[-1] # Самое высокое разрешение
+            photo = msg.photo[-1]
             file = await photo.get_file()
             bio = io.BytesIO()
             await file.download_to_memory(bio)
             image_bytes = bio.getvalue()
-            text_content = msg.caption or "Проанализируй изображение и извлеки структуру регламента/процесса."
+            text_content = msg.caption or "Проанализируй изображение и проверь на соответствие регламентам."
 
-        # 3. Документ
         elif msg.document:
             await msg.reply_chat_action("typing")
             doc = msg.document
@@ -237,7 +240,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if msg.caption and not image_bytes:
                 text_content = f"{msg.caption}\n\nСодержимое документа:\n{text_content}"
 
-        # 4. Обычный текст
         elif msg.text:
             text_content = msg.text
             if text_content.startswith('/start') or text_content.startswith('/clear'):
@@ -263,7 +265,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text(f"⚠ Произошла ошибка при обработке: {e}")
 
 def main():
-    logger.info("Запуск бота-кодификатора Star Building (v2.0 с памятью диалога)...")
+    logger.info("Запуск бота-кодификатора со встроенным Сверщиком коллизий...")
     req = HTTPXRequest(
         connection_pool_size=16,
         read_timeout=60.0,
