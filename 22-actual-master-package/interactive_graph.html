@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Интерактивный граф сущностей и связей Star Building</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070a13;
+      --panel-bg: rgba(15, 23, 42, 0.85);
+      --border: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --blue: #38bdf8;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --purple: #a78bfa;
+      --rose: #fb7185;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+    header {
+      padding: 16px 24px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .header-left h1 { font-size: 18px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .header-left p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .badge-live { background: rgba(52, 211, 153, 0.15); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.3); }
+
+    .main-wrapper { flex: 1; position: relative; display: flex; }
+    #network-canvas { width: 100%; height: 100%; }
+
+    /* Плавающая панель информации / легенды */
+    .info-panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 320px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 5;
+      font-size: 12px;
+      max-height: calc(100% - 32px);
+      overflow-y: auto;
+    }
+
+    .panel-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    
+    .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 11.5px; color: var(--text-muted); }
+    .legend-color { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+
+    .node-details { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); display: none; }
+    .node-details h4 { font-size: 13px; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
+    .node-details p { font-size: 11.5px; color: #cbd5e1; line-height: 1.5; }
+    .node-details .meta { margin-top: 6px; font-size: 10.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+    .controls-panel {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      backdrop-filter: blur(12px);
+      font-size: 11px;
+      color: var(--text-muted);
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <h1>🌐 Актуальный интерактивный граф сущностей Star Building</h1>
+      <p>Сквозные связи: Входные потоки ➔ Telegram-боты ➔ Интеллектуальное ядро ➔ 10 регламентов ➔ Хранение и Битрикс24</p>
+    </div>
+    <span class="badge badge-live">● 2 БОТА АКТИВНЫ</span>
+  </header>
+
+  <div class="main-wrapper">
+    <div id="network-canvas"></div>
+
+    <div class="info-panel">
+      <div class="panel-title">📋 Группы сущностей и элементов</div>
+      
+      <div class="legend-item">
+        <div class="legend-color" style="background: #38bdf8;"></div>
+        <span>Входные потоки и сотрудники</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #a855f7;"></div>
+        <span>Telegram-боты (Кодификатор / Консультант)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #f59e0b;"></div>
+        <span>Интеллектуальное ядро и «Сверщик»</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #6366f1;"></div>
+        <span>Базовые регламенты Ядра (РЕГ-001..003)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #0ea5e9;"></div>
+        <span>Операционные регламенты (РЕГ-004..010)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #10b981;"></div>
+        <span>Двухконтурные папки и Битрикс24</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ec4899;"></div>
+        <span>Обязательные формы и документы</span>
+      </div>
+
+      <div class="node-details" id="node-details">
+        <h4 id="detail-title">Название узла</h4>
+        <p id="detail-desc">Описание узла</p>
+        <div class="meta" id="detail-meta">Метаданные</div>
+      </div>
+    </div>
+
+    <div class="controls-panel">
+      💡 Масштабирование колесиком • Перетаскивание узлов мышью • Клик по узлу для подробностей
+    </div>
+  </div>
+
+  <script>
+    const nodes = new vis.DataSet([
+      // 1. ВХОДНЫЕ ПОТОКИ (Blue)
+      { id: 'user_draft', label: 'Черновик / Заявка\n(Голос/Текст/Docx)', group: 'input', shape: 'box', color: '#0284c7' },
+      { id: 'user_question', label: 'Рабочий вопрос / Инцидент\n(Голос/Текст/Фото)', group: 'input', shape: 'box', color: '#0284c7' },
+      { id: 'employees', label: 'Сотрудники компании\n(Прорабы, ПТО, Менеджеры)', group: 'input', shape: 'ellipse', color: '#0369a1' },
+
+      // 2. TELEGRAM-БОТЫ (Purple)
+      { id: 'bot_codifier', label: 'Бот 1: Кодификатор\n@ReglamentSB_bot', group: 'bots', shape: 'box', color: '#9333ea', font: { bold: true } },
+      { id: 'bot_consultant', label: 'Бот 2: Консультант\n@star_building_help_bot', group: 'bots', shape: 'box', color: '#9333ea', font: { bold: true } },
+      { id: 'whisper_stt', label: 'Модуль речи (STT)\nFaster-Whisper (ru)', group: 'bots', shape: 'ellipse', color: '#7e22ce' },
+
+      // 3. ИНТЕЛЛЕКТУАЛЬНОЕ ЯДРО (Amber)
+      { id: 'gemini_core', label: 'Интеллектуальное Ядро\nGemini 3.7 Flash', group: 'core', shape: 'box', color: '#d97706', font: { bold: true, size: 16 } },
+      { id: 'cross_auditor', label: 'Модуль «Сверщик»\n(Поиск коллизий SLA и ролей)', group: 'core', shape: 'box', color: '#b45309' },
+      { id: 'conv_memory', label: 'Память диалогов\n(Multi-Turn Context)', group: 'core', shape: 'ellipse', color: '#b45309' },
+
+      // 4. БАЗОВОЕ ЯДРО РЕГЛАМЕНТОВ (Indigo)
+      { id: 'reg_001', label: 'РЕГ-001: Кодекс\n(Ценности, ТБ, Стоп-факторы)', group: 'core_regs', shape: 'box', color: '#4f46e5' },
+      { id: 'reg_002', label: 'РЕГ-002: Оргструктура\n(Штатная сетка, ЦКП)', group: 'core_regs', shape: 'box', color: '#4f46e5' },
+      { id: 'reg_003', label: 'РЕГ-003: Стратегия\n(Цели 2030, Рост)', group: 'core_regs', shape: 'box', color: '#4f46e5' },
+
+      // 5. ОПЕРАЦИОННЫЕ РЕГЛАМЕНТЫ (Sky)
+      { id: 'reg_004', label: 'РЕГ-004: Как писать регламент', group: 'op_regs', shape: 'box', color: '#0284c7' },
+      { id: 'reg_005', label: 'РЕГ-005: Виды регламентов', group: 'op_regs', shape: 'box', color: '#0284c7' },
+      { id: 'reg_006', label: 'РЕГ-006: Договорная работа', group: 'op_regs', shape: 'box', color: '#0284c7' },
+      { id: 'reg_007', label: 'РЕГ-007: Кадровый учет', group: 'op_regs', shape: 'box', color: '#0284c7' },
+      { id: 'reg_008', label: 'РЕГ-008: Мотивация и KPI', group: 'op_regs', shape: 'box', color: '#0284c7' },
+      { id: 'reg_009', label: 'РЕГ-009: Топливные карты (ГСМ)', group: 'op_regs', shape: 'box', color: '#0284c7' },
+      { id: 'reg_010', label: 'РЕГ-010: Клиентоориентированность', group: 'op_regs', shape: 'box', color: '#d97706' },
+
+      // 6. ХРАНЕНИЕ И БИТРИКС24 (Green)
+      { id: 'folder_staging', label: 'Папка 01_В_РАБОТЕ\n(10 регламентов + проекты v0.1)', group: 'storage', shape: 'folder', color: '#059669' },
+      { id: 'folder_approved', label: 'Папка 02_УТВЕРЖДЕНО\n(9 эталонов с подписью CEO)', group: 'storage', shape: 'folder', color: '#047857' },
+      { id: 'reestr_master', label: 'Сводный реестр\n(Markdown + Excel)', group: 'storage', shape: 'box', color: '#059669' },
+      { id: 'bitrix_tasks', label: 'Битрикс24: Задачи\n(Согласование рабочей группой)', group: 'storage', shape: 'box', color: '#059669' },
+      { id: 'bitrix_wiki', label: 'Битрикс24: База знаний\n(Опубликованные стандарты)', group: 'storage', shape: 'box', color: '#059669' },
+
+      // 7. ОБЯЗАТЕЛЬНЫЕ ФОРМЫ (Pink)
+      { id: 'form_contracts', label: 'ФОРМА-ДОГ-001\nЛист согласования договора', group: 'forms', shape: 'box', color: '#db2777' },
+      { id: 'form_hr', label: 'ФОРМА-КАДР-001..003\nЗаявления на отпуск/прием/СЗ', group: 'forms', shape: 'box', color: '#db2777' },
+      { id: 'form_gsm', label: 'ФОРМА-ГСМ-001..002\nАкт приема карты / Лимиты', group: 'forms', shape: 'box', color: '#db2777' },
+      { id: 'form_bonus', label: 'ФОРМА-МОТ-001\nСЗ на премирование по KPI', group: 'forms', shape: 'box', color: '#db2777' },
+      { id: 'form_client', label: 'ФОРМА-КЛИЕНТ-001..002\nАнкета NPS / Акт рекламации', group: 'forms', shape: 'box', color: '#db2777' }
+    ]);
+
+    const edges = new vis.DataSet([
+      // Связи ввода
+      { from: 'employees', to: 'user_draft', label: 'подает' },
+      { from: 'employees', to: 'user_question', label: 'задает' },
+      { from: 'user_draft', to: 'bot_codifier', label: 'текст/голос/файл', color: { color: '#38bdf8' } },
+      { from: 'user_question', to: 'bot_consultant', label: 'вопрос/инцидент', color: { color: '#38bdf8' } },
+
+      // Связи ботов с STT и Ядром
+      { from: 'bot_codifier', to: 'whisper_stt', label: 'транскрибация' },
+      { from: 'bot_consultant', to: 'whisper_stt', label: 'транскрибация' },
+      { from: 'bot_codifier', to: 'gemini_core', label: 'запрос кодификации', color: { color: '#a855f7' } },
+      { from: 'bot_consultant', to: 'gemini_core', label: 'запрос решения', color: { color: '#a855f7' } },
+      { from: 'gemini_core', to: 'conv_memory', label: 'контекст' },
+
+      // Сверщик коллизий
+      { from: 'gemini_core', to: 'cross_auditor', label: 'проверка коллизий', color: { color: '#f59e0b' } },
+      { from: 'cross_auditor', to: 'reg_001', label: 'сверка' },
+      { from: 'cross_auditor', to: 'reg_002', label: 'сверка' },
+      { from: 'cross_auditor', to: 'reg_006', label: 'SLA' },
+      { from: 'cross_auditor', to: 'reg_010', label: 'SLA' },
+
+      // Ядро опирается на регламенты
+      { from: 'gemini_core', to: 'reg_001', label: 'нормы Кодекса' },
+      { from: 'gemini_core', to: 'reg_002', label: 'роли RACI' },
+      { from: 'gemini_core', to: 'reg_004', label: 'стандарт 5 разделов' },
+      { from: 'gemini_core', to: 'reg_006' },
+      { from: 'gemini_core', to: 'reg_007' },
+      { from: 'gemini_core', to: 'reg_008' },
+      { from: 'gemini_core', to: 'reg_009' },
+      { from: 'gemini_core', to: 'reg_010' },
+
+      // Регламенты и Формы
+      { from: 'reg_006', to: 'form_contracts', label: 'шаблон' },
+      { from: 'reg_007', to: 'form_hr', label: 'шаблоны' },
+      { from: 'reg_008', to: 'form_bonus', label: 'шаблон' },
+      { from: 'reg_009', to: 'form_gsm', label: 'шаблоны' },
+      { from: 'reg_010', to: 'form_client', label: 'шаблоны' },
+
+      // Выдача форм консультантом
+      { from: 'bot_consultant', to: 'form_contracts', label: 'выдает по запросу', dashes: true },
+      { from: 'bot_consultant', to: 'form_hr', label: 'выдает по запросу', dashes: true },
+      { from: 'bot_consultant', to: 'form_gsm', label: 'выдает по запросу', dashes: true },
+
+      // Хранение и согласование
+      { from: 'bot_codifier', to: 'folder_staging', label: 'сохраняет проект v0.1', color: { color: '#10b981' } },
+      { from: 'folder_staging', to: 'bitrix_tasks', label: 'задача согласования' },
+      { from: 'folder_staging', to: 'folder_approved', label: 'виза CEO', color: { color: '#10b981' } },
+      { from: 'folder_approved', to: 'bitrix_wiki', label: 'авто-публикация' },
+      { from: 'folder_staging', to: 'reestr_master', label: 'учет' },
+      { from: 'folder_approved', to: 'reestr_master', label: 'учет' }
+    ]);
+
+    const container = document.getElementById('network-canvas');
+    const data = { nodes: nodes, edges: edges };
+    const options = {
+      physics: {
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {
+          gravitationalConstant: -70,
+          centralGravity: 0.008,
+          springLength: 130,
+          springConstant: 0.12,
+          damping: 0.88
+        },
+        maxVelocity: 50,
+        minVelocity: 0.1,
+        stabilization: { iterations: 200 }
+      },
+      nodes: {
+        shape: 'box',
+        margin: 10,
+        font: { color: '#ffffff', face: 'Inter', size: 12 },
+        borderWidth: 1,
+        shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 8, x: 2, y: 2 }
+      },
+      edges: {
+        arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+        color: { color: '#334155', highlight: '#38bdf8', hover: '#38bdf8' },
+        font: { color: '#94a3b8', size: 10, face: 'Inter', strokeWidth: 0, align: 'horizontal' },
+        smooth: { type: 'continuous' }
+      },
+      interaction: { hover: true, tooltipDelay: 100 }
+    };
+
+    const network = new vis.Network(container, data, options);
+
+    // Описания узлов для интерактивности
+    const descriptions = {
+      user_draft: { title: 'Входной черновик процесса', desc: 'Текстовый набросок, аудиосообщение или файл .docx от сотрудника.', meta: 'Тип: Входящий поток • Канал: @ReglamentSB_bot' },
+      user_question: { title: 'Обращение сотрудника', desc: 'Вопрос по кадрам, закупкам, стройке или жалобам клиентов.', meta: 'Тип: Входящий поток • Канал: @star_building_help_bot' },
+      bot_codifier: { title: 'Бот 1: Кодификатор (@ReglamentSB_bot)', desc: 'Принимает черновики, сверяет их со всеми регламентами и упаковывает по 5 разделам в папку 01_В_РАБОТЕ.', meta: 'Статус: 🟢 Онлайн на сервере' },
+      bot_consultant: { title: 'Бот 2: Консультант (@star_building_help_bot)', desc: 'Дает пошаговые решения со ссылками на РЕГ-001..010 и генерирует заполненные служебные записки и акты.', meta: 'Статус: 🟢 Онлайн на сервере' },
+      cross_auditor: { title: 'Модуль «Сверщик»', desc: 'Анализирует каждый новый черновик на пересечения со сроками (SLA) и оргструктурой действующих стандартов.', meta: 'Интегрирован в Бот 1' },
+      gemini_core: { title: 'Интеллектуальное Ядро Gemini 3.7 Flash', desc: 'Обрабатывает текст, распознает речь и изображения, генерирует нормативные регламенты.', meta: 'Провайдер: Google GenAI' },
+      folder_staging: { title: 'Папка 01_В_РАБОТЕ', desc: 'Рабочий контур: содержит 10 утвержденных регламентов + проекты в процессе согласования рабочей группой.', meta: 'Путь: knowledge_base/01_В_РАБОТЕ' },
+      folder_approved: { title: 'Папка 02_УТВЕРЖДЕНО', desc: 'Золотой эталон: только регламенты с финальной подписью Генерального директора (РЕГ-001..009).', meta: 'Путь: knowledge_base/02_УТВЕРЖДЕНО' }
+    };
+
+    network.on('click', function(params) {
+      if (params.nodes.length > 0) {
+        const nodeId = params.nodes[0];
+        const node = nodes.get(nodeId);
+        const details = descriptions[nodeId] || { title: node.label.replace('\n', ' '), desc: 'Элемент архитектуры нормативной системы Star Building.', meta: 'ID: ' + nodeId };
+        
+        document.getElementById('detail-title').innerText = details.title;
+        document.getElementById('detail-desc').innerText = details.desc;
+        document.getElementById('detail-meta').innerText = details.meta;
+        document.getElementById('node-details').style.display = 'block';
+      } else {
+        document.getElementById('node-details').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
