@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": 1,
+      "url": "https://developers.facebook.com/docs/instagram-platform/content-publishing",
+      "title": "Instagram Platform — Content Publishing",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": 2,
+      "url": "https://developers.google.com/youtube/v3/docs/videos/insert",
+      "title": "YouTube Data API — Videos: insert",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": 3,
+      "url": "https://developers.google.com/youtube/analytics/reference/reports/query",
+      "title": "YouTube Analytics API — Reports: Query",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": 4,
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api",
+      "title": "LinkedIn Posts API",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": 5,
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/organization-lookup-api",
+      "title": "LinkedIn Organization Lookup API",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": 6,
+      "url": "https://developers.google.com/webmaster-tools/v1/api_reference_index",
+      "title": "Google Search Console API Reference",
+      "accessed": "2026-08-20"
+    }
+  ]
+}
