@@ -94,7 +94,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id if update.effective_user else 0
     user_histories[user_id].clear()
     msg = (
-        "📝 **Бот-Кодификатор и Сверщик регламентов Star Building**\n\n"
+        "📝 **Смотритель — Кодификатор регламентов Star Building**\n\n"
         "Я создаю новые регламенты и **автоматически проверяю их на противоречия** с уже действующей базой компании (`РЕГ-001`..`РЕГ-010`).\n\n"
         "📌 **Что я делаю при получении черновика:**\n"
         "1. **Сверяю с базой:** нахожу пересечения по срокам, ролям и документам.\n"

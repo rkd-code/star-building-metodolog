@@ -95,7 +95,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id if update.effective_user else 0
     user_histories[user_id].clear()
     msg = (
-        "💼 **Корпоративный консультант Star Building**\n\n"
+        "💼 **Ом — Корпоративный консультант Star Building**\n\n"
         "Я помогу решить любой рабочий вопрос на основе действующих регламентов компании (`РЕГ-001`..`РЕГ-010`).\n\n"
         "📌 **Как я работаю:**\n"
         "1. Даю пошаговый порядок действий (*что разрешено делать сейчас / что запрещено*).\n"
