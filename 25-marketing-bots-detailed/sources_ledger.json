@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": 1,
+      "url": "https://github.com/kushalsamani/social-media-ai-agent",
+      "title": "Social Media AI Agent",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": 2,
+      "url": "https://github.com/BayramAnnakov/synthetic-market-research",
+      "title": "Synthetic Market Research",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": 3,
+      "url": "https://github.com/n8n-io/n8n",
+      "title": "n8n",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": 4,
+      "url": "https://github.com/langgenius/dify",
+      "title": "Dify",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": 5,
+      "url": "https://github.com/firecrawl/firecrawl",
+      "title": "Firecrawl",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": 6,
+      "url": "https://github.com/unclecode/crawl4ai",
+      "title": "Crawl4AI",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": 7,
+      "url": "https://github.com/qdrant/qdrant",
+      "title": "Qdrant",
+      "accessed": "2026-08-21"
+    }
+  ]
+}
