@@ -41,6 +41,28 @@ class CuratedGraphTests(unittest.TestCase):
         self.assertNotIn("api_key=", serialized)
         self.assertNotIn("password=", serialized)
 
+    def test_normalization_collapses_duplicate_project_ids_and_redirects_edges(self):
+        module = load_module()
+        data = {
+            "nodes": [
+                {"id": "semantic-p008", "label": "P-008 — Маркетинговые помощники"},
+                {"id": "curated-p008", "label": "P-008 — Маркетинговые помощники Star Building", "current_status": "проверено"},
+                {"id": "other", "label": "Другой узел"},
+            ],
+            "links": [
+                {"source": "semantic-p008", "target": "other", "relation": "uses"},
+                {"source": "curated-p008", "target": "other", "relation": "uses"},
+            ],
+            "hyperedges": [{"id": "h", "nodes": ["semantic-p008", "other"]}],
+        }
+
+        normalized = module.normalize_graph_data(data)
+        project_nodes = [n for n in normalized["nodes"] if n["label"].startswith("P-008")]
+
+        self.assertEqual(["curated-p008"], [n["id"] for n in project_nodes])
+        self.assertTrue(all(edge["source"] == "curated-p008" for edge in normalized["links"]))
+        self.assertEqual("curated-p008", normalized["hyperedges"][0]["nodes"][0])
+
 
 if __name__ == "__main__":
     unittest.main()

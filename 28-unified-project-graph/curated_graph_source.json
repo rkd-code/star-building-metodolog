@@ -177,8 +177,8 @@
       "working_path": "/home/roman/28-unified-project-graph; /home/roman/graphify-out",
       "technologies": "Graphify, JSON, Markdown, HTML, Git",
       "documents": "PROJECT_REGISTRY.md; RELATIONSHIPS.md; graph.json; GRAPH_REPORT.md",
-      "current_status": "реестр сформирован; граф строится",
-      "next_step": "проверить все сущности запросами и обновлять граф после изменений"
+      "current_status": "единый граф создан и проверен; обязательные сущности присутствуют",
+      "next_step": "поддерживать граф после изменений и дополнять отсутствующие сведения"
     },
     {
       "id": "repo_r001",

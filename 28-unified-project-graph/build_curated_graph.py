@@ -3,7 +3,10 @@
 
 from __future__ import annotations
 
+import argparse
+import copy
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -117,8 +120,8 @@ PROJECTS = [
         "path": "/home/roman/28-unified-project-graph; /home/roman/graphify-out",
         "technologies": "Graphify, JSON, Markdown, HTML, Git",
         "documents": "PROJECT_REGISTRY.md; RELATIONSHIPS.md; graph.json; GRAPH_REPORT.md",
-        "status": "реестр сформирован; граф строится",
-        "next_step": "проверить все сущности запросами и обновлять граф после изменений",
+        "status": "единый граф создан и проверен; обязательные сущности присутствуют",
+        "next_step": "поддерживать граф после изменений и дополнять отсутствующие сведения",
     },
 ]
 
@@ -228,10 +231,66 @@ def build_extraction():
     return {"nodes": nodes, "edges": edges, "hyperedges": [], "input_tokens": 0, "output_tokens": 0}
 
 
+def normalize_graph_data(data):
+    """Collapse duplicate P-XXX nodes, preferring curated project cards."""
+    result = copy.deepcopy(data)
+    groups = {}
+    for item in result.get("nodes", []):
+        match = re.match(r"^P-(\d{3})\s+—", str(item.get("label", "")))
+        if match:
+            groups.setdefault(match.group(1), []).append(item)
+
+    redirects = {}
+    removed = set()
+    for items in groups.values():
+        if len(items) < 2:
+            continue
+        canonical = max(items, key=lambda item: (bool(item.get("current_status")), bool(item.get("next_step"))))
+        for item in items:
+            if item["id"] != canonical["id"]:
+                redirects[item["id"]] = canonical["id"]
+                removed.add(item["id"])
+
+    result["nodes"] = [item for item in result.get("nodes", []) if item.get("id") not in removed]
+
+    deduped_links = []
+    seen_links = set()
+    for item in result.get("links", []):
+        item["source"] = redirects.get(item.get("source"), item.get("source"))
+        item["target"] = redirects.get(item.get("target"), item.get("target"))
+        key = tuple(item.get(k) for k in ("source", "target", "relation", "context", "source_file", "source_location"))
+        if key not in seen_links:
+            seen_links.add(key)
+            deduped_links.append(item)
+    result["links"] = deduped_links
+
+    def redirect_hyperedges(items):
+        for item in items:
+            item["nodes"] = list(dict.fromkeys(redirects.get(value, value) for value in item.get("nodes", [])))
+
+    redirect_hyperedges(result.get("hyperedges", []))
+    if isinstance(result.get("graph"), dict):
+        redirect_hyperedges(result["graph"].get("hyperedges", []))
+    return result
+
+
+def normalize_graph_file(path: Path):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    normalized = normalize_graph_data(data)
+    path.write_text(json.dumps(normalized, ensure_ascii=False, indent=2), encoding="utf-8")
+    return len(data.get("nodes", [])) - len(normalized.get("nodes", []))
+
+
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--normalize", type=Path)
+    args = parser.parse_args()
     out = ROOT / "curated_graph_source.json"
     out.write_text(json.dumps(build_extraction(), ensure_ascii=False, indent=2), encoding="utf-8")
     print(out)
+    if args.normalize:
+        removed = normalize_graph_file(args.normalize)
+        print(f"normalized {args.normalize}: removed {removed} duplicate project nodes")
 
 
 if __name__ == "__main__":
