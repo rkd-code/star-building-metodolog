@@ -39,6 +39,12 @@ install -m 600 "$ROOT/orchestrator/SOUL.md" "$HOME/.hermes/profiles/orchestrator
 install -m 600 "$ROOT/developer/SOUL.md" "$HOME/.hermes/profiles/developer/SOUL.md"
 
 for profile in orchestrator developer; do
+  # Единые ограничения обоих независимых профилей.
+  hermes -p "$profile" config set compression.enabled true
+  hermes -p "$profile" config set compression.target_ratio 0.50
+  hermes -p "$profile" config set agent.max_turns 100
+  hermes -p "$profile" config set delegation.max_iterations 100
+
   test -f "$HOME/.hermes/profiles/$profile/SOUL.md"
   test -f "$HOME/.hermes/profiles/$profile/skills/graphify/SKILL.md" || {
     echo "Ошибка: навык Graphify отсутствует в профиле $profile" >&2
