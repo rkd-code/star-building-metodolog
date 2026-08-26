@@ -1,0 +1,1129 @@
+{
+  "nodes": [
+    {
+      "id": "p001",
+      "label": "P-001 — Корпоративная система «Кодификатор» Star Building",
+      "type": "Project",
+      "description": "Стандартизировать регламенты, проверять противоречия и консультировать сотрудников.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Стандартизировать регламенты, проверять противоречия и консультировать сотрудников.",
+      "owner": "лорд Витинари; Star Building",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman",
+      "technologies": "Markdown, HTML, JSON Schema, Python, Telegram, Gemini, Faster Whisper, Git, Hermes, Graphify",
+      "documents": "README.md; AGENTS.md; PROJECT_MAP.md; KNOWLEDGE_BASE.md; DECISIONS.md",
+      "current_status": "активный монорепозиторий; часть интеграций остается прототипом",
+      "next_step": "зарегистрировать проект во всех профилях Hermes и проверить сквозную задачу"
+    },
+    {
+      "id": "p002",
+      "label": "P-002 — Нормативная база Star Building",
+      "type": "Project",
+      "description": "Хранить рабочие и утвержденные регламенты и проверять новые документы накопительно.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Хранить рабочие и утвержденные регламенты и проверять новые документы накопительно.",
+      "owner": "Star Building; операционный владелец — не указано",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/knowledge_base",
+      "technologies": "Markdown, Excel, карточки документов, RACI, двухконтурное хранение",
+      "documents": "KNOWLEDGE_BASE.md; knowledge_base/00_РЕЕСТР; 19-top-20-roadmap; 21-cross-audit",
+      "current_status": "РЕГ-001..009 утверждены; РЕГ-010 на согласовании v0.1",
+      "next_step": "закрыть коллизии, назначить владельца реестра и разработать РЕГ-011..030"
+    },
+    {
+      "id": "p003",
+      "label": "P-003 — «Смотритель»",
+      "type": "Project",
+      "description": "Принимать черновики, выполнять сверку и формировать регламенты по пяти разделам.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Принимать черновики, выполнять сверку и формировать регламенты по пяти разделам.",
+      "owner": "Star Building; владелец процесса — не указано",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/17-two-bots-split/bot_1_codifier.py",
+      "technologies": "Python, Telegram Bot API, Gemini, Faster Whisper, DOCX, PDF",
+      "documents": "17-two-bots-split/README.md; AGENTS.md; 20-cross-check-engine/README.md",
+      "current_status": "рабочий прототип; промышленная эксплуатация не подтверждена",
+      "next_step": "настроить защищенную переменную, испытания, сервисный запуск и мониторинг"
+    },
+    {
+      "id": "p004",
+      "label": "P-004 — «Ом»",
+      "type": "Project",
+      "description": "Консультировать сотрудников по утвержденной базе и готовить только утвержденные формы.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Консультировать сотрудников по утвержденной базе и готовить только утвержденные формы.",
+      "owner": "Star Building; владелец процесса — не указано",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/17-two-bots-split/bot_2_consultant.py",
+      "technologies": "Python, Telegram Bot API, Gemini, Faster Whisper, DOCX, PDF",
+      "documents": "17-two-bots-split/README.md; KNOWLEDGE_BASE.md; DECISIONS.md",
+      "current_status": "рабочий прототип; разграничение доступа и мониторинг не подтверждены",
+      "next_step": "настроить защищенную переменную, испытания, сервисный запуск и мониторинг"
+    },
+    {
+      "id": "p005",
+      "label": "P-005 — «Сверщик» и сквозной аудит",
+      "type": "Project",
+      "description": "Находить противоречия сроков, ролей, документов и функций.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Находить противоречия сроков, ролей, документов и функций.",
+      "owner": "Star Building; ответственный методолог — не указано",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/20-cross-check-engine; /home/roman/21-cross-audit",
+      "technologies": "Markdown, матрицы пересечений, ссылки РЕГ-XXX, экспертная проверка",
+      "documents": "20-cross-check-engine/README.md; 21-cross-audit/audit_report.md",
+      "current_status": "правила и отчет подготовлены; известные коллизии не закрыты",
+      "next_step": "автоматизировать испытания и закрыть коллизии решениями рабочей группы"
+    },
+    {
+      "id": "p006",
+      "label": "P-006 — Интеграция Битрикс24",
+      "type": "Project",
+      "description": "Согласовывать и публиковать утвержденные регламенты через корпоративный контур.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Согласовывать и публиковать утвержденные регламенты через корпоративный контур.",
+      "owner": "Star Building; владелец портала — не указано",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/15-bitrix24-integration",
+      "technologies": "Битрикс24 REST API, вебхуки, задачи, бизнес-процессы, Wiki",
+      "documents": "15-bitrix24-integration/README.md; 05-integrations/architecture_v2.md",
+      "current_status": "архитектура описана; фактическое подключение отсутствует",
+      "next_step": "указать портал, владельца, рабочую группу и безопасную авторизацию"
+    },
+    {
+      "id": "p007",
+      "label": "P-007 — Прием черновиков и Telegram-контур",
+      "type": "Project",
+      "description": "Принимать текст, голос, DOCX и заявки через три входных канала.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Принимать текст, голос, DOCX и заявки через три входных канала.",
+      "owner": "сотрудники Star Building; владелец каналов — не указано",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/14-intake-tool; /home/roman/16-telegram-setup",
+      "technologies": "HTML, Telegram, голосовая транскрибация, DOCX, файловый накопитель",
+      "documents": "14-intake-tool/README.md; 16-telegram-setup/README.md",
+      "current_status": "интерфейсы спроектированы; единая серверная обработка не подтверждена",
+      "next_step": "назначить владельца и связать каналы единым идентификатором заявки"
+    },
+    {
+      "id": "p008",
+      "label": "P-008 — Маркетинговые помощники Star Building",
+      "type": "Project",
+      "description": "Анализировать рынок и боли клиентов и готовить проверяемые материалы.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Анализировать рынок и боли клиентов и готовить проверяемые материалы.",
+      "owner": "Руководитель маркетинга; Star Building",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/24-marketing-bots; /home/roman/25-marketing-bots-detailed",
+      "technologies": "Excel, n8n или Dify, Crawl4AI или Firecrawl, Qdrant",
+      "documents": "24-marketing-bots/top_20_marketing_bots.md; marketing_bots_star_building.xlsx",
+      "current_status": "концепция и таблица готовы; учетные записи и интеграции не созданы",
+      "next_step": "утвердить пилот, назначить проверяющего и подключить законные источники"
+    },
+    {
+      "id": "p009",
+      "label": "P-009 — Оркестрация Hermes и разработка",
+      "type": "Project",
+      "description": "Разделить постановку, разработку и независимую приемку задач.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Разделить постановку, разработку и независимую приемку задач.",
+      "owner": "лорд Витинари",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/26-hermes-profiles; ~/.hermes/profiles/developer",
+      "technologies": "Hermes Profiles, Projects, Kanban, Git worktree, GitHub SSH, Graphify",
+      "documents": "26-hermes-profiles/README.md; TASK_CONTRACT.md; 27-developer-skills/README.md",
+      "current_status": "developer создан; orchestrator не создан; реестры проектов пусты",
+      "next_step": "создать orchestrator, зарегистрировать P-001 и проверить Kanban-задачу"
+    },
+    {
+      "id": "p010",
+      "label": "P-010 — Единый граф Graphify проектов и знаний",
+      "type": "Project",
+      "description": "Связать проекты, людей, репозиторий, документы, решения и следующие шаги.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Связать проекты, людей, репозиторий, документы, решения и следующие шаги.",
+      "owner": "лорд Витинари",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/28-unified-project-graph; /home/roman/graphify-out",
+      "technologies": "Graphify, JSON, Markdown, HTML, Git",
+      "documents": "PROJECT_REGISTRY.md; RELATIONSHIPS.md; graph.json; GRAPH_REPORT.md",
+      "current_status": "реестр сформирован; граф строится",
+      "next_step": "проверить все сущности запросами и обновлять граф после изменений"
+    },
+    {
+      "id": "repo_r001",
+      "label": "R-001 — rkd-code/star-building-metodolog",
+      "type": "Repository",
+      "description": "Единый активный GitHub-монорепозиторий Star Building.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman",
+      "default_branch": "main"
+    },
+    {
+      "id": "human_h001",
+      "label": "H-001 — лорд Витинари",
+      "type": "PersonOrRole",
+      "description": "владелец направления и заказчик",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "human_h002",
+      "label": "H-002 — Star Building",
+      "type": "PersonOrRole",
+      "description": "корпоративный заказчик",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "human_h003",
+      "label": "H-003 — Генеральный директор",
+      "type": "PersonOrRole",
+      "description": "утверждающее лицо; имя не указано",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "human_h004",
+      "label": "H-004 — Руководитель маркетинга",
+      "type": "PersonOrRole",
+      "description": "функциональный пользователь; имя не указано",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "human_h005",
+      "label": "H-005 — рабочая группа согласования",
+      "type": "PersonOrRole",
+      "description": "состав не указан",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "human_h006",
+      "label": "H-006 — сотрудники Star Building",
+      "type": "PersonOrRole",
+      "description": "пользователи корпоративных сервисов",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d001",
+      "label": "D-001 — AGENTS.md",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d002",
+      "label": "D-002 — PROJECT_MAP.md",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d003",
+      "label": "D-003 — KNOWLEDGE_BASE.md",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d004",
+      "label": "D-004 — DECISIONS.md",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d005",
+      "label": "D-005 — реестр регламентов",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d006",
+      "label": "D-006 — отчет сквозного аудита",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d007",
+      "label": "D-007 — архитектура маркетинговых помощников",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d008",
+      "label": "D-008 — книга маркетинговых функций",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d009",
+      "label": "D-009 — договор кодовой задачи",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d010",
+      "label": "D-010 — единый реестр проектов",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_001",
+      "label": "ADR-001 — Выбор Claude Project",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_002",
+      "label": "ADR-002 — Пилотная база знаний",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_003",
+      "label": "ADR-003 — Стандарт пяти разделов",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_004",
+      "label": "ADR-004 — Запрет выдуманных ролей",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_005",
+      "label": "ADR-005 — Маркировка неполных данных",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_006",
+      "label": "ADR-006 — Интерактивные уточнения",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_007",
+      "label": "ADR-007 — Сопряжение конфликтов",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_008",
+      "label": "ADR-008 — Голосовой ввод",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_009",
+      "label": "ADR-009 — Версионность документов",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_010",
+      "label": "ADR-010 — Накопительная база",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_011",
+      "label": "ADR-011 — Два контура согласования",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_012",
+      "label": "ADR-012 — Два Telegram-вектора",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_013",
+      "label": "ADR-013 — Ограничение выдачи форм",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_014",
+      "label": "ADR-014 — Встроенный Сверщик",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_015",
+      "label": "ADR-015 — Кодовые имена",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_016",
+      "label": "ADR-016 — Маркетинговые контуры",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_017",
+      "label": "ADR-017 — Исследователь ниши",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_018",
+      "label": "ADR-018 — Два профиля Hermes",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_019",
+      "label": "ADR-019 — Предел контекста и итераций",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_020",
+      "label": "ADR-020 — Навыки разработчика",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    }
+  ],
+  "edges": [
+    {
+      "source": "p001",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p002",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p003",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p004",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p005",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p006",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p007",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p008",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p009",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p010",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p001",
+      "target": "p002",
+      "relation": "contains",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p001",
+      "target": "p003",
+      "relation": "contains",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p001",
+      "target": "p004",
+      "relation": "contains",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p001",
+      "target": "p005",
+      "relation": "contains",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p001",
+      "target": "p006",
+      "relation": "contains",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p001",
+      "target": "p007",
+      "relation": "contains",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p001",
+      "target": "p008",
+      "relation": "contains",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p009",
+      "target": "p001",
+      "relation": "manages_changes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p010",
+      "target": "p001",
+      "relation": "indexes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p007",
+      "target": "p003",
+      "relation": "submits_drafts_to",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p007",
+      "target": "p004",
+      "relation": "submits_questions_to",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p003",
+      "target": "p002",
+      "relation": "uses_knowledge",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p004",
+      "target": "p002",
+      "relation": "reads_approved_knowledge",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p003",
+      "target": "p005",
+      "relation": "calls",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p005",
+      "target": "p002",
+      "relation": "audits",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p003",
+      "target": "p006",
+      "relation": "submits_for_approval",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p006",
+      "target": "p002",
+      "relation": "publishes_after_approval",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p008",
+      "target": "p002",
+      "relation": "uses_corporate_facts",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p009",
+      "target": "p010",
+      "relation": "uses_for_analysis",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h001",
+      "target": "p001",
+      "relation": "owns",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h001",
+      "target": "p009",
+      "relation": "commissions",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h001",
+      "target": "p010",
+      "relation": "commissions",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h001",
+      "target": "repo_r001",
+      "relation": "owns_account_for",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h002",
+      "target": "p001",
+      "relation": "commissions",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h003",
+      "target": "p002",
+      "relation": "approves",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h004",
+      "target": "p008",
+      "relation": "uses",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h005",
+      "target": "p002",
+      "relation": "coordinates",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h006",
+      "target": "p003",
+      "relation": "uses",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h006",
+      "target": "p004",
+      "relation": "uses",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h006",
+      "target": "p007",
+      "relation": "submits_to",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d001",
+      "target": "p001",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d002",
+      "target": "p001",
+      "relation": "describes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d003",
+      "target": "p002",
+      "relation": "describes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d004",
+      "target": "p001",
+      "relation": "records_decisions_for",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d005",
+      "target": "p002",
+      "relation": "registers",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d006",
+      "target": "p005",
+      "relation": "produced_by",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d007",
+      "target": "p008",
+      "relation": "describes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d008",
+      "target": "p008",
+      "relation": "details",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d009",
+      "target": "p009",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d010",
+      "target": "p010",
+      "relation": "describes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_001",
+      "target": "p001",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_003",
+      "target": "p001",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_008",
+      "target": "p007",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_010",
+      "target": "p002",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_011",
+      "target": "p002",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_013",
+      "target": "p004",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_014",
+      "target": "p005",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_015",
+      "target": "p003",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_016",
+      "target": "p008",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_017",
+      "target": "p008",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_018",
+      "target": "p009",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_019",
+      "target": "p009",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_020",
+      "target": "p009",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

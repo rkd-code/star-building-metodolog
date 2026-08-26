@@ -39,7 +39,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("bot_codifier")
 
-TOKEN = "8314030408:AAFywrGRSZNpCLqC_Yv06REa1yCn0Eh43fc"
+TOKEN = os.environ.get("STAR_BUILDING_CODIFIER_BOT_TOKEN")
 
 api_key = None
 with open('/home/roman/.hermes/.env') as f:

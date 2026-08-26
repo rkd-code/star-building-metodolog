@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN = "8314030408:AAFywrGRSZNpCLqC_Yv06REa1yCn0Eh43fc"
+TOKEN = os.environ.get("STAR_BUILDING_CODIFIER_BOT_TOKEN")
 
 # Инициализация модели Gemini
 api_key = None

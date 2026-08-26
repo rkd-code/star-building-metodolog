@@ -38,7 +38,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("bot_consultant")
 
-TOKEN = "8928901139:AAFE9qOWDKYQJb7OXtfEeLqfCaSSD0yvAB0"
+TOKEN = os.environ.get("STAR_BUILDING_CONSULTANT_BOT_TOKEN")
 
 api_key = None
 with open('/home/roman/.hermes/.env') as f:
