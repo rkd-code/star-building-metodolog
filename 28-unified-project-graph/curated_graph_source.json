@@ -181,6 +181,24 @@
       "next_step": "поддерживать граф после изменений и дополнять отсутствующие сведения"
     },
     {
+      "id": "p011",
+      "label": "P-011 — «Экзаменатор Star Building»",
+      "type": "Project",
+      "description": "Проводить проверяемое тестирование сотрудников по технологиям и утвержденным регламентам.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Проводить проверяемое тестирование сотрудников по технологиям и утвержденным регламентам.",
+      "owner": "Star Building; владелец процесса — требует уточнения",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/29-employee-testing-service",
+      "technologies": "Python, FastAPI, PostgreSQL, React, Excel, Docker",
+      "documents": "README.md; DATA_MODEL.md; IMPORT_RULES.md; question_bank_template.xlsx",
+      "current_status": "концепция, модель данных и шаблон на 500 вопросов подготовлены; сервис не реализован",
+      "next_step": "утвердить владельца и параметры пилота, выбрать должность и проверить не менее 100 вопросов"
+    },
+    {
       "id": "repo_r001",
       "label": "R-001 — rkd-code/star-building-metodolog",
       "type": "Repository",
@@ -346,6 +364,16 @@
     {
       "id": "doc_d010",
       "label": "D-010 — единый реестр проектов",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d011",
+      "label": "D-011 — концепция сервиса тестирования сотрудников",
       "type": "Document",
       "description": "",
       "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
@@ -552,6 +580,26 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "verification": "verified"
+    },
+    {
+      "id": "adr_021",
+      "label": "ADR-021 — Единый граф проектов и знаний",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_022",
+      "label": "ADR-022 — Сервис тестирования сотрудников",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
     }
   ],
   "edges": [
@@ -638,6 +686,15 @@
     },
     {
       "source": "p010",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p011",
       "target": "repo_r001",
       "relation": "stored_in",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
@@ -1006,6 +1063,78 @@
       "confidence_score": 1.0
     },
     {
+      "source": "doc_d011",
+      "target": "p011",
+      "relation": "describes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p010",
+      "target": "p011",
+      "relation": "indexes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p011",
+      "target": "p002",
+      "relation": "uses_approved_sources",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p011",
+      "target": "p004",
+      "relation": "sends_review_topics",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p011",
+      "target": "p006",
+      "relation": "plans_integration",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p009",
+      "target": "p011",
+      "relation": "manages_changes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h002",
+      "target": "p011",
+      "relation": "commissions",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h006",
+      "target": "p011",
+      "relation": "takes_tests",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
       "source": "adr_001",
       "target": "p001",
       "relation": "governs",
@@ -1116,6 +1245,24 @@
     {
       "source": "adr_020",
       "target": "p009",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_021",
+      "target": "p010",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_022",
+      "target": "p011",
       "relation": "governs",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
       "source_file": "28-unified-project-graph/RELATIONSHIPS.md",

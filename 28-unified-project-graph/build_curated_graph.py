@@ -123,6 +123,17 @@ PROJECTS = [
         "status": "единый граф создан и проверен; обязательные сущности присутствуют",
         "next_step": "поддерживать граф после изменений и дополнять отсутствующие сведения",
     },
+    {
+        "id": "p011",
+        "label": "P-011 — «Экзаменатор Star Building»",
+        "goal": "Проводить проверяемое тестирование сотрудников по технологиям и утвержденным регламентам.",
+        "owner": "Star Building; владелец процесса — требует уточнения",
+        "path": "/home/roman/29-employee-testing-service",
+        "technologies": "Python, FastAPI, PostgreSQL, React, Excel, Docker",
+        "documents": "README.md; DATA_MODEL.md; IMPORT_RULES.md; question_bank_template.xlsx",
+        "status": "концепция, модель данных и шаблон на 500 вопросов подготовлены; сервис не реализован",
+        "next_step": "утвердить владельца и параметры пилота, выбрать должность и проверить не менее 100 вопросов",
+    },
 ]
 
 PEOPLE = [
@@ -145,6 +156,7 @@ DOCUMENTS = [
     ("doc_d008", "D-008 — книга маркетинговых функций"),
     ("doc_d009", "D-009 — договор кодовой задачи"),
     ("doc_d010", "D-010 — единый реестр проектов"),
+    ("doc_d011", "D-011 — концепция сервиса тестирования сотрудников"),
 ]
 
 ADR_TITLES = [
@@ -153,6 +165,7 @@ ADR_TITLES = [
     "Версионность документов", "Накопительная база", "Два контура согласования", "Два Telegram-вектора",
     "Ограничение выдачи форм", "Встроенный Сверщик", "Кодовые имена", "Маркетинговые контуры",
     "Исследователь ниши", "Два профиля Hermes", "Предел контекста и итераций", "Навыки разработчика",
+    "Единый граф проектов и знаний", "Сервис тестирования сотрудников",
 ]
 
 
@@ -202,7 +215,7 @@ def build_extraction():
     nodes.extend(node(f"adr_{i:03d}", f"ADR-{i:03d} — {title}", "Decision") for i, title in enumerate(ADR_TITLES, 1))
 
     edges = []
-    for i in range(1, 11):
+    for i in range(1, 12):
         edges.append(edge(f"p{i:03d}", "repo_r001", "stored_in"))
     for i in range(2, 9):
         edges.append(edge("p001", f"p{i:03d}", "contains"))
@@ -223,8 +236,12 @@ def build_extraction():
         edge("doc_d005", "p002", "registers"), edge("doc_d006", "p005", "produced_by"),
         edge("doc_d007", "p008", "describes"), edge("doc_d008", "p008", "details"),
         edge("doc_d009", "p009", "governs"), edge("doc_d010", "p010", "describes"),
+        edge("doc_d011", "p011", "describes"), edge("p010", "p011", "indexes"),
+        edge("p011", "p002", "uses_approved_sources"), edge("p011", "p004", "sends_review_topics"),
+        edge("p011", "p006", "plans_integration"), edge("p009", "p011", "manages_changes"),
+        edge("human_h002", "p011", "commissions"), edge("human_h006", "p011", "takes_tests"),
     ])
-    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9}
+    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9, 21: 10, 22: 11}
     for adr_num, project_num in adr_projects.items():
         edges.append(edge(f"adr_{adr_num:03d}", f"p{project_num:03d}", "governs"))
 
@@ -236,7 +253,7 @@ def normalize_graph_data(data):
     result = copy.deepcopy(data)
     groups = {}
     for item in result.get("nodes", []):
-        match = re.match(r"^P-(\d{3})\s+—", str(item.get("label", "")))
+        match = re.match(r"^(P-\d{3}|H-\d{3}|D-\d{3}|R-\d{3}|ADR-\d{3})\s+—", str(item.get("label", "")))
         if match:
             groups.setdefault(match.group(1), []).append(item)
 
@@ -245,7 +262,11 @@ def normalize_graph_data(data):
     for items in groups.values():
         if len(items) < 2:
             continue
-        canonical = max(items, key=lambda item: (bool(item.get("current_status")), bool(item.get("next_step"))))
+        canonical = max(items, key=lambda item: (
+            bool(item.get("current_status")),
+            bool(item.get("next_step")),
+            item.get("verification") == "verified",
+        ))
         for item in items:
             if item["id"] != canonical["id"]:
                 redirects[item["id"]] = canonical["id"]

@@ -20,11 +20,11 @@ class CuratedGraphTests(unittest.TestCase):
         extraction = load_module().build_extraction()
         ids = {node["id"] for node in extraction["nodes"]}
 
-        self.assertLessEqual({f"p{i:03d}" for i in range(1, 11)}, ids)
+        self.assertLessEqual({f"p{i:03d}" for i in range(1, 12)}, ids)
         self.assertIn("repo_r001", ids)
         self.assertLessEqual({f"human_h{i:03d}" for i in range(1, 7)}, ids)
-        self.assertLessEqual({f"doc_d{i:03d}" for i in range(1, 11)}, ids)
-        self.assertLessEqual({f"adr_{i:03d}" for i in range(1, 21)}, ids)
+        self.assertLessEqual({f"doc_d{i:03d}" for i in range(1, 12)}, ids)
+        self.assertLessEqual({f"adr_{i:03d}" for i in range(1, 23)}, ids)
 
     def test_every_edge_references_existing_nodes(self):
         extraction = load_module().build_extraction()
@@ -62,6 +62,29 @@ class CuratedGraphTests(unittest.TestCase):
         self.assertEqual(["curated-p008"], [n["id"] for n in project_nodes])
         self.assertTrue(all(edge["source"] == "curated-p008" for edge in normalized["links"]))
         self.assertEqual("curated-p008", normalized["hyperedges"][0]["nodes"][0])
+
+    def test_normalization_also_collapses_duplicate_registry_entities(self):
+        module = load_module()
+        data = {
+            "nodes": [
+                {"id": "old-person", "label": "H-001 — лорд Витинари"},
+                {"id": "new-person", "label": "H-001 — лорд Витинари", "verification": "verified"},
+                {"id": "old-adr", "label": "ADR-022 — Сервис тестирования"},
+                {"id": "new-adr", "label": "ADR-022 — Сервис тестирования", "verification": "verified"},
+                {"id": "project", "label": "P-011 — Экзаменатор", "current_status": "концепция"},
+            ],
+            "links": [
+                {"source": "old-person", "target": "project", "relation": "owns"},
+                {"source": "old-adr", "target": "project", "relation": "governs"},
+            ],
+        }
+        normalized = module.normalize_graph_data(data)
+        labels = [node["label"] for node in normalized["nodes"]]
+
+        self.assertEqual(1, labels.count("H-001 — лорд Витинари"))
+        self.assertEqual(1, labels.count("ADR-022 — Сервис тестирования"))
+        self.assertEqual("new-person", normalized["links"][0]["source"])
+        self.assertEqual("new-adr", normalized["links"][1]["source"])
 
 
 if __name__ == "__main__":
