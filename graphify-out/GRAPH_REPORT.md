@@ -6,7 +6,7 @@
 ## Summary
 - 190 nodes · 201 edges · 52 communities (17 shown, 35 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 15 edges (avg confidence: 0.86)
-- Token cost: 1,697 input · 533 output
+- Token cost: 0 input · 0 output
 
 ## Graph Freshness
 - Built from commit: `4f030cfb`

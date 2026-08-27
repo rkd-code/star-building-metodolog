@@ -130,9 +130,9 @@ PROJECTS = [
         "owner": "Star Building; владелец процесса — требует уточнения",
         "path": "/home/roman/29-employee-testing-service",
         "technologies": "Python, FastAPI, PostgreSQL, React, Excel, Docker",
-        "documents": "README.md; DATA_MODEL.md; IMPORT_RULES.md; question_bank_template.xlsx",
-        "status": "концепция, модель данных и шаблон на 500 вопросов подготовлены; сервис не реализован",
-        "next_step": "утвердить владельца и параметры пилота, выбрать должность и проверить не менее 100 вопросов",
+        "documents": "README.md; DATA_MODEL.md; IMPORT_RULES.md; question_bank_template.xlsx; question_bank_pool_001.xlsx; POOL_001_IMPORT_REPORT.md",
+        "status": "первый пул из 102 вопросов распределен в банк как черновик; сервис не реализован",
+        "next_step": "назначить должности и проверяющего, предоставить источники и утвердить параметры пилота",
     },
 ]
 
