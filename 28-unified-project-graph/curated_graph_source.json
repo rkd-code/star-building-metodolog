@@ -192,11 +192,11 @@
       "goal": "Проводить проверяемое тестирование сотрудников по технологиям и утвержденным регламентам.",
       "owner": "Star Building; владелец процесса — требует уточнения",
       "github": "https://github.com/rkd-code/star-building-metodolog",
-      "working_path": "/home/roman/29-employee-testing-service",
-      "technologies": "Python, FastAPI, PostgreSQL, React, Excel, Docker",
-      "documents": "README.md; DATA_MODEL.md; IMPORT_RULES.md; question_bank_template.xlsx; question_bank_pool_001.xlsx; POOL_001_IMPORT_REPORT.md",
-      "current_status": "102 вопроса назначены отделу продаж; РОП — ответственный; порог 90%; одна попытка в месяц; срок результата — до запроса РОПа",
-      "next_step": "определить число вопросов и время одной попытки, затем реализовать постоянное хранение в базе данных"
+      "working_path": "/home/roman/29-employee-testing-service; /home/roman/30-employee-testing-html",
+      "technologies": "Python, Excel, автономный HTML/CSS/JavaScript, localStorage; целевая база PostgreSQL",
+      "documents": "question_bank_pool_001.xlsx; POOL_001_IMPORT_REPORT.md; 30-employee-testing-html/index.html; README.md",
+      "current_status": "автономная HTML-платформа с 102 вопросами, кабинетом РОПа, оценкой 90% и календарным ограничением попыток создана и проверена",
+      "next_step": "перенести данные и правильные ответы на сервер, подключить базу данных и корпоративную авторизацию"
     },
     {
       "id": "repo_r001",
@@ -374,6 +374,16 @@
     {
       "id": "doc_d011",
       "label": "D-011 — концепция сервиса тестирования сотрудников",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d012",
+      "label": "D-012 — автономная HTML-платформа «Экзаменатор Star Building»",
       "type": "Document",
       "description": "",
       "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
@@ -594,6 +604,16 @@
     {
       "id": "adr_022",
       "label": "ADR-022 — Сервис тестирования сотрудников",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_023",
+      "label": "ADR-023 — Автономная HTML-платформа тестирования",
       "type": "Decision",
       "description": "",
       "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
@@ -1072,6 +1092,15 @@
       "confidence_score": 1.0
     },
     {
+      "source": "doc_d012",
+      "target": "p011",
+      "relation": "implements",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
       "source": "p010",
       "target": "p011",
       "relation": "indexes",
@@ -1262,6 +1291,15 @@
     },
     {
       "source": "adr_022",
+      "target": "p011",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_023",
       "target": "p011",
       "relation": "governs",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
