@@ -131,8 +131,8 @@ PROJECTS = [
         "path": "/home/roman/29-employee-testing-service",
         "technologies": "Python, FastAPI, PostgreSQL, React, Excel, Docker",
         "documents": "README.md; DATA_MODEL.md; IMPORT_RULES.md; question_bank_template.xlsx; question_bank_pool_001.xlsx; POOL_001_IMPORT_REPORT.md",
-        "status": "первый пул из 102 вопросов распределен в банк как черновик; сервис не реализован",
-        "next_step": "назначить должности и проверяющего, предоставить источники и утвердить параметры пилота",
+        "status": "102 вопроса назначены отделу продаж; РОП — ответственный; порог 90%; одна попытка в месяц; срок результата — до запроса РОПа",
+        "next_step": "определить число вопросов и время одной попытки, затем реализовать постоянное хранение в базе данных",
     },
 ]
 
