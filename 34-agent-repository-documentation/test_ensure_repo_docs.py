@@ -50,6 +50,8 @@ class RepositoryDocumentationTests(unittest.TestCase):
             unicode_item = next(item for item in manifest["files"] if item["name"] == "описание.md")
             self.assertEqual("данные/описание.md", unicode_item["path"])
             self.assertNotIn("\\320", unicode_item["github_url"])
+            context = (repo / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
+            self.assertNotIn(str(repo), context)
             self.assertIn("PROJECT_CONTEXT.md", git(repo, "diff", "--cached", "--name-only"))
 
     def test_check_detects_stale_structure_after_new_staged_file(self):
