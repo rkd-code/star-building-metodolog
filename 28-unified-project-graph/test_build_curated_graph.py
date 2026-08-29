@@ -20,11 +20,11 @@ class CuratedGraphTests(unittest.TestCase):
         extraction = load_module().build_extraction()
         ids = {node["id"] for node in extraction["nodes"]}
 
-        self.assertLessEqual({f"p{i:03d}" for i in range(1, 12)}, ids)
+        self.assertLessEqual({f"p{i:03d}" for i in range(1, 14)}, ids)
         self.assertIn("repo_r001", ids)
         self.assertLessEqual({f"human_h{i:03d}" for i in range(1, 7)}, ids)
-        self.assertLessEqual({f"doc_d{i:03d}" for i in range(1, 13)}, ids)
-        self.assertLessEqual({f"adr_{i:03d}" for i in range(1, 24)}, ids)
+        self.assertLessEqual({f"doc_d{i:03d}" for i in range(1, 15)}, ids)
+        self.assertLessEqual({f"adr_{i:03d}" for i in range(1, 26)}, ids)
 
     def test_every_edge_references_existing_nodes(self):
         extraction = load_module().build_extraction()

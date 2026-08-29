@@ -134,6 +134,28 @@ PROJECTS = [
         "status": "автономная HTML-платформа с 102 вопросами, кабинетом РОПа, оценкой 90% и календарным ограничением попыток создана и проверена",
         "next_step": "перенести данные и правильные ответы на сервер, подключить базу данных и корпоративную авторизацию",
     },
+    {
+        "id": "p012",
+        "label": "P-012 — Архив переписки Hermes",
+        "goal": "Сохранять переписку всех профилей Hermes по дням и месячным папкам.",
+        "owner": "лорд Витинари",
+        "path": "/home/roman/32-chat-history-archive; /home/roman/Hermes-переписка",
+        "technologies": "Python, SQLite, текстовые файлы, планировщик Hermes",
+        "documents": "32-chat-history-archive/README.md; export_chat_history.py",
+        "status": "автоматическое приватное архивирование каждые 15 минут работает",
+        "next_step": "контролировать объем и резервное копирование приватного архива",
+    },
+    {
+        "id": "p013",
+        "label": "P-013 — Реестр файлов и граф знаний виртуальной машины",
+        "goal": "Давать агентам единый реестр путей, содержимого и проектной принадлежности рабочих файлов.",
+        "owner": "лорд Витинари; Star Building",
+        "path": "/home/roman/33-vm-file-knowledge-graph",
+        "technologies": "Python, Excel, CSV, JSONL, JSON-граф, автономный HTML, планировщик Hermes",
+        "documents": "README.md; build_inventory.py; output/file_inventory.xlsx; output/file_graph.json",
+        "status": "рекомендованный охват проиндексирован; автоматическое обновление каждые 15 минут работает",
+        "next_step": "использовать реестр как общий контекст агентов и дополнять классификацию новых проектов",
+    },
 ]
 
 PEOPLE = [
@@ -158,6 +180,8 @@ DOCUMENTS = [
     ("doc_d010", "D-010 — единый реестр проектов"),
     ("doc_d011", "D-011 — концепция сервиса тестирования сотрудников"),
     ("doc_d012", "D-012 — автономная HTML-платформа «Экзаменатор Star Building»"),
+    ("doc_d013", "D-013 — правила ежедневного архива переписки Hermes"),
+    ("doc_d014", "D-014 — единый табличный реестр рабочих файлов"),
 ]
 
 ADR_TITLES = [
@@ -168,6 +192,7 @@ ADR_TITLES = [
     "Исследователь ниши", "Два профиля Hermes", "Предел контекста и итераций", "Навыки разработчика",
     "Единый граф проектов и знаний", "Сервис тестирования сотрудников",
     "Автономная HTML-платформа тестирования",
+    "Ежедневный архив переписки Hermes", "Безопасный реестр файлов и граф проектной принадлежности",
 ]
 
 
@@ -217,7 +242,7 @@ def build_extraction():
     nodes.extend(node(f"adr_{i:03d}", f"ADR-{i:03d} — {title}", "Decision") for i, title in enumerate(ADR_TITLES, 1))
 
     edges = []
-    for i in range(1, 12):
+    for i in range(1, 14):
         edges.append(edge(f"p{i:03d}", "repo_r001", "stored_in"))
     for i in range(2, 9):
         edges.append(edge("p001", f"p{i:03d}", "contains"))
@@ -242,8 +267,12 @@ def build_extraction():
         edge("p011", "p002", "uses_approved_sources"), edge("p011", "p004", "sends_review_topics"),
         edge("p011", "p006", "plans_integration"), edge("p009", "p011", "manages_changes"),
         edge("human_h002", "p011", "commissions"), edge("human_h006", "p011", "takes_tests"),
+        edge("doc_d013", "p012", "describes"), edge("doc_d014", "p013", "implements"),
+        edge("p012", "p009", "archives_conversations_from"), edge("p013", "p001", "indexes_files"),
+        edge("p013", "p010", "supplements"), edge("p009", "p013", "manages_changes"),
+        edge("human_h001", "p012", "commissions"), edge("human_h001", "p013", "commissions"),
     ])
-    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9, 21: 10, 22: 11, 23: 11}
+    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9, 21: 10, 22: 11, 23: 11, 24: 12, 25: 13}
     for adr_num, project_num in adr_projects.items():
         edges.append(edge(f"adr_{adr_num:03d}", f"p{project_num:03d}", "governs"))
 

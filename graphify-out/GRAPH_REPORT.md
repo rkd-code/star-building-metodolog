@@ -1,15 +1,15 @@
-# Graph Report - roman  (2026-08-27)
+# Graph Report - roman  (2026-08-29)
 
 ## Corpus Check
 - cluster-only mode — file stats not available
 
 ## Summary
-- 192 nodes · 203 edges · 52 communities (17 shown, 35 thin omitted)
+- 198 nodes · 215 edges · 53 communities (18 shown, 35 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 15 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `14637dd1`
+- Built from commit: `085f4e5b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -30,6 +30,7 @@
 - Регламентирующая документация (РДК)
 - Entity: Regulation
 - 26-hermes-profiles: Два независимых профиля Hermes
+- R-001 — rkd-code/star-building-metodolog
 - Prompt: Kartochnik (Extractor)
 - РЕГ-002: Оргструктура
 - СЕМЕЙСТВО МАРКЕТИНГОВЫХ БОТОВ STAR BUILDING
@@ -67,14 +68,14 @@
 - ADR-012 — Два Telegram-вектора
 
 ## God Nodes (most connected - your core abstractions)
-1. `P-001 — Корпоративная система «Кодификатор» Star Building` - 18 edges
+1. `P-001 — Корпоративная система «Кодификатор» Star Building` - 19 edges
 2. `P-002 — Нормативная база Star Building` - 14 edges
-3. `P-011 — «Экзаменатор Star Building»` - 12 edges
-4. `R-001 — rkd-code/star-building-metodolog` - 12 edges
-5. `P-008 — Маркетинговые помощники Star Building` - 10 edges
-6. `P-009 — Оркестрация Hermes и разработка` - 9 edges
-7. `P-003 — «Смотритель»` - 8 edges
-8. `handle_message()` - 7 edges
+3. `R-001 — rkd-code/star-building-metodolog` - 14 edges
+4. `P-011 — «Экзаменатор Star Building»` - 12 edges
+5. `P-009 — Оркестрация Hermes и разработка` - 11 edges
+6. `P-008 — Маркетинговые помощники Star Building` - 10 edges
+7. `P-010 — Единый граф Graphify проектов и знаний` - 8 edges
+8. `P-003 — «Смотритель»` - 8 edges
 9. `handle_message()` - 7 edges
 10. `handle_message()` - 7 edges
 
@@ -94,22 +95,22 @@
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Marketing Automation Flow** — home_roman::home_roman::home_roman::bot_hex, home_roman::home_roman::home_roman::bot_william_de_worde, home_roman::home_roman::home_roman-2::p008 [EXTRACTED 0.90]
-- **Система управления Star Building** — home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_001_kodeks, home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura, home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_003_strategicheskaya_osnova, home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_005_vidy_reglamentov [EXTRACTED 0.95]
-- **Star Building Normative Base** — home_roman::home_roman::home_roman::reg001_kodeks, home_roman::home_roman::home_roman::reg002_orgstructure, home_roman::home_roman::home_roman-2::p001 [EXTRACTED 0.95]
-- **Codifier Agent Family** — home_roman::home_roman::home_roman::agents_md_kartochnik, home_roman::home_roman::home_roman::agents_md_sverschik, home_roman::home_roman::home_roman::agents_md_codifier [EXTRACTED 1.00]
-- **Core Knowledge Base (The 'Golden Standard')** — home_roman::home_roman::home_roman::07_concept_concept_reg_001, home_roman::home_roman::home_roman::07_concept_concept_reg_002, home_roman::home_roman::home_roman::07_concept_concept_reg_003 [EXTRACTED 1.00]
-- **Core Knowledge Base** — home_roman::home_roman::home_roman::knowledge_base_reg_001, home_roman::home_roman::home_roman::knowledge_base_reg_002, home_roman::home_roman::home_roman::knowledge_base_reg_003 [EXTRACTED 1.00]
-- **Core Knowledge Base (REG-001..003)** — home_roman::home_roman::home_roman::reg_001_kodeks, home_roman::home_roman::home_roman::reg_002_orgstruktura [EXTRACTED 1.00]
-- **Dual-Circuit AI Assistant Architecture** — home_roman::home_roman::home_roman::bot_codifier, home_roman::home_roman::home_roman::bot_consultant, home_roman::home_roman::home_roman::module_svershchik, home_roman::home_roman::home_roman::10_general_assistant_readme [EXTRACTED 1.00]
-- **Hermes Agent System** — home_roman::home_roman::home_roman::profile_orchestrator, home_roman::home_roman::home_roman::profile_developer, home_roman::home_roman::home_roman-2::p009 [EXTRACTED 1.00]
-- **Иерархия регламентирующей документации** — home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_rgv, home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_rgp, home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_prikaz, home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_rasporyazhenie, home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_instrukciya [EXTRACTED 1.00]
-- **Codification Logic Flow** — home_roman::home_roman::home_roman::knowledge_base_smotritel, home_roman::home_roman::home_roman::04_environment_promt_sverschik, home_roman::home_roman::home_roman::04_environment_promt_kartochnik [INFERRED 0.85]
-- **Automated Verification Flow** — home_roman::home_roman::home_roman::06_tools_tools_specification_проверить_конфликты_с_ядром, home_roman::home_roman::home_roman::20_cross_check_engine_cross_check_logic, home_roman::home_roman::home_roman::21_cross_audit_audit_report_sla_conflict [INFERRED 0.85]
-- **Процесс управления персоналом** — home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_007_kadrovoe_deloproizvodstvo, home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_008_sistema_motivacii, home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura [INFERRED 0.85]
-- **Кадровые и мотивационные процессы** — home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_007_kadrovoe_deloproizvodstvo_reglament, home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_008_sistema_motivacii_reglament [INFERRED 0.90]
+- **Marketing Automation Flow** — home_roman::home_roman::home_roman::home_roman::bot_hex, home_roman::home_roman::home_roman::home_roman::bot_william_de_worde, home_roman::home_roman::home_roman::home_roman-2::p008 [EXTRACTED 0.90]
+- **Система управления Star Building** — home_roman::home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_001_kodeks, home_roman::home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura, home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_003_strategicheskaya_osnova, home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_005_vidy_reglamentov [EXTRACTED 0.95]
+- **Star Building Normative Base** — home_roman::home_roman::home_roman::home_roman::reg001_kodeks, home_roman::home_roman::home_roman::home_roman::reg002_orgstructure, home_roman::home_roman::home_roman::home_roman-2::p001 [EXTRACTED 0.95]
+- **Codifier Agent Family** — home_roman::home_roman::home_roman::home_roman::agents_md_kartochnik, home_roman::home_roman::home_roman::home_roman::agents_md_sverschik, home_roman::home_roman::home_roman::home_roman::agents_md_codifier [EXTRACTED 1.00]
+- **Core Knowledge Base (The 'Golden Standard')** — home_roman::home_roman::home_roman::home_roman::07_concept_concept_reg_001, home_roman::home_roman::home_roman::home_roman::07_concept_concept_reg_002, home_roman::home_roman::home_roman::home_roman::07_concept_concept_reg_003 [EXTRACTED 1.00]
+- **Core Knowledge Base** — home_roman::home_roman::home_roman::home_roman::knowledge_base_reg_001, home_roman::home_roman::home_roman::home_roman::knowledge_base_reg_002, home_roman::home_roman::home_roman::home_roman::knowledge_base_reg_003 [EXTRACTED 1.00]
+- **Core Knowledge Base (REG-001..003)** — home_roman::home_roman::home_roman::home_roman::reg_001_kodeks, home_roman::home_roman::home_roman::home_roman::reg_002_orgstruktura [EXTRACTED 1.00]
+- **Dual-Circuit AI Assistant Architecture** — home_roman::home_roman::home_roman::home_roman::bot_codifier, home_roman::home_roman::home_roman::home_roman::bot_consultant, home_roman::home_roman::home_roman::home_roman::module_svershchik, home_roman::home_roman::home_roman::home_roman::10_general_assistant_readme [EXTRACTED 1.00]
+- **Hermes Agent System** — home_roman::home_roman::home_roman::home_roman::profile_orchestrator, home_roman::home_roman::home_roman::home_roman::profile_developer, home_roman::home_roman::home_roman::home_roman-2::p009 [EXTRACTED 1.00]
+- **Иерархия регламентирующей документации** — home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_rgv, home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_rgp, home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_prikaz, home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_rasporyazhenie, home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_005_vidy_reglamentov_instrukciya [EXTRACTED 1.00]
+- **Codification Logic Flow** — home_roman::home_roman::home_roman::home_roman::knowledge_base_smotritel, home_roman::home_roman::home_roman::home_roman::04_environment_promt_sverschik, home_roman::home_roman::home_roman::home_roman::04_environment_promt_kartochnik [INFERRED 0.85]
+- **Automated Verification Flow** — home_roman::home_roman::home_roman::home_roman::06_tools_tools_specification_проверить_конфликты_с_ядром, home_roman::home_roman::home_roman::home_roman::20_cross_check_engine_cross_check_logic, home_roman::home_roman::home_roman::home_roman::21_cross_audit_audit_report_sla_conflict [INFERRED 0.85]
+- **Процесс управления персоналом** — home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_007_kadrovoe_deloproizvodstvo, home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_008_sistema_motivacii, home_roman::home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura [INFERRED 0.85]
+- **Кадровые и мотивационные процессы** — home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_007_kadrovoe_deloproizvodstvo_reglament, home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_008_sistema_motivacii_reglament [INFERRED 0.90]
 
-## Communities (52 total, 35 thin omitted)
+## Communities (53 total, 35 thin omitted)
 
 ### Community 0 - "@ReglamentSB_bot (Watchman)"
 Cohesion: 0.17
@@ -171,25 +172,29 @@ Nodes (3): RACI Matrix Standard, Entity: Regulation, System Prompt: Universal Ag
 Cohesion: 1.00
 Nodes (3): 26-hermes-profiles: Два независимых профиля Hermes, Hermes Profile: Developer, Hermes Profile: Orchestrator
 
+### Community 16 - "R-001 — rkd-code/star-building-metodolog"
+Cohesion: 0.19
+Nodes (16): ADR-024 — Ежедневный архив переписки Hermes, ADR-025 — Безопасный реестр файлов и граф проектной принадлежности, D-013 — правила ежедневного архива переписки Hermes, D-014 — единый табличный реестр рабочих файлов, P-012 — Архив переписки Hermes, P-013 — Реестр файлов и граф знаний виртуальной машины, ADR-021 — Единый граф проектов и знаний, ADR-018 — Два профиля Hermes (+8 more)
+
 ### Community 45 - "P-001 — Корпоративная система «Кодификатор» Star Building"
-Cohesion: 0.08
-Nodes (41): ADR-023 — Автономная HTML-платформа тестирования, D-012 — автономная HTML-платформа «Экзаменатор Star Building», ADR-021 — Единый граф проектов и знаний, ADR-022 — Сервис тестирования сотрудников, D-011 — концепция сервиса тестирования сотрудников, P-011 — «Экзаменатор Star Building», ADR-001 — Выбор Claude Project, ADR-003 — Стандарт пяти разделов (+33 more)
+Cohesion: 0.09
+Nodes (31): ADR-023 — Автономная HTML-платформа тестирования, D-012 — автономная HTML-платформа «Экзаменатор Star Building», ADR-022 — Сервис тестирования сотрудников, D-011 — концепция сервиса тестирования сотрудников, P-011 — «Экзаменатор Star Building», ADR-001 — Выбор Claude Project, ADR-003 — Стандарт пяти разделов, ADR-008 — Голосовой ввод (+23 more)
 
 ## Knowledge Gaps
-- **98 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `Промпт «Карточник»`, `Промпт «Сверщик»`, `5-Section Regulation Schema` (+93 more)
+- **102 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `Промпт «Карточник»`, `Промпт «Сверщик»`, `5-Section Regulation Schema` (+97 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `P-001 — Корпоративная система «Кодификатор» Star Building` connect `P-001 — Корпоративная система «Кодификатор» Star Building` to `P-008 — Маркетинговые помощники Star Building`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **Why does `P-008 — Маркетинговые помощники Star Building` connect `P-008 — Маркетинговые помощники Star Building` to `P-001 — Корпоративная система «Кодификатор» Star Building`?**
+- **Why does `P-001 — Корпоративная система «Кодификатор» Star Building` connect `P-001 — Корпоративная система «Кодификатор» Star Building` to `R-001 — rkd-code/star-building-metodolog`, `P-008 — Маркетинговые помощники Star Building`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Why does `P-008 — Маркетинговые помощники Star Building` connect `P-008 — Маркетинговые помощники Star Building` to `R-001 — rkd-code/star-building-metodolog`, `P-001 — Корпоративная система «Кодификатор» Star Building`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `P-002 — Нормативная база Star Building` connect `P-001 — Корпоративная система «Кодификатор» Star Building` to `R-001 — rkd-code/star-building-metodolog`, `P-008 — Маркетинговые помощники Star Building`?**
   _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Why does `P-002 — Нормативная база Star Building` connect `P-001 — Корпоративная система «Кодификатор» Star Building` to `P-008 — Маркетинговые помощники Star Building`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **What connects `register_project.sh script`, `setup_profiles.sh script`, `Промпт «Карточник»` to the rest of the system?**
-  _98 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _102 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `P-001 — Корпоративная система «Кодификатор» Star Building` be split into smaller, more focused modules?**
-  _Cohesion score 0.08414634146341464 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09462365591397849 - nodes in this community are weakly interconnected._

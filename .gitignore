@@ -7,6 +7,8 @@
 .npm/
 .ssh/
 .gnupg/
+Hermes-переписка/
+33-vm-file-knowledge-graph/output/
 .gitconfig
 *.log
 .bash_logout

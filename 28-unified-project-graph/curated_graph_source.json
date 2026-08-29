@@ -199,6 +199,42 @@
       "next_step": "перенести данные и правильные ответы на сервер, подключить базу данных и корпоративную авторизацию"
     },
     {
+      "id": "p012",
+      "label": "P-012 — Архив переписки Hermes",
+      "type": "Project",
+      "description": "Сохранять переписку всех профилей Hermes по дням и месячным папкам.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Сохранять переписку всех профилей Hermes по дням и месячным папкам.",
+      "owner": "лорд Витинари",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/32-chat-history-archive; /home/roman/Hermes-переписка",
+      "technologies": "Python, SQLite, текстовые файлы, планировщик Hermes",
+      "documents": "32-chat-history-archive/README.md; export_chat_history.py",
+      "current_status": "автоматическое приватное архивирование каждые 15 минут работает",
+      "next_step": "контролировать объем и резервное копирование приватного архива"
+    },
+    {
+      "id": "p013",
+      "label": "P-013 — Реестр файлов и граф знаний виртуальной машины",
+      "type": "Project",
+      "description": "Давать агентам единый реестр путей, содержимого и проектной принадлежности рабочих файлов.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Давать агентам единый реестр путей, содержимого и проектной принадлежности рабочих файлов.",
+      "owner": "лорд Витинари; Star Building",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/33-vm-file-knowledge-graph",
+      "technologies": "Python, Excel, CSV, JSONL, JSON-граф, автономный HTML, планировщик Hermes",
+      "documents": "README.md; build_inventory.py; output/file_inventory.xlsx; output/file_graph.json",
+      "current_status": "рекомендованный охват проиндексирован; автоматическое обновление каждые 15 минут работает",
+      "next_step": "использовать реестр как общий контекст агентов и дополнять классификацию новых проектов"
+    },
+    {
       "id": "repo_r001",
       "label": "R-001 — rkd-code/star-building-metodolog",
       "type": "Repository",
@@ -384,6 +420,26 @@
     {
       "id": "doc_d012",
       "label": "D-012 — автономная HTML-платформа «Экзаменатор Star Building»",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d013",
+      "label": "D-013 — правила ежедневного архива переписки Hermes",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d014",
+      "label": "D-014 — единый табличный реестр рабочих файлов",
       "type": "Document",
       "description": "",
       "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
@@ -620,6 +676,26 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "verification": "verified"
+    },
+    {
+      "id": "adr_024",
+      "label": "ADR-024 — Ежедневный архив переписки Hermes",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_025",
+      "label": "ADR-025 — Безопасный реестр файлов и граф проектной принадлежности",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
     }
   ],
   "edges": [
@@ -715,6 +791,24 @@
     },
     {
       "source": "p011",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p012",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p013",
       "target": "repo_r001",
       "relation": "stored_in",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
@@ -1164,6 +1258,78 @@
       "confidence_score": 1.0
     },
     {
+      "source": "doc_d013",
+      "target": "p012",
+      "relation": "describes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "doc_d014",
+      "target": "p013",
+      "relation": "implements",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p012",
+      "target": "p009",
+      "relation": "archives_conversations_from",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p013",
+      "target": "p001",
+      "relation": "indexes_files",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p013",
+      "target": "p010",
+      "relation": "supplements",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p009",
+      "target": "p013",
+      "relation": "manages_changes",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h001",
+      "target": "p012",
+      "relation": "commissions",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h001",
+      "target": "p013",
+      "relation": "commissions",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
       "source": "adr_001",
       "target": "p001",
       "relation": "governs",
@@ -1301,6 +1467,24 @@
     {
       "source": "adr_023",
       "target": "p011",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_024",
+      "target": "p012",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_025",
+      "target": "p013",
       "relation": "governs",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
       "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
