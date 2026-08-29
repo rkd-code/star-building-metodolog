@@ -1,0 +1,1224 @@
+{
+  "schema_version": "1.0",
+  "project": "Агент «Кодификатор» (Codifier Agent v1.0 MVP)",
+  "repository": "https://github.com/rkd-code/star-building-metodolog",
+  "github_slug": "rkd-code/star-building-metodolog",
+  "default_branch": "main",
+  "source_tree_hash": "0990d2b69ccb94e085fd02a1ef4c7ad4ceff65ee2c1c86f32104bc3edc63f16f",
+  "documentation_files": [
+    "README.md",
+    "AGENTS.md",
+    ".hermes.md",
+    "PROJECT_CONTEXT.md",
+    "PROJECT_STRUCTURE.md",
+    "PROJECT_MANIFEST.json",
+    "DOCS_INDEX.md",
+    "DATA_MODEL.md",
+    "DECISIONS.md",
+    "KNOWLEDGE_BASE.md",
+    "CHANGELOG.md",
+    "DOCUMENTATION_STANDARD.md",
+    ".githooks/pre-commit",
+    ".github/workflows/documentation-integrity.yml",
+    "tools/ensure_repo_docs.py"
+  ],
+  "files": [
+    {
+      "path": ".git-templates/hooks/pre-commit",
+      "name": "pre-commit",
+      "area": ".git-templates",
+      "description": "Файл проекта: pre-commit.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/.git-templates/hooks/pre-commit"
+    },
+    {
+      "path": ".githooks/pre-commit",
+      "name": "pre-commit",
+      "area": ".githooks",
+      "description": "Файл проекта: pre-commit.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/.githooks/pre-commit"
+    },
+    {
+      "path": ".github/workflows/documentation-integrity.yml",
+      "name": "documentation-integrity.yml",
+      "area": ".github",
+      "description": "name: Проверка актуальности документации on: push: pull_request: jobs: documentation: runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 - name: Проверить обязательную документацию run: | if [ -f 34-agent-repository-documentation/ens",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/.github/workflows/documentation-integrity.yml"
+    },
+    {
+      "path": ".gitignore",
+      "name": ".gitignore",
+      "area": "Корень репозитория",
+      "description": "Файл проекта: .gitignore.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/.gitignore"
+    },
+    {
+      "path": ".hermes.md",
+      "name": ".hermes.md",
+      "area": "Корень репозитория",
+      "description": "Контекст Hermes",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/.hermes.md"
+    },
+    {
+      "path": "01-report/01_input_draft.md",
+      "name": "01_input_draft.md",
+      "area": "01-report",
+      "description": "Пример входных данных (Сырой черновик от руководителя)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/01-report/01_input_draft.md"
+    },
+    {
+      "path": "01-report/02_output_regulation.md",
+      "name": "02_output_regulation.md",
+      "area": "01-report",
+      "description": "РЕГЛАМЕНТ: Входной контроль и приемка строительных материалов и конструкций на объекте",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/01-report/02_output_regulation.md"
+    },
+    {
+      "path": "01-report/03_fields_description.md",
+      "name": "03_fields_description.md",
+      "area": "01-report",
+      "description": "Описание полей и структуры выходного документа агента «Кодификатор»",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/01-report/03_fields_description.md"
+    },
+    {
+      "path": "01-report/04_assumptions.md",
+      "name": "04_assumptions.md",
+      "area": "01-report",
+      "description": "Список допущений и ограничений (MVP v1.0)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/01-report/04_assumptions.md"
+    },
+    {
+      "path": "01-report/report.html",
+      "name": "report.html",
+      "area": "01-report",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Прототип выдачи агента «Кодификатор» v1.0 (MVP)</title> <link rel=\"preconnect\" href=\"https://fonts.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/01-report/report.html"
+    },
+    {
+      "path": "02-tests/README.md",
+      "name": "README.md",
+      "area": "02-tests",
+      "description": "02-tests: Комплекс приёмочных сценариев (Acceptance Test Suite)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/02-tests/README.md"
+    },
+    {
+      "path": "02-tests/test_01_happy_path.md",
+      "name": "test_01_happy_path.md",
+      "area": "02-tests",
+      "description": "TC-01: Приёмочный сценарий «Обычный случай» (Happy Path)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/02-tests/test_01_happy_path.md"
+    },
+    {
+      "path": "02-tests/test_02_edge_cases.md",
+      "name": "test_02_edge_cases.md",
+      "area": "02-tests",
+      "description": "TC-02: Приёмочные сценарии «Граничные ситуации» (Edge Cases)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/02-tests/test_02_edge_cases.md"
+    },
+    {
+      "path": "02-tests/test_03_safe_stop.md",
+      "name": "test_03_safe_stop.md",
+      "area": "02-tests",
+      "description": "TC-03: Приёмочный сценарий «Безопасная остановка» (Safe Stop / Circuit Breaker)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/02-tests/test_03_safe_stop.md"
+    },
+    {
+      "path": "02-tests/test_04_idempotency_and_explainability.md",
+      "name": "test_04_idempotency_and_explainability.md",
+      "area": "02-tests",
+      "description": "TC-04: Приёмочный сценарий «Детерминизм и Объяснимость» (Idempotency & Explainability)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/02-tests/test_04_idempotency_and_explainability.md"
+    },
+    {
+      "path": "02-tests/test_assumptions.md",
+      "name": "test_assumptions.md",
+      "area": "02-tests",
+      "description": "test_assumptions.md: Спорные ожидания и допущения приемочных тестов",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/02-tests/test_assumptions.md"
+    },
+    {
+      "path": "03-data-model/README.md",
+      "name": "README.md",
+      "area": "03-data-model",
+      "description": "03-data-model: Модель данных системы кодификации",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/README.md"
+    },
+    {
+      "path": "03-data-model/assumptions.md",
+      "name": "assumptions.md",
+      "area": "03-data-model",
+      "description": "Допущения по модели данных (MVP v1.0)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/assumptions.md"
+    },
+    {
+      "path": "03-data-model/data_model.html",
+      "name": "data_model.html",
+      "area": "03-data-model",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Модель данных системы «Кодификатор»</title> <link rel=\"preconnect\" href=\"https://fonts.googleapis.c",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/data_model.html"
+    },
+    {
+      "path": "03-data-model/entities.md",
+      "name": "entities.md",
+      "area": "03-data-model",
+      "description": "Реестр сущностей информационной модели",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/entities.md"
+    },
+    {
+      "path": "03-data-model/examples.md",
+      "name": "examples.md",
+      "area": "03-data-model",
+      "description": "Примеры записей данных",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/examples.md"
+    },
+    {
+      "path": "03-data-model/input_and_decisions.md",
+      "name": "input_and_decisions.md",
+      "area": "03-data-model",
+      "description": "Структуры входных данных, решений, правок и журнала действий",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/input_and_decisions.md"
+    },
+    {
+      "path": "03-data-model/mindmap.html",
+      "name": "mindmap.html",
+      "area": "03-data-model",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Карта связей и сущностей системы «Кодификатор»</title> <link rel=\"preconnect\" href=\"https://fonts.g",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/mindmap.html"
+    },
+    {
+      "path": "03-data-model/relationships_schema.md",
+      "name": "relationships_schema.md",
+      "area": "03-data-model",
+      "description": "Схема связей между сущностями информационной модели",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/03-data-model/relationships_schema.md"
+    },
+    {
+      "path": "04-environment/README.md",
+      "name": "README.md",
+      "area": "04-environment",
+      "description": "04-environment: Окружение агента на сервере Гермеса",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/README.md"
+    },
+    {
+      "path": "04-environment/assumptions.md",
+      "name": "assumptions.md",
+      "area": "04-environment",
+      "description": "Допущения по инфраструктуре и окружению (MVP v1.0)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/assumptions.md"
+    },
+    {
+      "path": "04-environment/backup_and_logging.md",
+      "name": "backup_and_logging.md",
+      "area": "04-environment",
+      "description": "Регламент резервного копирования и журналирования",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/backup_and_logging.md"
+    },
+    {
+      "path": "04-environment/config_template.yaml",
+      "name": "config_template.yaml",
+      "area": "04-environment",
+      "description": "Шаблон конфигурации агента на сервере Гермеса (config_template.yaml)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/config_template.yaml"
+    },
+    {
+      "path": "04-environment/custom_instructions.md",
+      "name": "custom_instructions.md",
+      "area": "04-environment",
+      "description": "Системные инструкции: Универсальный агент Star Building (Кодификатор + Консультант)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/custom_instructions.md"
+    },
+    {
+      "path": "04-environment/env_template.txt",
+      "name": "env_template.txt",
+      "area": "04-environment",
+      "description": "Шаблон файла секретов (.env.template)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/env_template.txt"
+    },
+    {
+      "path": "04-environment/launch_instructions.md",
+      "name": "launch_instructions.md",
+      "area": "04-environment",
+      "description": "Инструкция по подготовке и запуску окружения",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/launch_instructions.md"
+    },
+    {
+      "path": "04-environment/promt-kartochnik.md",
+      "name": "promt-kartochnik.md",
+      "area": "04-environment",
+      "description": "Промпт «Карточник» (Извлечение карточки из полного текста регламента)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/promt-kartochnik.md"
+    },
+    {
+      "path": "04-environment/promt-sverschik.md",
+      "name": "promt-sverschik.md",
+      "area": "04-environment",
+      "description": "Промпт «Сверщик» (Поиск противоречий и сборка реестра связей)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/promt-sverschik.md"
+    },
+    {
+      "path": "04-environment/roles_and_permissions.md",
+      "name": "roles_and_permissions.md",
+      "area": "04-environment",
+      "description": "Роли пользователей и системные права доступа",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/roles_and_permissions.md"
+    },
+    {
+      "path": "04-environment/structure.md",
+      "name": "structure.md",
+      "area": "04-environment",
+      "description": "Структура серверного окружения на сервере Гермеса",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/04-environment/structure.md"
+    },
+    {
+      "path": "05-integrations/README.md",
+      "name": "README.md",
+      "area": "05-integrations",
+      "description": "05-integrations: Архитектура внешних интеграций",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/05-integrations/README.md"
+    },
+    {
+      "path": "05-integrations/assumptions.md",
+      "name": "assumptions.md",
+      "area": "05-integrations",
+      "description": "Допущения по внешним интеграциям (MVP v1.0)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/05-integrations/assumptions.md"
+    },
+    {
+      "path": "05-integrations/data_flow_map.md",
+      "name": "data_flow_map.md",
+      "area": "05-integrations",
+      "description": "Карта сквозного движения данных между системами",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/05-integrations/data_flow_map.md"
+    },
+    {
+      "path": "05-integrations/systems_catalog.md",
+      "name": "systems_catalog.md",
+      "area": "05-integrations",
+      "description": "Каталог внешних систем и интерфейсов интеграции",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/05-integrations/systems_catalog.md"
+    },
+    {
+      "path": "05-integrations/version_scope.md",
+      "name": "version_scope.md",
+      "area": "05-integrations",
+      "description": "Матрица разделения интеграций по версиям",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/05-integrations/version_scope.md"
+    },
+    {
+      "path": "06-tools/README.md",
+      "name": "README.md",
+      "area": "06-tools",
+      "description": "06-tools: Сервер инструментов и протокол контекста модели",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/06-tools/README.md"
+    },
+    {
+      "path": "06-tools/assumptions.md",
+      "name": "assumptions.md",
+      "area": "06-tools",
+      "description": "Допущения по инструментам и среде исполнения (MVP v1.0)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/06-tools/assumptions.md"
+    },
+    {
+      "path": "06-tools/mcp_server_manifest.json",
+      "name": "mcp_server_manifest.json",
+      "area": "06-tools",
+      "description": "{ \"имя_сервера\": \"сервер-инструментов-кодификатор\", \"версия\": \"1.0.0\", \"описание\": \"Сервер инструментов протокола контекста модели для кодификации и проверки регламентов строительной компании Star Building\", \"группы_инструментов\": [ { \"груп",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/06-tools/mcp_server_manifest.json"
+    },
+    {
+      "path": "06-tools/tools_specification.md",
+      "name": "tools_specification.md",
+      "area": "06-tools",
+      "description": "Спецификация инструментов и команд сервера контекста модели",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/06-tools/tools_specification.md"
+    },
+    {
+      "path": "07-concept/README.md",
+      "name": "README.md",
+      "area": "07-concept",
+      "description": "07-concept: Сводная концепция системы «Кодификатор»",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/07-concept/README.md"
+    },
+    {
+      "path": "07-concept/concept.html",
+      "name": "concept.html",
+      "area": "07-concept",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Актуальная концепция агента Star Building</title> <link rel=\"preconnect\" href=\"https://fonts.google",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/07-concept/concept.html"
+    },
+    {
+      "path": "08-refinement/README.md",
+      "name": "README.md",
+      "area": "08-refinement",
+      "description": "08-refinement: Утвержденные уточнения бизнес-логики",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/08-refinement/README.md"
+    },
+    {
+      "path": "09-roadmap/README.md",
+      "name": "README.md",
+      "area": "09-roadmap",
+      "description": "09-roadmap: Пошаговый поэтапный план разработки",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/09-roadmap/README.md"
+    },
+    {
+      "path": "09-roadmap/roadmap.html",
+      "name": "roadmap.html",
+      "area": "09-roadmap",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Дорожная карта внедрения Star Building</title> <link rel=\"preconnect\" href=\"https://fonts.googleapi",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/09-roadmap/roadmap.html"
+    },
+    {
+      "path": "10-general-assistant/README.md",
+      "name": "README.md",
+      "area": "10-general-assistant",
+      "description": "10-general-assistant: Универсальный корпоративный агент (Кодификатор + Консультант)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/10-general-assistant/README.md"
+    },
+    {
+      "path": "10-general-assistant/consultant_scenario.md",
+      "name": "consultant_scenario.md",
+      "area": "10-general-assistant",
+      "description": "Сквозной сценарий работы агента-консультанта",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/10-general-assistant/consultant_scenario.md"
+    },
+    {
+      "path": "10-general-assistant/document_templates_catalog.md",
+      "name": "document_templates_catalog.md",
+      "area": "10-general-assistant",
+      "description": "Каталог шаблонов документов для автогенерации",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/10-general-assistant/document_templates_catalog.md"
+    },
+    {
+      "path": "10-general-assistant/updated_tz_v2.md",
+      "name": "updated_tz_v2.md",
+      "area": "10-general-assistant",
+      "description": "Обновленное Техническое Задание: Универсальный агент Star Building (v2.0)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/10-general-assistant/updated_tz_v2.md"
+    },
+    {
+      "path": "11-updated-artifacts/README.md",
+      "name": "README.md",
+      "area": "11-updated-artifacts",
+      "description": "11-updated-artifacts: Обновленные презентационные материалы",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/11-updated-artifacts/README.md"
+    },
+    {
+      "path": "12-mindmap-update/README.md",
+      "name": "README.md",
+      "area": "12-mindmap-update",
+      "description": "12-mindmap-update: Актуализированный граф сущностей и связей",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/12-mindmap-update/README.md"
+    },
+    {
+      "path": "12-mindmap-update/mindmap.html",
+      "name": "mindmap.html",
+      "area": "12-mindmap-update",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Интерактивная карта сущностей Star Building</title> <style> :root { --bg: #070a13; --panel-bg: #0f1",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/12-mindmap-update/mindmap.html"
+    },
+    {
+      "path": "14-intake-tool/README.md",
+      "name": "README.md",
+      "area": "14-intake-tool",
+      "description": "14-intake-tool: Инструмент приема и первичной обработки черновиков",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/14-intake-tool/README.md"
+    },
+    {
+      "path": "14-intake-tool/intake_form.html",
+      "name": "intake_form.html",
+      "area": "14-intake-tool",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Форма подачи черновика регламента — Star Building</title> <link rel=\"preconnect\" href=\"https://font",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/14-intake-tool/intake_form.html"
+    },
+    {
+      "path": "15-bitrix24-integration/README.md",
+      "name": "README.md",
+      "area": "15-bitrix24-integration",
+      "description": "15-bitrix24-integration: Архитектура интеграции с Битрикс24",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/15-bitrix24-integration/README.md"
+    },
+    {
+      "path": "16-telegram-setup/README.md",
+      "name": "README.md",
+      "area": "16-telegram-setup",
+      "description": "16-telegram-setup: Настройка и регламент Telegram-группы",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/16-telegram-setup/README.md"
+    },
+    {
+      "path": "16-telegram-setup/telegram_bot_service.py",
+      "name": "telegram_bot_service.py",
+      "area": "16-telegram-setup",
+      "description": "Telegram-бот «Star Building — Регламенты и Стандарты» Поддержка 2 веток: 1. Заявки и черновики регламентов (Кодификатор) 2. Вопросы и консультации (Консультант с автогенерацией документов)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/16-telegram-setup/telegram_bot_service.py"
+    },
+    {
+      "path": "16-telegram-setup/topic_1_instructions.md",
+      "name": "topic_1_instructions.md",
+      "area": "16-telegram-setup",
+      "description": "Инструкция для Ветки 1: «Заявки и черновики регламентов»",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/16-telegram-setup/topic_1_instructions.md"
+    },
+    {
+      "path": "16-telegram-setup/topic_2_instructions.md",
+      "name": "topic_2_instructions.md",
+      "area": "16-telegram-setup",
+      "description": "Инструкция для Ветки 2: «Вопросы и консультации»",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/16-telegram-setup/topic_2_instructions.md"
+    },
+    {
+      "path": "17-two-bots-split/README.md",
+      "name": "README.md",
+      "area": "17-two-bots-split",
+      "description": "17-two-bots-split: Разделение на 2 независимых бота",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/README.md"
+    },
+    {
+      "path": "17-two-bots-split/bot_1_codifier.py",
+      "name": "bot_1_codifier.py",
+      "area": "17-two-bots-split",
+      "description": "Бот 1: «Кодификатор регламентов Star Building» (Версия v2.1 с модулем Сверщика) Функционал: 1. Автоматическая сверка нового черновика со ВСЕМИ действующими регламентами (РЕГ-001..010). 2. Выявление противоречий, пересечений сроков и ролей. ",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/bot_1_codifier.py"
+    },
+    {
+      "path": "17-two-bots-split/bot_2_consultant.py",
+      "name": "bot_2_consultant.py",
+      "area": "17-two-bots-split",
+      "description": "Бот 2: «Корпоративный консультант Star Building» (Надежная версия v2.0) Улучшения: 1. Память диалога (помнит исходный вопрос, когда пользователь отвечает «Да, сделай шаблон»). 2. Таймауты сети Telegram 60 сек. 3. Поддержка голосовых, фото и",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/bot_2_consultant.py"
+    },
+    {
+      "path": "18-bot-behavior-refinement/README.md",
+      "name": "README.md",
+      "area": "18-bot-behavior-refinement",
+      "description": "18-bot-behavior-refinement: Регламент выдачи шаблонов документов",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/18-bot-behavior-refinement/README.md"
+    },
+    {
+      "path": "19-top-20-roadmap/README.md",
+      "name": "README.md",
+      "area": "19-top-20-roadmap",
+      "description": "19-top-20-roadmap: План разработки ТОП-20 приоритетных регламентов",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/19-top-20-roadmap/README.md"
+    },
+    {
+      "path": "19-top-20-roadmap/top_20_regulations.md",
+      "name": "top_20_regulations.md",
+      "area": "19-top-20-roadmap",
+      "description": "ТОП-20 приоритетных регламентирующих документов Star Building",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/19-top-20-roadmap/top_20_regulations.md"
+    },
+    {
+      "path": "20-cross-check-engine/README.md",
+      "name": "README.md",
+      "area": "20-cross-check-engine",
+      "description": "20-cross-check-engine: Автоматическая сверка и поиск противоречий",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/20-cross-check-engine/README.md"
+    },
+    {
+      "path": "21-cross-audit/README.md",
+      "name": "README.md",
+      "area": "21-cross-audit",
+      "description": "21-cross-audit: Результаты сквозного перекрестного аудита базы знаний",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/21-cross-audit/README.md"
+    },
+    {
+      "path": "21-cross-audit/audit_report.md",
+      "name": "audit_report.md",
+      "area": "21-cross-audit",
+      "description": "АУДИТОРСКИЙ ОТЧЕТ И ЭКСПЕРТНОЕ ЗАКЛЮЧЕНИЕ",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/21-cross-audit/audit_report.md"
+    },
+    {
+      "path": "22-actual-master-package/README.md",
+      "name": "README.md",
+      "area": "22-actual-master-package",
+      "description": "22-actual-master-package: Актуальный пакет концепции, дорожной карты и карты связей",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/22-actual-master-package/README.md"
+    },
+    {
+      "path": "22-actual-master-package/concept.html",
+      "name": "concept.html",
+      "area": "22-actual-master-package",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Актуальная концепция агента Star Building</title> <link rel=\"preconnect\" href=\"https://fonts.google",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/22-actual-master-package/concept.html"
+    },
+    {
+      "path": "22-actual-master-package/interactive_graph.html",
+      "name": "interactive_graph.html",
+      "area": "22-actual-master-package",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Интерактивная карта сущностей Star Building</title> <style> :root { --bg: #070a13; --panel-bg: #0f1",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/22-actual-master-package/interactive_graph.html"
+    },
+    {
+      "path": "22-actual-master-package/mindmap.html",
+      "name": "mindmap.html",
+      "area": "22-actual-master-package",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Интерактивная карта сущностей Star Building</title> <style> :root { --bg: #070a13; --panel-bg: #0f1",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/22-actual-master-package/mindmap.html"
+    },
+    {
+      "path": "22-actual-master-package/roadmap.html",
+      "name": "roadmap.html",
+      "area": "22-actual-master-package",
+      "description": "<!DOCTYPE html> <html lang=\"ru\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Дорожная карта внедрения Star Building</title> <link rel=\"preconnect\" href=\"https://fonts.googleapi",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/22-actual-master-package/roadmap.html"
+    },
+    {
+      "path": "23-code-names/README.md",
+      "name": "README.md",
+      "area": "23-code-names",
+      "description": "23-code-names: Внутренние имена ботов",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/23-code-names/README.md"
+    },
+    {
+      "path": "24-marketing-bots/README.md",
+      "name": "README.md",
+      "area": "24-marketing-bots",
+      "description": "24-marketing-bots: Концепция семейства маркетинговых помощников",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/24-marketing-bots/README.md"
+    },
+    {
+      "path": "24-marketing-bots/content_bots_detailed.md",
+      "name": "content_bots_detailed.md",
+      "area": "24-marketing-bots",
+      "description": "10 содержательных ботов для Star Building",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/24-marketing-bots/content_bots_detailed.md"
+    },
+    {
+      "path": "24-marketing-bots/sources_ledger.json",
+      "name": "sources_ledger.json",
+      "area": "24-marketing-bots",
+      "description": "{ \"version\": 1, \"sources\": [ { \"id\": 1, \"url\": \"https://developers.facebook.com/docs/instagram-platform/content-publishing\", \"title\": \"Instagram Platform — Content Publishing\", \"accessed\": \"2026-08-20\" }, { \"id\": 2, \"url\": \"https://develope",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/24-marketing-bots/sources_ledger.json"
+    },
+    {
+      "path": "24-marketing-bots/top_20_marketing_bots.md",
+      "name": "top_20_marketing_bots.md",
+      "area": "24-marketing-bots",
+      "description": "СЕМЕЙСТВО МАРКЕТИНГОВЫХ БОТОВ STAR BUILDING",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/24-marketing-bots/top_20_marketing_bots.md"
+    },
+    {
+      "path": "25-marketing-bots-detailed/README.md",
+      "name": "README.md",
+      "area": "25-marketing-bots-detailed",
+      "description": "25-marketing-bots-detailed: Подробная таблица маркетинговых помощников",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/25-marketing-bots-detailed/README.md"
+    },
+    {
+      "path": "25-marketing-bots-detailed/build_workbook.py",
+      "name": "build_workbook.py",
+      "area": "25-marketing-bots-detailed",
+      "description": "Краткий обзор",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/25-marketing-bots-detailed/build_workbook.py"
+    },
+    {
+      "path": "25-marketing-bots-detailed/marketing_bots_star_building.xlsx",
+      "name": "marketing_bots_star_building.xlsx",
+      "area": "25-marketing-bots-detailed",
+      "description": "Книга Excel с проектными данными.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/25-marketing-bots-detailed/marketing_bots_star_building.xlsx"
+    },
+    {
+      "path": "25-marketing-bots-detailed/sources_ledger.json",
+      "name": "sources_ledger.json",
+      "area": "25-marketing-bots-detailed",
+      "description": "{ \"version\": 1, \"sources\": [ { \"id\": 1, \"url\": \"https://github.com/kushalsamani/social-media-ai-agent\", \"title\": \"Social Media AI Agent\", \"accessed\": \"2026-08-21\" }, { \"id\": 2, \"url\": \"https://github.com/BayramAnnakov/synthetic-market-resea",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/25-marketing-bots-detailed/sources_ledger.json"
+    },
+    {
+      "path": "26-hermes-profiles/PROJECT_CONTEXT_TEMPLATE.md",
+      "name": "PROJECT_CONTEXT_TEMPLATE.md",
+      "area": "26-hermes-profiles",
+      "description": "Шаблон контекста проекта для обоих профилей",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/26-hermes-profiles/PROJECT_CONTEXT_TEMPLATE.md"
+    },
+    {
+      "path": "26-hermes-profiles/README.md",
+      "name": "README.md",
+      "area": "26-hermes-profiles",
+      "description": "26-hermes-profiles: Два независимых профиля Hermes",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/26-hermes-profiles/README.md"
+    },
+    {
+      "path": "26-hermes-profiles/TASK_CONTRACT.md",
+      "name": "TASK_CONTRACT.md",
+      "area": "26-hermes-profiles",
+      "description": "Договор передачи кодовой задачи",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/26-hermes-profiles/TASK_CONTRACT.md"
+    },
+    {
+      "path": "26-hermes-profiles/developer/SOUL.md",
+      "name": "SOUL.md",
+      "area": "26-hermes-profiles",
+      "description": "Профиль Hermes: Разработчик",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/26-hermes-profiles/developer/SOUL.md"
+    },
+    {
+      "path": "26-hermes-profiles/orchestrator/SOUL.md",
+      "name": "SOUL.md",
+      "area": "26-hermes-profiles",
+      "description": "Профиль Hermes: Общий оркестратор",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/26-hermes-profiles/orchestrator/SOUL.md"
+    },
+    {
+      "path": "26-hermes-profiles/register_project.sh",
+      "name": "register_project.sh",
+      "area": "26-hermes-profiles",
+      "description": "#!/usr/bin/env bash set -euo pipefail if [[ $# -lt 3 || $# -gt 4 ]]; then echo \"Использование: $0 <код-проекта> <название> <путь> [исходная-ветка]\" >&2 exit 1 fi SLUG=\"$1\" NAME=\"$2\" REPO=\"$(realpath \"$3\")\" BASE_BRANCH=\"${4:-}\" command -v he",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/26-hermes-profiles/register_project.sh"
+    },
+    {
+      "path": "26-hermes-profiles/setup_profiles.sh",
+      "name": "setup_profiles.sh",
+      "area": "26-hermes-profiles",
+      "description": "Graphify устанавливает навык в активный профиль. Новые профили клонируют его.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/26-hermes-profiles/setup_profiles.sh"
+    },
+    {
+      "path": "27-developer-skills/README.md",
+      "name": "README.md",
+      "area": "27-developer-skills",
+      "description": "27-developer-skills: Навыки профиля разработчика",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/27-developer-skills/README.md"
+    },
+    {
+      "path": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "name": "PROJECT_REGISTRY.md",
+      "area": "28-unified-project-graph",
+      "description": "Единый реестр проектов и направлений",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/28-unified-project-graph/PROJECT_REGISTRY.md"
+    },
+    {
+      "path": "28-unified-project-graph/README.md",
+      "name": "README.md",
+      "area": "28-unified-project-graph",
+      "description": "28-unified-project-graph: Единый граф проектов и знаний",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/28-unified-project-graph/README.md"
+    },
+    {
+      "path": "28-unified-project-graph/RELATIONSHIPS.md",
+      "name": "RELATIONSHIPS.md",
+      "area": "28-unified-project-graph",
+      "description": "Связи единого графа проектов и знаний",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/28-unified-project-graph/RELATIONSHIPS.md"
+    },
+    {
+      "path": "28-unified-project-graph/build_curated_graph.py",
+      "name": "build_curated_graph.py",
+      "area": "28-unified-project-graph",
+      "description": "Build deterministic project entities for the unified Graphify graph.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/28-unified-project-graph/build_curated_graph.py"
+    },
+    {
+      "path": "28-unified-project-graph/curated_graph_source.json",
+      "name": "curated_graph_source.json",
+      "area": "28-unified-project-graph",
+      "description": "{ \"nodes\": [ { \"id\": \"p001\", \"label\": \"P-001 — Корпоративная система «Кодификатор» Star Building\", \"type\": \"Project\", \"description\": \"Стандартизировать регламенты, проверять противоречия и консультировать сотрудников.\", \"source_file\": \"28-u",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/28-unified-project-graph/curated_graph_source.json"
+    },
+    {
+      "path": "28-unified-project-graph/test_build_curated_graph.py",
+      "name": "test_build_curated_graph.py",
+      "area": "28-unified-project-graph",
+      "description": "import importlib.util import json import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent MODULE_PATH = ROOT / \"build_curated_graph.py\" def load_module(): spec = importlib.util.spec_from_file_location(\"build_curated_",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/28-unified-project-graph/test_build_curated_graph.py"
+    },
+    {
+      "path": "29-employee-testing-service/DATA_MODEL.md",
+      "name": "DATA_MODEL.md",
+      "area": "29-employee-testing-service",
+      "description": "Модель данных сервиса «Экзаменатор Star Building»",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/DATA_MODEL.md"
+    },
+    {
+      "path": "29-employee-testing-service/IMPORT_RULES.md",
+      "name": "IMPORT_RULES.md",
+      "area": "29-employee-testing-service",
+      "description": "Правила загрузки банка вопросов",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/IMPORT_RULES.md"
+    },
+    {
+      "path": "29-employee-testing-service/POOL_001_IMPORT_REPORT.md",
+      "name": "POOL_001_IMPORT_REPORT.md",
+      "area": "29-employee-testing-service",
+      "description": "Отчет импорта первого пула вопросов",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/POOL_001_IMPORT_REPORT.md"
+    },
+    {
+      "path": "29-employee-testing-service/README.md",
+      "name": "README.md",
+      "area": "29-employee-testing-service",
+      "description": "29-employee-testing-service: «Экзаменатор Star Building»",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/README.md"
+    },
+    {
+      "path": "29-employee-testing-service/build_question_bank.py",
+      "name": "build_question_bank.py",
+      "area": "29-employee-testing-service",
+      "description": "Создает проверяемый Excel-шаблон банка вопросов.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/build_question_bank.py"
+    },
+    {
+      "path": "29-employee-testing-service/import_pool_001.py",
+      "name": "import_pool_001.py",
+      "area": "29-employee-testing-service",
+      "description": "Импортирует первый пул вопросов из DOCX в банк Excel.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/import_pool_001.py"
+    },
+    {
+      "path": "29-employee-testing-service/question_bank_pool_001.xlsx",
+      "name": "question_bank_pool_001.xlsx",
+      "area": "29-employee-testing-service",
+      "description": "Книга Excel с проектными данными.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/question_bank_pool_001.xlsx"
+    },
+    {
+      "path": "29-employee-testing-service/question_bank_template.xlsx",
+      "name": "question_bank_template.xlsx",
+      "area": "29-employee-testing-service",
+      "description": "Книга Excel с проектными данными.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/question_bank_template.xlsx"
+    },
+    {
+      "path": "29-employee-testing-service/source_pool_001.docx",
+      "name": "source_pool_001.docx",
+      "area": "29-employee-testing-service",
+      "description": "Документ Word.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/29-employee-testing-service/source_pool_001.docx"
+    },
+    {
+      "path": "30-employee-testing-html/README.md",
+      "name": "README.md",
+      "area": "30-employee-testing-html",
+      "description": "30-employee-testing-html: автономная платформа",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/30-employee-testing-html/README.md"
+    },
+    {
+      "path": "30-employee-testing-html/build_platform.py",
+      "name": "build_platform.py",
+      "area": "30-employee-testing-html",
+      "description": "Собирает автономную HTML-платформу из Excel-банка.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/30-employee-testing-html/build_platform.py"
+    },
+    {
+      "path": "30-employee-testing-html/index.html",
+      "name": "index.html",
+      "area": "30-employee-testing-html",
+      "description": "<!doctype html> <html lang=\"ru\"> <head> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"> <meta name=\"color-scheme\" content=\"light\"> <title>Экзаменатор Star Building</title> <style> :root{--ink:#1323",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/30-employee-testing-html/index.html"
+    },
+    {
+      "path": "30-employee-testing-html/test_browser.py",
+      "name": "test_browser.py",
+      "area": "30-employee-testing-html",
+      "description": "from pathlib import Path from playwright.sync_api import sync_playwright ROOT = Path(__file__).resolve().parent URL = (ROOT / \"index.html\").as_uri() with sync_playwright() as p: browser = p.chromium.launch(headless=True) page = browser.new_",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/30-employee-testing-html/test_browser.py"
+    },
+    {
+      "path": "30-employee-testing-html/test_build_platform.py",
+      "name": "test_build_platform.py",
+      "area": "30-employee-testing-html",
+      "description": "import importlib.util import json import re import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent MODULE_PATH = ROOT / \"build_platform.py\" BANK_PATH = ROOT.parent / \"29-employee-testing-service\" / \"question_bank_po",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/30-employee-testing-html/test_build_platform.py"
+    },
+    {
+      "path": "32-chat-history-archive/README.md",
+      "name": "README.md",
+      "area": "32-chat-history-archive",
+      "description": "Архив переписки Hermes",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/32-chat-history-archive/README.md"
+    },
+    {
+      "path": "32-chat-history-archive/export_chat_history.py",
+      "name": "export_chat_history.py",
+      "area": "32-chat-history-archive",
+      "description": "Ежедневно выгружает переписку Hermes по профилям.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/32-chat-history-archive/export_chat_history.py"
+    },
+    {
+      "path": "32-chat-history-archive/test_export_chat_history.py",
+      "name": "test_export_chat_history.py",
+      "area": "32-chat-history-archive",
+      "description": "import importlib.util import sqlite3 import tempfile import unittest from datetime import date from pathlib import Path MODULE_PATH = Path(__file__).with_name(\"export_chat_history.py\") def load_module(): spec = importlib.util.spec_from_file",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/32-chat-history-archive/test_export_chat_history.py"
+    },
+    {
+      "path": "33-vm-file-knowledge-graph/README.md",
+      "name": "README.md",
+      "area": "33-vm-file-knowledge-graph",
+      "description": "33 — Реестр файлов и граф знаний виртуальной машины",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/33-vm-file-knowledge-graph/README.md"
+    },
+    {
+      "path": "33-vm-file-knowledge-graph/build_inventory.py",
+      "name": "build_inventory.py",
+      "area": "33-vm-file-knowledge-graph",
+      "description": "Строит безопасный реестр рабочих файлов и граф их проектной принадлежности.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/33-vm-file-knowledge-graph/build_inventory.py"
+    },
+    {
+      "path": "33-vm-file-knowledge-graph/test_build_inventory.py",
+      "name": "test_build_inventory.py",
+      "area": "33-vm-file-knowledge-graph",
+      "description": "import importlib.util import json import tempfile import unittest from pathlib import Path from openpyxl import load_workbook MODULE_PATH = Path(__file__).with_name(\"build_inventory.py\") def load_module(): spec = importlib.util.spec_from_fi",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/33-vm-file-knowledge-graph/test_build_inventory.py"
+    },
+    {
+      "path": "34-agent-repository-documentation/README.md",
+      "name": "README.md",
+      "area": "34-agent-repository-documentation",
+      "description": "34 — Обязательная документация для всех агентов и репозиториев",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/34-agent-repository-documentation/README.md"
+    },
+    {
+      "path": "34-agent-repository-documentation/ensure_repo_docs.py",
+      "name": "ensure_repo_docs.py",
+      "area": "34-agent-repository-documentation",
+      "description": "Создает и проверяет обязательную документацию любого Git-репозитория.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/34-agent-repository-documentation/ensure_repo_docs.py"
+    },
+    {
+      "path": "34-agent-repository-documentation/test_ensure_repo_docs.py",
+      "name": "test_ensure_repo_docs.py",
+      "area": "34-agent-repository-documentation",
+      "description": "import importlib.util import json import subprocess import tempfile import unittest from pathlib import Path MODULE_PATH = Path(__file__).with_name(\"ensure_repo_docs.py\") def load_module(): spec = importlib.util.spec_from_file_location(\"ens",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/34-agent-repository-documentation/test_ensure_repo_docs.py"
+    },
+    {
+      "path": "AGENTS.md",
+      "name": "AGENTS.md",
+      "area": "Корень репозитория",
+      "description": "AGENTS.md: Спецификация агентов и правила поведения AI",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/AGENTS.md"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "name": "CHANGELOG.md",
+      "area": "Корень репозитория",
+      "description": "История изменений",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/CHANGELOG.md"
+    },
+    {
+      "path": "DATA_MODEL.md",
+      "name": "DATA_MODEL.md",
+      "area": "Корень репозитория",
+      "description": "Модель данных проекта",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/DATA_MODEL.md"
+    },
+    {
+      "path": "DECISIONS.md",
+      "name": "DECISIONS.md",
+      "area": "Корень репозитория",
+      "description": "DECISIONS.md: Журнал архитектурных решений (ADR) и допущений",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/DECISIONS.md"
+    },
+    {
+      "path": "DOCS_INDEX.md",
+      "name": "DOCS_INDEX.md",
+      "area": "Корень репозитория",
+      "description": "Единая точка входа во всю документацию проекта.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/DOCS_INDEX.md"
+    },
+    {
+      "path": "DOCUMENTATION_STANDARD.md",
+      "name": "DOCUMENTATION_STANDARD.md",
+      "area": "Корень репозитория",
+      "description": "Обязательный стандарт документации репозитория",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/DOCUMENTATION_STANDARD.md"
+    },
+    {
+      "path": "KNOWLEDGE_BASE.md",
+      "name": "KNOWLEDGE_BASE.md",
+      "area": "Корень репозитория",
+      "description": "KNOWLEDGE_BASE.md: Структура и реестр базы знаний Star Building",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/KNOWLEDGE_BASE.md"
+    },
+    {
+      "path": "PROJECT_CONTEXT.md",
+      "name": "PROJECT_CONTEXT.md",
+      "area": "Корень репозитория",
+      "description": "Краткий обязательный контекст для начала работы агента.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/PROJECT_CONTEXT.md"
+    },
+    {
+      "path": "PROJECT_MANIFEST.json",
+      "name": "PROJECT_MANIFEST.json",
+      "area": "Корень репозитория",
+      "description": "Машиночитаемая структура репозитория и ссылки GitHub.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/PROJECT_MANIFEST.json"
+    },
+    {
+      "path": "PROJECT_MAP.md",
+      "name": "PROJECT_MAP.md",
+      "area": "Корень репозитория",
+      "description": "PROJECT_MAP.md: Архитектурная карта проекта",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/PROJECT_MAP.md"
+    },
+    {
+      "path": "PROJECT_STRUCTURE.md",
+      "name": "PROJECT_STRUCTURE.md",
+      "area": "Корень репозитория",
+      "description": "Автоматический указатель структуры и назначения файлов.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/PROJECT_STRUCTURE.md"
+    },
+    {
+      "path": "README.md",
+      "name": "README.md",
+      "area": "Корень репозитория",
+      "description": "Агент «Кодификатор» (Codifier Agent v1.0 MVP)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/README.md"
+    },
+    {
+      "path": "graphify-out/GRAPH_REPORT.md",
+      "name": "GRAPH_REPORT.md",
+      "area": "graphify-out",
+      "description": "Graph Report - roman (2026-08-29)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/GRAPH_REPORT.md"
+    },
+    {
+      "path": "graphify-out/graph.html",
+      "name": "graph.html",
+      "area": "graphify-out",
+      "description": "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <title>graphify - graphify-out/graph.html</title> <script> /** * vis-network * https://visjs.github.io/vis-network/ * * A dynamic, browser-based visualization library. * * @vers",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/graph.html"
+    },
+    {
+      "path": "graphify-out/graph.json",
+      "name": "graph.json",
+      "area": "graphify-out",
+      "description": "{ \"directed\": false, \"multigraph\": false, \"graph\": { \"hyperedges\": [ { \"id\": \"home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow\", \"label\": \"Marketing Automation Flow\", \"nodes\": [ \"home_roman::home_roman::",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/graph.json"
+    },
+    {
+      "path": "knowledge_base/00_РЕЕСТР/reestr-reglamentov.md",
+      "name": "reestr-reglamentov.md",
+      "area": "knowledge_base",
+      "description": "РЕЕСТР РЕГЛАМЕНТОВ И МАТРИЦА ВЛАДЕНИЯ ПРОЦЕССАМИ",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/00_%D0%A0%D0%95%D0%95%D0%A1%D0%A2%D0%A0/reestr-reglamentov.md"
+    },
+    {
+      "path": "knowledge_base/00_РЕЕСТР/reestr-reglamentov.xlsx",
+      "name": "reestr-reglamentov.xlsx",
+      "area": "knowledge_base",
+      "description": "Книга Excel с проектными данными.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/00_%D0%A0%D0%95%D0%95%D0%A1%D0%A2%D0%A0/reestr-reglamentov.xlsx"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-001_kodeks.md",
+      "name": "full_REG-001_kodeks.md",
+      "area": "knowledge_base",
+      "description": "--- СТРАНИЦА 1 --- СОДЕРЖАНИЕ /01 Общие положения 1 КОДЕКС группы компаний STAR BUILDING Караганда, 2024 --- СТРАНИЦА 2 --- /01 ОБЩИЕ ПОЛОЖЕНИЯ. . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 Введение . . . . . . . . . . . . . . ",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-001_kodeks.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-002_orgstruktura.md",
+      "name": "full_REG-002_orgstruktura.md",
+      "area": "knowledge_base",
+      "description": "ЛИСТ: 01_Общая оргструктура",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-002_orgstruktura.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-003_strategicheskaya_osnova.md",
+      "name": "full_REG-003_strategicheskaya_osnova.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ Дата выпуска: 25 марта 2025 года Дата последнего обновления: 12.06.2026 года В папку штатного сотрудника СТРАТЕГИЧЕСКАЯ ОСНОВА КОМПАНИИ Каждый сотрудник должен хорошо понимать, куда мы идем, какие",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-003_strategicheskaya_osnova.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-004_kak_napisat_reglament.md",
+      "name": "full_REG-004_kak_napisat_reglament.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ ОТ 26 ЯНВАРЯ 2026 Г. В папку всех руководителей КАК ПРАВИЛЬНО НАПИСАТЬ РЕГЛАМЕНТ В процессе работы, когда вы сталкиваетесь с разного рода неоптимальностями (в частности, во время проведения опросо",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-004_kak_napisat_reglament.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-005_vidy_reglamentov.md",
+      "name": "full_REG-005_vidy_reglamentov.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ от 26 января 2026 года В папку штатного сотрудника В папки всех руководителей В папку ответственного за должностные папки ВИДЫ РЕГЛАМЕНТОВ И ИХ РОЛЬ В КОМПАНИИ Содержание: Преамбула Термины, опред",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-005_vidy_reglamentov.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-006_dogovornaya_rabota.md",
+      "name": "full_REG-006_dogovornaya_rabota.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ Дата выпуска: 22 июня 2026 года В папку сотрудника отдела продаж В папку ответственного за должностные папки ПРАВИЛА ВЕДЕНИЯ ДОГОВОРНОЙ РАБОТЫ Содержание Область применения 1.1 Настоящие Правила о",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-006_dogovornaya_rabota.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-007_kadrovoe_deloproizvodstvo.md",
+      "name": "full_REG-007_kadrovoe_deloproizvodstvo.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ ОТ 16 МАРТА 2026 ГОДА В папки всех руководителей В папку штатного сотрудника В папку сотрудников отдела найма и адаптации персонала КАДРОВОЕ ДЕЛОПРОИЗВОДСТВО В целях упорядочения кадровых процедур",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-007_kadrovoe_deloproizvodstvo.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-008_sistema_motivacii.md",
+      "name": "full_REG-008_sistema_motivacii.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО ПО УПРАВЛЕНИЮ КОМПАНИЕЙ ОТ ЯНВАРЯ 2026 ГОДА В папку штатного сотрудника ЕДИНАЯ СИСТЕМА МОТИВАЦИИ, ПООЩРЕНИЯ И ВЫСЛУГИ ЛЕТ Введение (Предпосылки и цели) В процессе работы мы столкнулись с тем, что правила начисления пр",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-008_sistema_motivacii.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-009_toplivnye_karty.md",
+      "name": "full_REG-009_toplivnye_karty.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО ИСПОЛЬЗОВАНИЮ ТОПЛИВНОЙ КАРТЫ ОТ 30 МАРТА 2026 ГОДА В папку штатного сотрудника В папки всех руководителей В папку ответственного за должностные папки РЕГЛАМЕНТ ИСПОЛЬЗОВАНИЯ ТОПЛИВНЫХ КАРТ Обоснование необходимости р",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-009_toplivnye_karty.md"
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-010_klientoorientirovannost.md",
+      "name": "full_REG-010_klientoorientirovannost.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ: Стандарт клиентоориентированности и управления клиентским опытом",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%92_%D0%A0%D0%90%D0%91%D0%9E%D0%A2%D0%95/full_REG-010_klientoorientirovannost.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-001_kodeks.md",
+      "name": "card_REG-001_kodeks.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-001 Кодекс группы компаний Star Building",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-001_kodeks.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-002_orgstruktura.md",
+      "name": "card_REG-002_orgstruktura.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-002 Общая оргструктура и штатная модель компании",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-002_orgstruktura.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-003_strategicheskaya_osnova.md",
+      "name": "card_REG-003_strategicheskaya_osnova.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-003 Стратегическая основа компании",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-003_strategicheskaya_osnova.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-004_kak_napisat_reglament.md",
+      "name": "card_REG-004_kak_napisat_reglament.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-004 Регламент «Как написать регламент»",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-004_kak_napisat_reglament.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-005_vidy_reglamentov.md",
+      "name": "card_REG-005_vidy_reglamentov.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-005 Виды регламентов и их роль в компании",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-005_vidy_reglamentov.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-006_dogovornaya_rabota.md",
+      "name": "card_REG-006_dogovornaya_rabota.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-006 Правила ведения договорной работы",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-006_dogovornaya_rabota.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-007_kadrovoe_deloproizvodstvo.md",
+      "name": "card_REG-007_kadrovoe_deloproizvodstvo.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-007 Кадровое делопроизводство",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-007_kadrovoe_deloproizvodstvo.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-008_sistema_motivacii.md",
+      "name": "card_REG-008_sistema_motivacii.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-008 Единая система мотивации, поощрения и выслуги лет",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-008_sistema_motivacii.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-009_toplivnye_karty.md",
+      "name": "card_REG-009_toplivnye_karty.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-009 Порядок выдачи и использования топливных карт",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-009_toplivnye_karty.md"
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-010_klientoorientirovannost.md",
+      "name": "card_REG-010_klientoorientirovannost.md",
+      "area": "knowledge_base",
+      "description": "КАРТОЧКА: РЕГ-010 Стандарт клиентоориентированности и клиентского опыта",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/01_%D0%9A%D0%90%D0%A0%D0%A2%D0%9E%D0%A7%D0%9A%D0%98/card_REG-010_klientoorientirovannost.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-001_kodeks.md",
+      "name": "full_REG-001_kodeks.md",
+      "area": "knowledge_base",
+      "description": "--- СТРАНИЦА 1 --- СОДЕРЖАНИЕ /01 Общие положения 1 КОДЕКС группы компаний STAR BUILDING Караганда, 2024 --- СТРАНИЦА 2 --- /01 ОБЩИЕ ПОЛОЖЕНИЯ. . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 Введение . . . . . . . . . . . . . . ",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-001_kodeks.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-002_orgstruktura.md",
+      "name": "full_REG-002_orgstruktura.md",
+      "area": "knowledge_base",
+      "description": "ЛИСТ: 01_Общая оргструктура",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-002_orgstruktura.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-003_strategicheskaya_osnova.md",
+      "name": "full_REG-003_strategicheskaya_osnova.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ Дата выпуска: 25 марта 2025 года Дата последнего обновления: 12.06.2026 года В папку штатного сотрудника СТРАТЕГИЧЕСКАЯ ОСНОВА КОМПАНИИ Каждый сотрудник должен хорошо понимать, куда мы идем, какие",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-003_strategicheskaya_osnova.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-004_kak_napisat_reglament.md",
+      "name": "full_REG-004_kak_napisat_reglament.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ ОТ 26 ЯНВАРЯ 2026 Г. В папку всех руководителей КАК ПРАВИЛЬНО НАПИСАТЬ РЕГЛАМЕНТ В процессе работы, когда вы сталкиваетесь с разного рода неоптимальностями (в частности, во время проведения опросо",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-004_kak_napisat_reglament.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-005_vidy_reglamentov.md",
+      "name": "full_REG-005_vidy_reglamentov.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ от 26 января 2026 года В папку штатного сотрудника В папки всех руководителей В папку ответственного за должностные папки ВИДЫ РЕГЛАМЕНТОВ И ИХ РОЛЬ В КОМПАНИИ Содержание: Преамбула Термины, опред",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-005_vidy_reglamentov.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-006_dogovornaya_rabota.md",
+      "name": "full_REG-006_dogovornaya_rabota.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ Дата выпуска: 22 июня 2026 года В папку сотрудника отдела продаж В папку ответственного за должностные папки ПРАВИЛА ВЕДЕНИЯ ДОГОВОРНОЙ РАБОТЫ Содержание Область применения 1.1 Настоящие Правила о",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-006_dogovornaya_rabota.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-007_kadrovoe_deloproizvodstvo.md",
+      "name": "full_REG-007_kadrovoe_deloproizvodstvo.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО УПРАВЛЕНИЮ КОМПАНИЕЙ ОТ 16 МАРТА 2026 ГОДА В папки всех руководителей В папку штатного сотрудника В папку сотрудников отдела найма и адаптации персонала КАДРОВОЕ ДЕЛОПРОИЗВОДСТВО В целях упорядочения кадровых процедур",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-007_kadrovoe_deloproizvodstvo.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-008_sistema_motivacii.md",
+      "name": "full_REG-008_sistema_motivacii.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО ПО УПРАВЛЕНИЮ КОМПАНИЕЙ ОТ ЯНВАРЯ 2026 ГОДА В папку штатного сотрудника ЕДИНАЯ СИСТЕМА МОТИВАЦИИ, ПООЩРЕНИЯ И ВЫСЛУГИ ЛЕТ Введение (Предпосылки и цели) В процессе работы мы столкнулись с тем, что правила начисления пр",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-008_sistema_motivacii.md"
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-009_toplivnye_karty.md",
+      "name": "full_REG-009_toplivnye_karty.md",
+      "area": "knowledge_base",
+      "description": "РЕГЛАМЕНТ ВЛАДЕЛЬЦА ПО ИСПОЛЬЗОВАНИЮ ТОПЛИВНОЙ КАРТЫ ОТ 30 МАРТА 2026 ГОДА В папку штатного сотрудника В папки всех руководителей В папку ответственного за должностные папки РЕГЛАМЕНТ ИСПОЛЬЗОВАНИЯ ТОПЛИВНЫХ КАРТ Обоснование необходимости р",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/02_%D0%A3%D0%A2%D0%92%D0%95%D0%A0%D0%96%D0%94%D0%95%D0%9D%D0%9E/full_REG-009_toplivnye_karty.md"
+    },
+    {
+      "path": "knowledge_base/03_ПРИЕМ_ЧЕРНОВИКОВ/README.md",
+      "name": "README.md",
+      "area": "knowledge_base",
+      "description": "03_ПРИЕМ_ЧЕРНОВИКОВ: Входной накопитель черновиков",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/knowledge_base/03_%D0%9F%D0%A0%D0%98%D0%95%D0%9C_%D0%A7%D0%95%D0%A0%D0%9D%D0%9E%D0%92%D0%98%D0%9A%D0%9E%D0%92/README.md"
+    },
+    {
+      "path": "tools/ensure_repo_docs.py",
+      "name": "ensure_repo_docs.py",
+      "area": "tools",
+      "description": "Создает и проверяет обязательную документацию любого Git-репозитория.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/tools/ensure_repo_docs.py"
+    }
+  ]
+}

@@ -13,6 +13,10 @@
 
 ---
 
+## Обязательный контекст проекта
+
+Перед работой откройте [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) и [`DOCS_INDEX.md`](DOCS_INDEX.md). Полная структура файлов и прямые ссылки GitHub поддерживаются автоматически в [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md) и [`PROJECT_MANIFEST.json`](PROJECT_MANIFEST.json).
+
 ## 📁 Структура репозитория
 
 ```text

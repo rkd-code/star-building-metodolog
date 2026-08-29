@@ -235,6 +235,24 @@
       "next_step": "использовать реестр как общий контекст агентов и дополнять классификацию новых проектов"
     },
     {
+      "id": "p014",
+      "label": "P-014 — Управление обязательной документацией репозиториев",
+      "type": "Project",
+      "description": "Обеспечить каждому агенту полный актуальный контекст, структуру файлов и ссылки GitHub.",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified",
+      "goal": "Обеспечить каждому агенту полный актуальный контекст, структуру файлов и ссылки GitHub.",
+      "owner": "лорд Витинари; Star Building",
+      "github": "https://github.com/rkd-code/star-building-metodolog",
+      "working_path": "/home/roman/34-agent-repository-documentation",
+      "technologies": "Python, Git hooks, GitHub Actions, Markdown, JSON",
+      "documents": "AGENTS.md; DOCUMENTATION_STANDARD.md; PROJECT_MANIFEST.json; PROJECT_STRUCTURE.md",
+      "current_status": "стандарт, генератор, локальная и удаленная проверки созданы",
+      "next_step": "применять стандарт во всех новых репозиториях и поддерживать шаблоны"
+    },
+    {
       "id": "repo_r001",
       "label": "R-001 — rkd-code/star-building-metodolog",
       "type": "Repository",
@@ -440,6 +458,16 @@
     {
       "id": "doc_d014",
       "label": "D-014 — единый табличный реестр рабочих файлов",
+      "type": "Document",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "doc_d015",
+      "label": "D-015 — обязательный стандарт документации репозитория",
       "type": "Document",
       "description": "",
       "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
@@ -696,6 +724,16 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "verification": "verified"
+    },
+    {
+      "id": "adr_026",
+      "label": "ADR-026 — Обязательная самодокументируемая структура каждого репозитория",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
     }
   ],
   "edges": [
@@ -809,6 +847,15 @@
     },
     {
       "source": "p013",
+      "target": "repo_r001",
+      "relation": "stored_in",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p014",
       "target": "repo_r001",
       "relation": "stored_in",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
@@ -1330,6 +1377,60 @@
       "confidence_score": 1.0
     },
     {
+      "source": "doc_d015",
+      "target": "p014",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p014",
+      "target": "p001",
+      "relation": "documents",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p014",
+      "target": "p010",
+      "relation": "updates_context_for",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p014",
+      "target": "p013",
+      "relation": "describes_files_for",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "p009",
+      "target": "p014",
+      "relation": "enforces_for_agents",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "human_h001",
+      "target": "p014",
+      "relation": "commissions",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
       "source": "adr_001",
       "target": "p001",
       "relation": "governs",
@@ -1485,6 +1586,15 @@
     {
       "source": "adr_025",
       "target": "p013",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_026",
+      "target": "p014",
       "relation": "governs",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
       "source_file": "28-unified-project-graph/RELATIONSHIPS.md",

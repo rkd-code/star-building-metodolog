@@ -49,6 +49,7 @@ PROJECTS = {
     "P-011": "«Кворум» — тестирование сотрудников",
     "P-012": "Архив переписки Hermes",
     "P-013": "Реестр файлов виртуальной машины",
+    "P-014": "Управление обязательной документацией репозиториев",
 }
 
 PREFIX_PROJECT = {
@@ -66,7 +67,8 @@ PREFIX_PROJECT = {
     "27-developer-skills": "P-009", "28-unified-project-graph": "P-010",
     "29-employee-testing-service": "P-011", "30-employee-testing-html": "P-011",
     "31-employee-testing-html-v2": "P-011", "32-chat-history-archive": "P-012",
-    "33-vm-file-knowledge-graph": "P-013", "knowledge_base": "P-002",
+    "33-vm-file-knowledge-graph": "P-013", "34-agent-repository-documentation": "P-014",
+    "knowledge_base": "P-002",
 }
 
 SECRET_PATTERNS = [

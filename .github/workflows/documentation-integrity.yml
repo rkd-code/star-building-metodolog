@@ -1,0 +1,16 @@
+name: Проверка актуальности документации
+on:
+  push:
+  pull_request:
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить обязательную документацию
+        run: |
+          if [ -f 34-agent-repository-documentation/ensure_repo_docs.py ]; then
+            python3 34-agent-repository-documentation/ensure_repo_docs.py --repo . --check
+          else
+            python3 tools/ensure_repo_docs.py --repo . --check
+          fi

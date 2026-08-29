@@ -20,6 +20,7 @@ class InventoryTests(unittest.TestCase):
     def test_classifies_numbered_iteration_and_portfolio_file(self):
         module = load_module()
         self.assertEqual("P-011", module.classify_project(Path("/home/roman/30-employee-testing-html/index.html"))["id"])
+        self.assertEqual("P-014", module.classify_project(Path("/home/roman/34-agent-repository-documentation/README.md"))["id"])
         self.assertEqual("PORTFOLIO", module.classify_project(Path("/home/roman/DECISIONS.md"))["id"])
         self.assertEqual("P-002", module.classify_project(Path("/home/roman/knowledge_base/full_REG-001.md"))["id"])
 

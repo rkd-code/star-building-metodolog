@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+if [ -f "$ROOT/34-agent-repository-documentation/ensure_repo_docs.py" ]; then
+  TOOL="$ROOT/34-agent-repository-documentation/ensure_repo_docs.py"
+elif [ -f "$ROOT/tools/ensure_repo_docs.py" ]; then
+  TOOL="$ROOT/tools/ensure_repo_docs.py"
+else
+  TOOL="$HOME/.hermes/scripts/ensure_repo_documentation.py"
+fi
+python3 "$TOOL" --repo "$ROOT" --stage

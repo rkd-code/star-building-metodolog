@@ -83,7 +83,7 @@ bash /home/roman/26-hermes-profiles/register_project.sh \
 - привязывает проект к доске;
 - фиксирует исходную ветку в описании проекта каждого профиля.
 
-Для каждого репозитория рекомендуется создать `.hermes.md` по `PROJECT_CONTEXT_TEMPLATE.md`.
+Для каждого репозитория обязательно создаются `.hermes.md`, `AGENTS.md`, `PROJECT_CONTEXT.md`, `PROJECT_STRUCTURE.md`, `PROJECT_MANIFEST.json` и остальные документы по `DOCUMENTATION_STANDARD.md`. Предкоммитный обработчик и GitHub Actions обеспечивают их актуальность независимо от профиля.
 
 ## 4. Создание и обновление Graphify
 

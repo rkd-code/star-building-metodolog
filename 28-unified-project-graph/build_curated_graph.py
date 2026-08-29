@@ -156,6 +156,17 @@ PROJECTS = [
         "status": "рекомендованный охват проиндексирован; автоматическое обновление каждые 15 минут работает",
         "next_step": "использовать реестр как общий контекст агентов и дополнять классификацию новых проектов",
     },
+    {
+        "id": "p014",
+        "label": "P-014 — Управление обязательной документацией репозиториев",
+        "goal": "Обеспечить каждому агенту полный актуальный контекст, структуру файлов и ссылки GitHub.",
+        "owner": "лорд Витинари; Star Building",
+        "path": "/home/roman/34-agent-repository-documentation",
+        "technologies": "Python, Git hooks, GitHub Actions, Markdown, JSON",
+        "documents": "AGENTS.md; DOCUMENTATION_STANDARD.md; PROJECT_MANIFEST.json; PROJECT_STRUCTURE.md",
+        "status": "стандарт, генератор, локальная и удаленная проверки созданы",
+        "next_step": "применять стандарт во всех новых репозиториях и поддерживать шаблоны",
+    },
 ]
 
 PEOPLE = [
@@ -182,6 +193,7 @@ DOCUMENTS = [
     ("doc_d012", "D-012 — автономная HTML-платформа «Экзаменатор Star Building»"),
     ("doc_d013", "D-013 — правила ежедневного архива переписки Hermes"),
     ("doc_d014", "D-014 — единый табличный реестр рабочих файлов"),
+    ("doc_d015", "D-015 — обязательный стандарт документации репозитория"),
 ]
 
 ADR_TITLES = [
@@ -193,6 +205,7 @@ ADR_TITLES = [
     "Единый граф проектов и знаний", "Сервис тестирования сотрудников",
     "Автономная HTML-платформа тестирования",
     "Ежедневный архив переписки Hermes", "Безопасный реестр файлов и граф проектной принадлежности",
+    "Обязательная самодокументируемая структура каждого репозитория",
 ]
 
 
@@ -242,7 +255,7 @@ def build_extraction():
     nodes.extend(node(f"adr_{i:03d}", f"ADR-{i:03d} — {title}", "Decision") for i, title in enumerate(ADR_TITLES, 1))
 
     edges = []
-    for i in range(1, 14):
+    for i in range(1, 15):
         edges.append(edge(f"p{i:03d}", "repo_r001", "stored_in"))
     for i in range(2, 9):
         edges.append(edge("p001", f"p{i:03d}", "contains"))
@@ -271,8 +284,11 @@ def build_extraction():
         edge("p012", "p009", "archives_conversations_from"), edge("p013", "p001", "indexes_files"),
         edge("p013", "p010", "supplements"), edge("p009", "p013", "manages_changes"),
         edge("human_h001", "p012", "commissions"), edge("human_h001", "p013", "commissions"),
+        edge("doc_d015", "p014", "governs"), edge("p014", "p001", "documents"),
+        edge("p014", "p010", "updates_context_for"), edge("p014", "p013", "describes_files_for"),
+        edge("p009", "p014", "enforces_for_agents"), edge("human_h001", "p014", "commissions"),
     ])
-    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9, 21: 10, 22: 11, 23: 11, 24: 12, 25: 13}
+    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9, 21: 10, 22: 11, 23: 11, 24: 12, 25: 13, 26: 14}
     for adr_num, project_num in adr_projects.items():
         edges.append(edge(f"adr_{adr_num:03d}", f"p{project_num:03d}", "governs"))
 
