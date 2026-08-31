@@ -60,6 +60,10 @@ def table_columns(connection: sqlite3.Connection, table: str) -> set[str]:
 def read_database(path: Path, fallback_profile: str, timezone: ZoneInfo) -> list[dict]:
     connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=30)
     connection.execute("PRAGMA busy_timeout=30000")
+    tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    if not {"sessions", "messages"}.issubset(tables):
+        connection.close()
+        return []
     session_columns = table_columns(connection, "sessions")
     profile_expression = "s.profile_name" if "profile_name" in session_columns else "NULL"
     title_expression = "s.title" if "title" in session_columns else "NULL"

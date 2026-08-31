@@ -78,6 +78,14 @@ class ExportTests(unittest.TestCase):
             messages = module.read_database(db_path, "default", module.ZoneInfo("Asia/Almaty"))
             self.assertEqual("Star building", messages[0]["title"])
 
+    def test_database_without_message_tables_is_skipped(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as temp:
+            db_path = Path(temp) / "empty.db"
+            sqlite3.connect(db_path).close()
+            messages = module.read_database(db_path, "developer", module.ZoneInfo("Asia/Almaty"))
+            self.assertEqual([], messages)
+
     def test_repeated_export_overwrites_without_duplicates(self):
         module = load_module()
         with tempfile.TemporaryDirectory() as temp:
