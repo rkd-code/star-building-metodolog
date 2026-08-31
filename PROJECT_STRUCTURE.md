@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `5cf024327ee202f603691f6e8cd4f8ea39099d8aed042cbd4d42f14ff08688e8`
+Отпечаток исходной структуры: `823ff14b06f58b1f5ba69b898707159d0a8caf9f0bca829aa51ec3ce06f79020`
 
 ## .git-templates
 
@@ -160,6 +160,10 @@
 | [`17-two-bots-split/README.md`](https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/README.md) | 17-two-bots-split: Разделение на 2 независимых бота |
 | [`17-two-bots-split/bot_1_codifier.py`](https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/bot_1_codifier.py) | Бот 1: «Кодификатор регламентов Star Building» (Версия v2.1 с модулем Сверщика) Функционал: 1. Автоматическая сверка нового черновика со ВСЕМИ действующими регламентами (РЕГ-001..010). 2. Выявление противоречий, пересечений сроков и ролей.  |
 | [`17-two-bots-split/bot_2_consultant.py`](https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/bot_2_consultant.py) | Бот 2: «Корпоративный консультант Star Building» (Надежная версия v2.0) Улучшения: 1. Память диалога (помнит исходный вопрос, когда пользователь отвечает «Да, сделай шаблон»). 2. Таймауты сети Telegram 60 сек. 3. Поддержка голосовых, фото и |
+| [`17-two-bots-split/bot_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/bot_healthcheck.py) | Проверяет учетные данные, Telegram API и службы двух ботов. |
+| [`17-two-bots-split/systemd/star-building-codifier.service`](https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/systemd/star-building-codifier.service) | Файл проекта: star-building-codifier.service. |
+| [`17-two-bots-split/systemd/star-building-consultant.service`](https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/systemd/star-building-consultant.service) | Файл проекта: star-building-consultant.service. |
+| [`17-two-bots-split/test_bot_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/test_bot_healthcheck.py) | Испытания диагностики двух Telegram-ботов Star Building. |
 
 ## 18-bot-behavior-refinement
 
@@ -302,9 +306,9 @@
 
 | Файл | Назначение |
 |---|---|
-| [`graphify-out/GRAPH_REPORT.md`](https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/GRAPH_REPORT.md) | Graph Report - roman (2026-08-29) |
+| [`graphify-out/GRAPH_REPORT.md`](https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/GRAPH_REPORT.md) | Graph Report - roman (2026-08-31) |
 | [`graphify-out/graph.html`](https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/graph.html) | <!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <title>graphify - graphify-out/graph.html</title> <script> /** * vis-network * https://visjs.github.io/vis-network/ * * A dynamic, browser-based visualization library. * * @vers |
-| [`graphify-out/graph.json`](https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/graph.json) | { "directed": false, "multigraph": false, "graph": { "hyperedges": [ { "id": "home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow", "label": "Marketing Automation Flow", "nodes": [ "home_roman::home_roman:: |
+| [`graphify-out/graph.json`](https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/graph.json) | { "directed": false, "multigraph": false, "graph": { "hyperedges": [ { "id": "home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow", "label": "Marketing Automation Flow", "nodes": [ "home_roman:: |
 
 ## knowledge_base
 

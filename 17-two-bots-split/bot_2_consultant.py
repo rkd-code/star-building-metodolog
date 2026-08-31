@@ -37,6 +37,8 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger("bot_consultant")
+# Не журналируем URL Telegram Bot API: он содержит учетные данные бота.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TOKEN = os.environ.get("STAR_BUILDING_CONSULTANT_BOT_TOKEN")
 
@@ -249,6 +251,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text(f"⚠ Ошибка: {e}")
 
 def main():
+    if not TOKEN:
+        raise RuntimeError("Не задана STAR_BUILDING_CONSULTANT_BOT_TOKEN")
     logger.info("Запуск бота-консультанта Star Building (v2.0 с памятью диалога)...")
     req = HTTPXRequest(
         connection_pool_size=16,

@@ -8,7 +8,7 @@
 
 - `PROJECT_REGISTRY.md` — карточки P-001..P-014 с обязательными полями.
 - `RELATIONSHIPS.md` — явные отношения между проектами, людьми, документами, репозиторием и ADR.
-- `/home/roman/graphify-out/graph.json` — машиночитаемый граф Graphify: 201 узел, 223 связи, 52 сообщества.
+- `/home/roman/graphify-out/graph.json` — машиночитаемый граф Graphify: 202 узла, 225 связей, 53 сообщества.
 - `/home/roman/graphify-out/GRAPH_REPORT.md` — отчет о структуре графа.
 - `/home/roman/graphify-out/graph.html` — автономное интерактивное представление без внешних библиотек.
 

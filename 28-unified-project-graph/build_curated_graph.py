@@ -43,8 +43,8 @@ PROJECTS = [
         "path": "/home/roman/17-two-bots-split/bot_1_codifier.py",
         "technologies": "Python, Telegram Bot API, Gemini, Faster Whisper, DOCX, PDF",
         "documents": "17-two-bots-split/README.md; AGENTS.md; 20-cross-check-engine/README.md",
-        "status": "рабочий прототип; промышленная эксплуатация не подтверждена",
-        "next_step": "настроить защищенную переменную, испытания, сервисный запуск и мониторинг",
+        "status": "активная служба systemd; Telegram API и polling контролируются каждые 5 минут",
+        "next_step": "перевыпустить исторический токен через BotFather и проверить полный сценарий",
     },
     {
         "id": "p004",
@@ -54,8 +54,8 @@ PROJECTS = [
         "path": "/home/roman/17-two-bots-split/bot_2_consultant.py",
         "technologies": "Python, Telegram Bot API, Gemini, Faster Whisper, DOCX, PDF",
         "documents": "17-two-bots-split/README.md; KNOWLEDGE_BASE.md; DECISIONS.md",
-        "status": "рабочий прототип; разграничение доступа и мониторинг не подтверждены",
-        "next_step": "настроить защищенную переменную, испытания, сервисный запуск и мониторинг",
+        "status": "активная служба systemd; Telegram API и polling контролируются каждые 5 минут",
+        "next_step": "перевыпустить исторический токен через BotFather и проверить полный сценарий",
     },
     {
         "id": "p005",
@@ -206,6 +206,7 @@ ADR_TITLES = [
     "Автономная HTML-платформа тестирования",
     "Ежедневный архив переписки Hermes", "Безопасный реестр файлов и граф проектной принадлежности",
     "Обязательная самодокументируемая структура каждого репозитория",
+    "Независимые управляемые службы Telegram-ботов",
 ]
 
 
@@ -288,9 +289,10 @@ def build_extraction():
         edge("p014", "p010", "updates_context_for"), edge("p014", "p013", "describes_files_for"),
         edge("p009", "p014", "enforces_for_agents"), edge("human_h001", "p014", "commissions"),
     ])
-    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9, 21: 10, 22: 11, 23: 11, 24: 12, 25: 13, 26: 14}
+    adr_projects = {1: 1, 3: 1, 8: 7, 10: 2, 11: 2, 13: 4, 14: 5, 15: 3, 16: 8, 17: 8, 18: 9, 19: 9, 20: 9, 21: 10, 22: 11, 23: 11, 24: 12, 25: 13, 26: 14, 27: 3}
     for adr_num, project_num in adr_projects.items():
         edges.append(edge(f"adr_{adr_num:03d}", f"p{project_num:03d}", "governs"))
+    edges.append(edge("adr_027", "p004", "governs"))
 
     return {"nodes": nodes, "edges": edges, "hyperedges": [], "input_tokens": 0, "output_tokens": 0}
 

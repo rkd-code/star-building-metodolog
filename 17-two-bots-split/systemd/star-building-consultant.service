@@ -1,0 +1,17 @@
+[Unit]
+Description=Star Building — Ом (корпоративный консультант)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/roman/17-two-bots-split
+EnvironmentFile=/home/roman/.config/star-building/bots.env
+ExecStart=/srv/hermes-agent/venv/bin/python3 /home/roman/17-two-bots-split/bot_2_consultant.py
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

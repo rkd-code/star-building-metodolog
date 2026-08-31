@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "main",
-  "source_tree_hash": "5cf024327ee202f603691f6e8cd4f8ea39099d8aed042cbd4d42f14ff08688e8",
+  "source_tree_hash": "823ff14b06f58b1f5ba69b898707159d0a8caf9f0bca829aa51ec3ce06f79020",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -484,6 +484,34 @@
       "area": "17-two-bots-split",
       "description": "Бот 2: «Корпоративный консультант Star Building» (Надежная версия v2.0) Улучшения: 1. Память диалога (помнит исходный вопрос, когда пользователь отвечает «Да, сделай шаблон»). 2. Таймауты сети Telegram 60 сек. 3. Поддержка голосовых, фото и",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/bot_2_consultant.py"
+    },
+    {
+      "path": "17-two-bots-split/bot_healthcheck.py",
+      "name": "bot_healthcheck.py",
+      "area": "17-two-bots-split",
+      "description": "Проверяет учетные данные, Telegram API и службы двух ботов.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/bot_healthcheck.py"
+    },
+    {
+      "path": "17-two-bots-split/systemd/star-building-codifier.service",
+      "name": "star-building-codifier.service",
+      "area": "17-two-bots-split",
+      "description": "Файл проекта: star-building-codifier.service.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/systemd/star-building-codifier.service"
+    },
+    {
+      "path": "17-two-bots-split/systemd/star-building-consultant.service",
+      "name": "star-building-consultant.service",
+      "area": "17-two-bots-split",
+      "description": "Файл проекта: star-building-consultant.service.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/systemd/star-building-consultant.service"
+    },
+    {
+      "path": "17-two-bots-split/test_bot_healthcheck.py",
+      "name": "test_bot_healthcheck.py",
+      "area": "17-two-bots-split",
+      "description": "Испытания диагностики двух Telegram-ботов Star Building.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/17-two-bots-split/test_bot_healthcheck.py"
     },
     {
       "path": "18-bot-behavior-refinement/README.md",
@@ -972,7 +1000,7 @@
       "path": "graphify-out/GRAPH_REPORT.md",
       "name": "GRAPH_REPORT.md",
       "area": "graphify-out",
-      "description": "Graph Report - roman (2026-08-29)",
+      "description": "Graph Report - roman (2026-08-31)",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/GRAPH_REPORT.md"
     },
     {
@@ -986,7 +1014,7 @@
       "path": "graphify-out/graph.json",
       "name": "graph.json",
       "area": "graphify-out",
-      "description": "{ \"directed\": false, \"multigraph\": false, \"graph\": { \"hyperedges\": [ { \"id\": \"home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow\", \"label\": \"Marketing Automation Flow\", \"nodes\": [ \"home_roman::home_roman::",
+      "description": "{ \"directed\": false, \"multigraph\": false, \"graph\": { \"hyperedges\": [ { \"id\": \"home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow\", \"label\": \"Marketing Automation Flow\", \"nodes\": [ \"home_roman::",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/main/graphify-out/graph.json"
     },
     {

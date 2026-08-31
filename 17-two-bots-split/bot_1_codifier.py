@@ -38,6 +38,9 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger("bot_codifier")
+# HTTPX включает адрес Telegram Bot API в INFO-журнал. Отключаем эти
+# записи, чтобы учетные данные не попадали в журнал службы.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TOKEN = os.environ.get("STAR_BUILDING_CODIFIER_BOT_TOKEN")
 
@@ -265,6 +268,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text(f"⚠ Произошла ошибка при обработке: {e}")
 
 def main():
+    if not TOKEN:
+        raise RuntimeError("Не задана STAR_BUILDING_CODIFIER_BOT_TOKEN")
     logger.info("Запуск бота-кодификатора со встроенным Сверщиком коллизий...")
     req = HTTPXRequest(
         connection_pool_size=16,

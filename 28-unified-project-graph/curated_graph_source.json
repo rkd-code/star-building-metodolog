@@ -51,8 +51,8 @@
       "working_path": "/home/roman/17-two-bots-split/bot_1_codifier.py",
       "technologies": "Python, Telegram Bot API, Gemini, Faster Whisper, DOCX, PDF",
       "documents": "17-two-bots-split/README.md; AGENTS.md; 20-cross-check-engine/README.md",
-      "current_status": "рабочий прототип; промышленная эксплуатация не подтверждена",
-      "next_step": "настроить защищенную переменную, испытания, сервисный запуск и мониторинг"
+      "current_status": "активная служба systemd; Telegram API и polling контролируются каждые 5 минут",
+      "next_step": "перевыпустить исторический токен через BotFather и проверить полный сценарий"
     },
     {
       "id": "p004",
@@ -69,8 +69,8 @@
       "working_path": "/home/roman/17-two-bots-split/bot_2_consultant.py",
       "technologies": "Python, Telegram Bot API, Gemini, Faster Whisper, DOCX, PDF",
       "documents": "17-two-bots-split/README.md; KNOWLEDGE_BASE.md; DECISIONS.md",
-      "current_status": "рабочий прототип; разграничение доступа и мониторинг не подтверждены",
-      "next_step": "настроить защищенную переменную, испытания, сервисный запуск и мониторинг"
+      "current_status": "активная служба systemd; Telegram API и polling контролируются каждые 5 минут",
+      "next_step": "перевыпустить исторический токен через BotFather и проверить полный сценарий"
     },
     {
       "id": "p005",
@@ -728,6 +728,16 @@
     {
       "id": "adr_026",
       "label": "ADR-026 — Обязательная самодокументируемая структура каждого репозитория",
+      "type": "Decision",
+      "description": "",
+      "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "verification": "verified"
+    },
+    {
+      "id": "adr_027",
+      "label": "ADR-027 — Независимые управляемые службы Telegram-ботов",
       "type": "Decision",
       "description": "",
       "source_file": "28-unified-project-graph/PROJECT_REGISTRY.md",
@@ -1595,6 +1605,24 @@
     {
       "source": "adr_026",
       "target": "p014",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_027",
+      "target": "p003",
+      "relation": "governs",
+      "context": "28-unified-project-graph/RELATIONSHIPS.md",
+      "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "adr_027",
+      "target": "p004",
       "relation": "governs",
       "context": "28-unified-project-graph/RELATIONSHIPS.md",
       "source_file": "28-unified-project-graph/RELATIONSHIPS.md",
