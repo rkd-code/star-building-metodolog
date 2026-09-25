@@ -17,6 +17,10 @@ Hermes-переписка/
 .zshrc
 __pycache__/
 *.pyc
+*.db
+*.db-wal
+*.db-shm
+17-two-bots-split/storage/
 
 # Graphify: version only canonical deliverables
 graphify-out/*

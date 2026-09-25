@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `db42f9d0f42fe14b64fc85473dc60d5864f6e20224c3816378eb75fd868d4940`
+Отпечаток исходной структуры: `ec2b896a63f50e766fd41bb418a04712ed062b90f452963afe3d97493956a9c2`
 
 ## .git-templates
 
@@ -158,13 +158,14 @@
 | Файл | Назначение |
 |---|---|
 | [`17-two-bots-split/README.md`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/README.md) | 17-two-bots-split: Разделение на 2 независимых бота |
-| [`17-two-bots-split/artifact_exporter.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/artifact_exporter.py) | Модуль экспорта регламентов: генерация автономного HTML и интеграция с Google Docs. Реализует требования договора FN-013: - Детерминированное распознавание намерений экспорта до вызова LLM; - Построение защищённого автономного HTML (UTF-8)  |
+| [`17-two-bots-split/artifact_exporter.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/artifact_exporter.py) | Модуль экспорта регламентов: генерация автономного HTML и интеграция с Google Docs. Реализует требования договора FN-013 и устраненные замечания независимой приёмки: - HIGH-1: Строгая валидация полноты регламента is_complete_regulation (тол |
 | [`17-two-bots-split/bot_1_codifier.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/bot_1_codifier.py) | Бот 1: «Кодификатор регламентов Star Building» (Версия v2.1 с модулем Сверщика) Функционал: 1. Автоматическая сверка нового черновика со ВСЕМИ действующими регламентами (РЕГ-001..010). 2. Выявление противоречий, пересечений сроков и ролей.  |
 | [`17-two-bots-split/bot_2_consultant.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/bot_2_consultant.py) | Бот 2: «Корпоративный консультант Star Building» (Надежная версия v2.0) Улучшения: 1. Память диалога (помнит исходный вопрос, когда пользователь отвечает «Да, сделай шаблон»). 2. Таймауты сети Telegram 60 сек. 3. Поддержка голосовых, фото и |
 | [`17-two-bots-split/bot_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/bot_healthcheck.py) | Проверяет учетные данные, Telegram API и службы двух ботов. |
+| [`17-two-bots-split/requirements.txt`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/requirements.txt) | 17-two-bots-split runtime dependencies (FN-013 / ADR-028) |
 | [`17-two-bots-split/systemd/star-building-codifier.service`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/systemd/star-building-codifier.service) | Файл проекта: star-building-codifier.service. |
 | [`17-two-bots-split/systemd/star-building-consultant.service`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/systemd/star-building-consultant.service) | Файл проекта: star-building-consultant.service. |
-| [`17-two-bots-split/test_bot_1_codifier_export.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/test_bot_1_codifier_export.py) | Обязательные тесты для FN-013: экспорт регламентов в HTML и Google Docs в Смотрителе (@ReglamentSB_bot). 10 обязательных сценариев: 1. complete draft → HTML + send_document 2. incomplete clarification → no export 3. follow-up export → cache |
+| [`17-two-bots-split/test_bot_1_codifier_export.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/test_bot_1_codifier_export.py) | Обязательные тесты для FN-013: экспорт регламентов в HTML и Google Docs в Смотрителе (@ReglamentSB_bot). Тестовое покрытие: - 10 базовых сценариев FN-013 - HIGH-1: Регрессионные тесты is_complete_regulation (строгий порядок, ровно по одному |
 | [`17-two-bots-split/test_bot_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/test_bot_healthcheck.py) | Испытания диагностики двух Telegram-ботов Star Building. |
 
 ## 18-bot-behavior-refinement
@@ -373,3 +374,4 @@
 | [`PROJECT_MAP.md`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/PROJECT_MAP.md) | PROJECT_MAP.md: Архитектурная карта проекта |
 | [`PROJECT_STRUCTURE.md`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/PROJECT_STRUCTURE.md) | Автоматический указатель структуры и назначения файлов. |
 | [`README.md`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/README.md) | Агент «Кодификатор» (Codifier Agent v1.0 MVP) |
+| [`requirements.txt`](https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/requirements.txt) | star-building runtime dependencies (FN-013 / ADR-028) |

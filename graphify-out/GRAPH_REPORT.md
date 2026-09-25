@@ -1,16 +1,16 @@
 # Graph Report - t_a49b4f5b  (2026-09-25)
 
 ## Corpus Check
-- 151 files · ~138,730 words
+- 151 files · ~141,198 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 769 nodes · 952 edges · 128 communities (61 shown, 67 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.88)
+- 812 nodes · 1041 edges · 133 communities (65 shown, 68 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 26 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2c992783`
+- Built from commit: `1a0d83aa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -68,14 +68,14 @@
 - ADR-007 — Сопряжение конфликтов
 - ADR-009 — Версионность документов
 - ADR-012 — Два Telegram-вектора
-- TestArtifactExportContract
+- GoogleDriveAdapter
 - РЕГЛАМЕНТ: Входной контроль и приемка строительных материалов и конструкций на объекте
-- test_bot_1_codifier_export.py
-- Агент «Кодификатор» (Codifier Agent v1.0 MVP)
+- HtmlRenderer
+- README.md
 - Подсценарий 3.1: Попытка кодификации процесса в обход контроля качества (Нарушение REG-001)
 - 2. Тест объяснимости решений (Explainability & Auditability)
 - telegram_bot_service.py
-- ArtifactCache
+- TestBot1CodifierHandlerIntegration
 - bot_2_consultant.py
 - import_pool_001.py
 - ЧАСТЬ 2. Интеграции следующих версий (v2.0+)
@@ -139,18 +139,23 @@
 - card_REG-007_kadrovoe_deloproizvodstvo.md
 - card_REG-008_sistema_motivacii.md
 - card_REG-009_toplivnye_karty.md
+- TestArtifactExportContract
+- PersistentArtifactStore
+- test_bot_1_codifier_export.py
+- FilenameSanitizer
+- Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
 ## God Nodes (most connected - your core abstractions)
 1. `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` - 40 edges
-2. `P-001 — Корпоративная система «Кодификатор» Star Building` - 20 edges
-3. `TestArtifactExportContract` - 18 edges
-4. `R-001 — rkd-code/star-building-metodolog` - 15 edges
-5. `P-002 — Нормативная база Star Building` - 14 edges
-6. `ArtifactCache` - 13 edges
-7. `GoogleDriveAdapter` - 13 edges
-8. `29-employee-testing-service: «Экзаменатор Star Building»` - 13 edges
-9. `ExportService` - 12 edges
-10. `P-009 — Оркестрация Hermes и разработка` - 12 edges
+2. `TestArtifactExportContract` - 37 edges
+3. `PersistentArtifactStore` - 21 edges
+4. `P-001 — Корпоративная система «Кодификатор» Star Building` - 20 edges
+5. `ExportService` - 15 edges
+6. `R-001 — rkd-code/star-building-metodolog` - 15 edges
+7. `is_complete_regulation()` - 14 edges
+8. `P-002 — Нормативная база Star Building` - 14 edges
+9. `GoogleDriveAdapter` - 13 edges
+10. `29-employee-testing-service: «Экзаменатор Star Building»` - 13 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `@ReglamentSB_bot (Watchman)` --calls--> `REG-004: How to Write a Regulation`  [INFERRED]
@@ -183,7 +188,7 @@
 - **Процесс управления персоналом** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_007_kadrovoe_deloproizvodstvo, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_008_sistema_motivacii, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura [INFERRED 0.85]
 - **Кадровые и мотивационные процессы** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_007_kadrovoe_deloproizvodstvo_reglament, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_008_sistema_motivacii_reglament [INFERRED 0.90]
 
-## Communities (128 total, 67 thin omitted)
+## Communities (133 total, 68 thin omitted)
 
 ### Community 0 - "@ReglamentSB_bot (Watchman)"
 Cohesion: 0.17
@@ -199,7 +204,7 @@ Nodes (40): 01-report, 02-tests, 03-data-model, 04-environment, 05-integrations,
 
 ### Community 3 - "export_chat_history.py"
 Cohesion: 0.18
-Nodes (19): atomic_private_write(), clean_session_title(), daterange(), discover_databases(), discover_profiles(), export_history(), main(), Path (+11 more)
+Nodes (19): atomic_private_write(), clean_session_title(), daterange(), discover_databases(), discover_profiles(), export_history(), main(), Connection (+11 more)
 
 ### Community 4 - "29-employee-testing-service: «Экзаменатор Star Building»"
 Cohesion: 0.09
@@ -255,11 +260,11 @@ Nodes (17): build_graph(), build_inventory(), classify_project(), describe_conte
 
 ### Community 20 - "ExportService"
 Cohesion: 0.14
-Nodes (9): CompletedArtifact, ExportService, Хранилище последнего завершённого регламента пользователя., Единый сервис управления артефактами и экспортом регламентов., Проверяет полноту регламента, генерирует HTML, санитизирует имя файла и…, Возвращает последний завершённый регламент пользователя из кэша., Формирует payload для отправки документа в Telegram Bot API., Выполняет экспорт артефакта в Google Docs через адаптер. (+1 more)
+Nodes (10): CompletedArtifact, ExportService, Проверяет полноту регламента, генерирует HTML, санитизирует имя файла и…, Возвращает последний завершённый регламент пользователя из хранилища., Формирует payload для отправки документа в Telegram Bot API., HIGH-2: Идемпотентный экспорт в Google Docs: - Если gdocs_url уже сформирован,…, Хранилище последнего завершённого регламента пользователя., HIGH-2: Единый сервис управления артефактами и идемпотентным экспортом… (+2 more)
 
 ### Community 21 - "bot_1_codifier.py"
-Cohesion: 0.20
-Nodes (11): detect_export_intent(), is_complete_regulation(), Проверяет, содержит ли текст все 5 стандартных разделов регламента Star…, Детерминированно определяет, является ли сообщение пользователя запросом на…, handle_message(), handle_start(), main(), process_draft_request() (+3 more)
+Cohesion: 0.27
+Nodes (8): detect_export_intent(), Детерминированно определяет, является ли сообщение пользователя запросом на…, handle_message(), handle_start(), main(), DEFAULT_TYPE, Update, transcribe_audio()
 
 ### Community 22 - "Модель данных сервиса «Экзаменатор Star Building»"
 Cohesion: 0.12
@@ -269,21 +274,21 @@ Nodes (15): 10. Ограничения целостности, 1. Вопрос, 
 Cohesion: 0.06
 Nodes (60): ADR-027 — Независимые управляемые службы Telegram-ботов, ADR-026 — Обязательная самодокументируемая структура каждого репозитория, D-015 — обязательный стандарт документации репозитория, P-014 — Управление обязательной документацией репозиториев, ADR-024 — Ежедневный архив переписки Hermes, ADR-025 — Безопасный реестр файлов и граф проектной принадлежности, D-013 — правила ежедневного архива переписки Hermes, D-014 — единый табличный реестр рабочих файлов (+52 more)
 
-### Community 53 - "TestArtifactExportContract"
-Cohesion: 0.17
-Nodes (6): GoogleDriveAdapter, Адаптер для экспорта HTML-документа в Google Docs (application/vnd.google-…, Проверяет наличие и доступность файла OAuth-токена., Реальный вызов Google Drive API. Загружает HTML с…, Экспорт HTML в Google Docs с безопасной валидацией URL., TestArtifactExportContract
+### Community 53 - "GoogleDriveAdapter"
+Cohesion: 0.15
+Nodes (6): GoogleDriveAdapter, Атомарное безопасное сохранение файла токена с правами 0600., HIGH-3: Адаптер для экспорта HTML-документа в Google Docs…, Проверяет наличие и строгую безопасность файла OAuth-токена., Реальный вызов Google Drive API. Загружает HTML с…, Экспорт HTML в Google Docs с безопасной валидацией URL.
 
 ### Community 54 - "РЕГЛАМЕНТ: Входной контроль и приемка строительных материалов и конструкций на объекте"
 Cohesion: 0.13
 Nodes (14): 1.1. Назначение, 1.2. Измеримые ключевые показатели (KR), 1. Цель и ключевые результаты (Key Results), 2.1. Контур действия, 2.2. Матрица ответственности (RACI), 2. Область применения и роли, 3. Пошаговый алгоритм выполнения, 4. Контроль и точки аудита (+6 more)
 
-### Community 55 - "test_bot_1_codifier_export.py"
-Cohesion: 0.20
-Nodes (8): FilenameSanitizer, GoogleDocExportResult, HtmlRenderer, Безопасная санитизация и ограничение длины имени файлов экспорта., Генерация автономного защищенного HTML-документа регламента., Безопасное преобразование Markdown в HTML с обязательным экранированием., Сборка полного автономного HTML-документа., Результат экспорта в Google Docs.
+### Community 55 - "HtmlRenderer"
+Cohesion: 0.29
+Nodes (4): HtmlRenderer, Генерация автономного защищенного HTML-документа регламента., Безопасное преобразование Markdown в HTML с обязательным экранированием., Сборка полного автономного HTML-документа.
 
-### Community 56 - "Агент «Кодификатор» (Codifier Agent v1.0 MVP)"
-Cohesion: 0.15
-Nodes (9): Указатель документации, Контекст проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP), Обязательный порядок знакомства, Агент «Кодификатор» (Codifier Agent v1.0 MVP), ⚙️ Архитектурные принципы v1.0 (MVP), 🚦 Критерии готовности (Definition of Done), Обязательный контекст проекта, 📁 Структура репозитория (+1 more)
+### Community 56 - "README.md"
+Cohesion: 0.29
+Nodes (3): Указатель документации, Контекст проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP), Обязательный порядок знакомства
 
 ### Community 57 - "Подсценарий 3.1: Попытка кодификации процесса в обход контроля качества (Нарушение REG-001)"
 Cohesion: 0.18
@@ -296,10 +301,6 @@ Nodes (10): 1.1. Процедура тестирования, 1.2. Критер�
 ### Community 59 - "telegram_bot_service.py"
 Cohesion: 0.36
 Nodes (7): handle_message(), handle_start(), main(), process_user_request(), DEFAULT_TYPE, Update, transcribe_audio()
-
-### Community 60 - "ArtifactCache"
-Cohesion: 0.22
-Nodes (4): ArtifactCache, Ограниченный LRU-кэш последних завершённых регламентов пользователей., Интеграционные тесты обработчика handle_message в bot_1_codifier., TestBot1CodifierHandlerIntegration
 
 ### Community 61 - "bot_2_consultant.py"
 Cohesion: 0.36
@@ -413,25 +414,45 @@ Nodes (3): 1. Матрица ролей пользователей систем�
 Cohesion: 0.50
 Nodes (3): Инструкция для Ветки 2: «Вопросы и консультации», Формат обращения сотрудника, Формат ответа агента (3 обязательных элемента):
 
+### Community 128 - "TestArtifactExportContract"
+Cohesion: 0.13
+Nodes (3): is_complete_regulation(), HIGH-1: Строгая проверка полноты регламента: - Присутствуют только 5 точных…, TestArtifactExportContract
+
+### Community 129 - "PersistentArtifactStore"
+Cohesion: 0.18
+Nodes (8): PersistentArtifactStore, Connection, Path, HIGH-4: Долговечное атомарное хранилище артефактов на базе SQLite: -…, Возвращает последний завершённый регламент пользователя. Fail-closed при ошибке., Сохраняет или обновляет артефакт пользователя с соблюдением лимита max_users., Атомарно обновляет Google Docs URL для артефакта пользователя., setter
+
+### Community 130 - "test_bot_1_codifier_export.py"
+Cohesion: 0.31
+Nodes (7): GoogleDocExportResult, OAuthTokenSecurityError, OAuthTokenValidator, HIGH-3: Строгая проверка безопасности пути и файла OAuth-токена: - lstat без…, Исключение при нарушении безопасности пути или прав доступа OAuth токена., Результат экспорта в Google Docs., Exception
+
+### Community 131 - "FilenameSanitizer"
+Cohesion: 0.42
+Nodes (4): FilenameSanitizer, Безопасная санитизация, ограничение длины и контроль расположения файлов…, MEDIUM-1: Проверка нахождения целевого пути строго внутри базового каталога.…, process_draft_request()
+
+### Community 132 - "Агент «Кодификатор» (Codifier Agent v1.0 MVP)"
+Cohesion: 0.33
+Nodes (6): Агент «Кодификатор» (Codifier Agent v1.0 MVP), ⚙️ Архитектурные принципы v1.0 (MVP), 🚦 Критерии готовности (Definition of Done), Обязательный контекст проекта, 📁 Структура репозитория, 🎯 Цели и ключевая ценность
+
 ## Knowledge Gaps
 - **330 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `Контекст Hermes`, `Текст черновика:`, `1.1. Назначение` (+325 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **67 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **68 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` connect `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` to `Агент «Кодификатор» (Codifier Agent v1.0 MVP)`?**
+- **Why does `TestArtifactExportContract` connect `TestArtifactExportContract` to `PersistentArtifactStore`, `test_bot_1_codifier_export.py`, `FilenameSanitizer`, `ExportService`, `GoogleDriveAdapter`, `bot_1_codifier.py`, `HtmlRenderer`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `PersistentArtifactStore` connect `PersistentArtifactStore` to `TestArtifactExportContract`, `test_bot_1_codifier_export.py`, `ExportService`, `HtmlRenderer`, `TestBot1CodifierHandlerIntegration`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Why does `TestArtifactExportContract` connect `TestArtifactExportContract` to `bot_1_codifier.py`, `ArtifactCache`, `ExportService`, `test_bot_1_codifier_export.py`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Are the 6 inferred relationships involving `TestArtifactExportContract` (e.g. with `ArtifactCache` and `CompletedArtifact`) actually correct?**
-  _`TestArtifactExportContract` has 6 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` connect `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` to `README.md`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Are the 7 inferred relationships involving `TestArtifactExportContract` (e.g. with `CompletedArtifact` and `ExportService`) actually correct?**
+  _`TestArtifactExportContract` has 7 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 2 inferred relationships involving `PersistentArtifactStore` (e.g. with `TestArtifactExportContract` and `TestBot1CodifierHandlerIntegration`) actually correct?**
+  _`PersistentArtifactStore` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `register_project.sh script`, `setup_profiles.sh script`, `Контекст Hermes` to the rest of the system?**
   _330 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` be split into smaller, more focused modules?**
   _Cohesion score 0.05 - nodes in this community are weakly interconnected._
-- **Should `29-employee-testing-service: «Экзаменатор Star Building»` be split into smaller, more focused modules?**
-  _Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected._
-- **Should `TC-02: Приёмочные сценарии «Граничные ситуации» (Edge Cases)` be split into smaller, more focused modules?**
-  _Cohesion score 0.1111111111111111 - nodes in this community are weakly interconnected._

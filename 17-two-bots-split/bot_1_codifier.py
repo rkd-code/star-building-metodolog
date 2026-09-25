@@ -38,6 +38,7 @@ import pypdf
 
 from artifact_exporter import (
     ExportService,
+    FilenameSanitizer,
     detect_export_intent,
     is_complete_regulation,
 )
@@ -191,11 +192,18 @@ async def process_draft_request(user_text: str, author_name: str, user_id: int, 
             export_service.register_completed_regulation(user_id, author_name, answer)
             repo_root = Path(__file__).resolve().parent.parent
             in_work_dir = repo_root / "knowledge_base/01_В_РАБОТЕ" if (repo_root / "knowledge_base/01_В_РАБОТЕ").exists() else Path("/home/roman/knowledge_base/01_В_РАБОТЕ")
+            in_work_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"draft_{author_name.replace(' ', '_')}_{timestamp}.md"
-            draft_path = in_work_dir / filename
+            sanitized_author = FilenameSanitizer.sanitize_base_name(author_name, max_length=32) or "user"
+            draft_filename = FilenameSanitizer.sanitize(
+                f"draft_{sanitized_author}_{timestamp}",
+                default_prefix="draft",
+                suffix=".md",
+                max_length=64,
+            )
+            draft_path = FilenameSanitizer.verify_path_containment(in_work_dir, in_work_dir / draft_filename)
             draft_path.write_text(answer, encoding="utf-8")
-            logger.info(f"Черновик сохранен в 01_В_РАБОТЕ: {filename}")
+            logger.info(f"Черновик сохранен в 01_В_РАБОТЕ: {draft_filename}")
         except Exception as e:
             logger.error(f"Ошибка сохранения черновика: {e}")
 

@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "feat/fn-013-html-gdocs-export",
-  "source_tree_hash": "db42f9d0f42fe14b64fc85473dc60d5864f6e20224c3816378eb75fd868d4940",
+  "source_tree_hash": "ec2b896a63f50e766fd41bb418a04712ed062b90f452963afe3d97493956a9c2",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -475,7 +475,7 @@
       "path": "17-two-bots-split/artifact_exporter.py",
       "name": "artifact_exporter.py",
       "area": "17-two-bots-split",
-      "description": "Модуль экспорта регламентов: генерация автономного HTML и интеграция с Google Docs. Реализует требования договора FN-013: - Детерминированное распознавание намерений экспорта до вызова LLM; - Построение защищённого автономного HTML (UTF-8) ",
+      "description": "Модуль экспорта регламентов: генерация автономного HTML и интеграция с Google Docs. Реализует требования договора FN-013 и устраненные замечания независимой приёмки: - HIGH-1: Строгая валидация полноты регламента is_complete_regulation (тол",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/artifact_exporter.py"
     },
     {
@@ -500,6 +500,13 @@
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/bot_healthcheck.py"
     },
     {
+      "path": "17-two-bots-split/requirements.txt",
+      "name": "requirements.txt",
+      "area": "17-two-bots-split",
+      "description": "17-two-bots-split runtime dependencies (FN-013 / ADR-028)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/requirements.txt"
+    },
+    {
       "path": "17-two-bots-split/systemd/star-building-codifier.service",
       "name": "star-building-codifier.service",
       "area": "17-two-bots-split",
@@ -517,7 +524,7 @@
       "path": "17-two-bots-split/test_bot_1_codifier_export.py",
       "name": "test_bot_1_codifier_export.py",
       "area": "17-two-bots-split",
-      "description": "Обязательные тесты для FN-013: экспорт регламентов в HTML и Google Docs в Смотрителе (@ReglamentSB_bot). 10 обязательных сценариев: 1. complete draft → HTML + send_document 2. incomplete clarification → no export 3. follow-up export → cache",
+      "description": "Обязательные тесты для FN-013: экспорт регламентов в HTML и Google Docs в Смотрителе (@ReglamentSB_bot). Тестовое покрытие: - 10 базовых сценариев FN-013 - HIGH-1: Регрессионные тесты is_complete_regulation (строгий порядок, ровно по одному",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/17-two-bots-split/test_bot_1_codifier_export.py"
     },
     {
@@ -1254,6 +1261,13 @@
       "area": "knowledge_base",
       "description": "03_ПРИЕМ_ЧЕРНОВИКОВ: Входной накопитель черновиков",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/knowledge_base/03_%D0%9F%D0%A0%D0%98%D0%95%D0%9C_%D0%A7%D0%95%D0%A0%D0%9D%D0%9E%D0%92%D0%98%D0%9A%D0%9E%D0%92/README.md"
+    },
+    {
+      "path": "requirements.txt",
+      "name": "requirements.txt",
+      "area": "Корень репозитория",
+      "description": "star-building runtime dependencies (FN-013 / ADR-028)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/feat%2Ffn-013-html-gdocs-export/requirements.txt"
     },
     {
       "path": "tools/ensure_repo_docs.py",
