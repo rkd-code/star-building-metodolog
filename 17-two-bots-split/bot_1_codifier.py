@@ -19,6 +19,9 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
 
+# Гарантируем импорт модулей из текущего каталога
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -33,6 +36,12 @@ import faster_whisper
 import docx
 import pypdf
 
+from artifact_exporter import (
+    ExportService,
+    detect_export_intent,
+    is_complete_regulation,
+)
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -44,16 +53,26 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TOKEN = os.environ.get("STAR_BUILDING_CODIFIER_BOT_TOKEN")
 
-api_key = None
-with open('/home/roman/.hermes/.env') as f:
-    for line in f:
-        if line.startswith('GEMINI_API_KEY=') or line.startswith('GOOGLE_API_KEY='):
-            api_key = line.split('=', 1)[1].strip()
-            break
+api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+if not api_key and os.path.exists('/home/roman/.hermes/.env'):
+    try:
+        with open('/home/roman/.hermes/.env') as f:
+            for line in f:
+                if line.startswith('GEMINI_API_KEY=') or line.startswith('GOOGLE_API_KEY='):
+                    api_key = line.split('=', 1)[1].strip()
+                    break
+    except Exception as e:
+        logger.warning(f"Не удалось прочитать .hermes/.env: {e}")
 
-ai_client = genai.Client(api_key=api_key)
+ai_client = None
+if api_key:
+    try:
+        ai_client = genai.Client(api_key=api_key)
+    except Exception as e:
+        logger.warning(f"Не удалось инициализировать GenAI client: {e}")
 
 user_histories = defaultdict(list)
+export_service = ExportService()
 
 stt_model = None
 def get_stt():
@@ -64,7 +83,8 @@ def get_stt():
     return stt_model
 
 def load_kb_context():
-    kb_path = Path("/home/roman/knowledge_base")
+    repo_root = Path(__file__).resolve().parent.parent
+    kb_path = repo_root / "knowledge_base" if (repo_root / "knowledge_base").exists() else Path("/home/roman/knowledge_base")
     cards = []
     cards_dir = kb_path / "01_КАРТОЧКИ"
     if cards_dir.exists():
@@ -77,7 +97,7 @@ def load_kb_context():
         reestr_text = reestr_file.read_text(encoding="utf-8")
 
     instructions = ""
-    inst_file = Path("/home/roman/04-environment/custom_instructions.md")
+    inst_file = repo_root / "04-environment/custom_instructions.md" if (repo_root / "04-environment/custom_instructions.md").exists() else Path("/home/roman/04-environment/custom_instructions.md")
     if inst_file.exists():
         instructions = inst_file.read_text(encoding="utf-8")
         
@@ -156,20 +176,24 @@ async def process_draft_request(user_text: str, author_name: str, user_id: int, 
                 model="gemini-3.7-flash",
                 contents=base_prompt
             )
-        return resp.text
+        answer = resp.text or ""
+        return answer
 
-    answer = await loop.run_in_executor(None, _call_ai)
+    answer: str = await loop.run_in_executor(None, _call_ai)
     
     history.append(f"Автор ({author_name}): {user_text}")
     history.append(f"Кодификатор: {answer}")
     if len(history) > 12:
         user_histories[user_id] = history[-10:]
 
-    if "## 1." in answer and "## 2." in answer and "## 3." in answer:
+    if is_complete_regulation(answer):
         try:
+            export_service.register_completed_regulation(user_id, author_name, answer)
+            repo_root = Path(__file__).resolve().parent.parent
+            in_work_dir = repo_root / "knowledge_base/01_В_РАБОТЕ" if (repo_root / "knowledge_base/01_В_РАБОТЕ").exists() else Path("/home/roman/knowledge_base/01_В_РАБОТЕ")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"draft_{author_name.replace(' ', '_')}_{timestamp}.md"
-            draft_path = Path("/home/roman/knowledge_base/01_В_РАБОТЕ") / filename
+            draft_path = in_work_dir / filename
             draft_path.write_text(answer, encoding="utf-8")
             logger.info(f"Черновик сохранен в 01_В_РАБОТЕ: {filename}")
         except Exception as e:
@@ -249,6 +273,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await handle_start(update, context)
                 return
 
+        # Детерминированное распознавание запроса на экспорт до LLM
+        if text_content and not image_bytes and detect_export_intent(text_content):
+            cached = export_service.get_last_artifact(user_id)
+            if cached:
+                payload = export_service.get_telegram_document_payload(cached)
+                await msg.reply_document(
+                    document=payload["document"],
+                    filename=payload["filename"],
+                    caption=payload["caption"],
+                )
+                gdocs_res = export_service.export_to_google_docs(cached)
+                if gdocs_res.success and gdocs_res.doc_url:
+                    await msg.reply_text(
+                        f"🌐 **Google Docs:** {gdocs_res.doc_url}\nДокумент доступен для онлайн-согласования и редактирования.",
+                        parse_mode="Markdown",
+                    )
+                else:
+                    await msg.reply_text(f"ℹ️ {gdocs_res.message}")
+            else:
+                await msg.reply_text(
+                    "ℹ️ У вас пока нет сохранённого завершённого регламента для выгрузки. Пожалуйста, отправьте черновик регламента для кодификации."
+                )
+            return
+
         if not text_content and not image_bytes:
             await msg.reply_text("Пожалуйста, отправьте текст, голосовое сообщение, файл документа или фото черновика.")
             return
@@ -262,6 +310,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await msg.reply_text(chunk, parse_mode="Markdown")
             except Exception:
                 await msg.reply_text(chunk)
+
+        # Автоматическая выдача артефакта при завершении пятираздельного регламента
+        if is_complete_regulation(reply_text):
+            artifact = export_service.get_last_artifact(user_id)
+            if not artifact:
+                artifact = export_service.register_completed_regulation(user_id, author_name, reply_text)
+            if artifact:
+                payload = export_service.get_telegram_document_payload(artifact)
+                await msg.reply_document(
+                    document=payload["document"],
+                    filename=payload["filename"],
+                    caption=payload["caption"],
+                )
+                gdocs_res = export_service.export_to_google_docs(artifact)
+                if gdocs_res.success and gdocs_res.doc_url:
+                    await msg.reply_text(
+                        f"🌐 **Google Docs:** {gdocs_res.doc_url}\nДокумент доступен для онлайн-согласования и редактирования.",
+                        parse_mode="Markdown",
+                    )
+                else:
+                    await msg.reply_text(f"ℹ️ {gdocs_res.message}")
 
     except Exception as e:
         logger.error(f"Глобальная ошибка обработчика: {e}", exc_info=True)
