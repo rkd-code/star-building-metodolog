@@ -1,0 +1,1185 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "hermes-agent",
+  "elements": [
+    {
+      "type": "ellipse",
+      "id": "core",
+      "x": 700,
+      "y": 430,
+      "width": 330,
+      "height": 150,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": null,
+      "boundElements": [
+        {
+          "id": "t_core",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_core",
+      "x": 710,
+      "y": 440,
+      "width": 310,
+      "height": 130,
+      "text": "500 тонн в месяц\nЕдиная коммерческо-производственная система",
+      "fontSize": 20,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "core",
+      "originalText": "500 тонн в месяц\nЕдиная коммерческо-производственная система",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "b0",
+      "x": 80,
+      "y": 80,
+      "width": 360,
+      "height": 175,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#ffc9c9",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_b0",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_b0",
+      "x": 90,
+      "y": 90,
+      "width": 340,
+      "height": 155,
+      "text": "Производство\n\n600 т по слотам\nАудит мощности\nПерсонал и сменность",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "b0",
+      "originalText": "Производство\n\n600 т по слотам\nАудит мощности\nПерсонал и сменность",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a0",
+      "x": 865,
+      "y": 505,
+      "width": -605,
+      "height": -338,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -605,
+          -338
+        ]
+      ],
+      "strokeColor": "#495057",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "core",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "b0",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "b1",
+      "x": 700,
+      "y": 40,
+      "width": 360,
+      "height": 175,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_b1",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_b1",
+      "x": 710,
+      "y": 50,
+      "width": 340,
+      "height": 155,
+      "text": "Коммерческий отдел\n\nКомдир / РОП\nВедущий и новый менеджер\nТендеры / Астана",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "b1",
+      "originalText": "Коммерческий отдел\n\nКомдир / РОП\nВедущий и новый менеджер\nТендеры / Астана",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a1",
+      "x": 865,
+      "y": 505,
+      "width": 15,
+      "height": -378,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          15,
+          -378
+        ]
+      ],
+      "strokeColor": "#495057",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "core",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "b1",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "b2",
+      "x": 1320,
+      "y": 80,
+      "width": 360,
+      "height": 175,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_b2",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_b2",
+      "x": 1330,
+      "y": 90,
+      "width": 340,
+      "height": 155,
+      "text": "Продажи\n\nБитрикс24\nВоронка 1000–2000 т\n9–10 побед/мес",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "b2",
+      "originalText": "Продажи\n\nБитрикс24\nВоронка 1000–2000 т\n9–10 побед/мес",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a2",
+      "x": 865,
+      "y": 505,
+      "width": 635,
+      "height": -338,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          635,
+          -338
+        ]
+      ],
+      "strokeColor": "#495057",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "core",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "b2",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "b3",
+      "x": 80,
+      "y": 740,
+      "width": 360,
+      "height": 175,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_b3",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_b3",
+      "x": 90,
+      "y": 750,
+      "width": 340,
+      "height": 155,
+      "text": "Маркетинг\n\nДва бренда\nКейсы и партнёры\nB2B/B2G-просвещение",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "b3",
+      "originalText": "Маркетинг\n\nДва бренда\nКейсы и партнёры\nB2B/B2G-просвещение",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a3",
+      "x": 865,
+      "y": 505,
+      "width": -605,
+      "height": 322,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -605,
+          322
+        ]
+      ],
+      "strokeColor": "#495057",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "core",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "b3",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "b4",
+      "x": 700,
+      "y": 800,
+      "width": 360,
+      "height": 175,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_b4",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_b4",
+      "x": 710,
+      "y": 810,
+      "width": 340,
+      "height": 155,
+      "text": "ИИ\n\nChatGPT / Claude\nMidjourney / Recraft\nWhisper / видео / n8n",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "b4",
+      "originalText": "ИИ\n\nChatGPT / Claude\nMidjourney / Recraft\nWhisper / видео / n8n",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a4",
+      "x": 865,
+      "y": 505,
+      "width": 15,
+      "height": 382,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          15,
+          382
+        ]
+      ],
+      "strokeColor": "#495057",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "core",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "b4",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "b5",
+      "x": 1320,
+      "y": 740,
+      "width": 360,
+      "height": 175,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_b5",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_b5",
+      "x": 1330,
+      "y": 750,
+      "width": 340,
+      "height": 155,
+      "text": "2027\n\nАстана\nГосбазы и тендеры\nПилотный объект",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "b5",
+      "originalText": "2027\n\nАстана\nГосбазы и тендеры\nПилотный объект",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a5",
+      "x": 865,
+      "y": 505,
+      "width": 635,
+      "height": 322,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          635,
+          322
+        ]
+      ],
+      "strokeColor": "#495057",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "core",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "b5",
+        "fixedPoint": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "f0",
+      "x": 255,
+      "y": 1080,
+      "width": 160,
+      "height": 70,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_f0",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_f0",
+      "x": 265,
+      "y": 1090,
+      "width": 140,
+      "height": 50,
+      "text": "Спрос",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "f0",
+      "originalText": "Спрос",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "f1",
+      "x": 495,
+      "y": 1080,
+      "width": 160,
+      "height": 70,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_f1",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_f1",
+      "x": 505,
+      "y": 1090,
+      "width": 140,
+      "height": 50,
+      "text": "Договор",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "f1",
+      "originalText": "Договор",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "fa1",
+      "x": 415,
+      "y": 1115,
+      "width": 80,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ],
+      "strokeColor": "#0f766e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "f2",
+      "x": 735,
+      "y": 1080,
+      "width": 160,
+      "height": 70,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_f2",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_f2",
+      "x": 745,
+      "y": 1090,
+      "width": 140,
+      "height": 50,
+      "text": "Слот",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "f2",
+      "originalText": "Слот",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "fa2",
+      "x": 655,
+      "y": 1115,
+      "width": 80,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ],
+      "strokeColor": "#0f766e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "f3",
+      "x": 975,
+      "y": 1080,
+      "width": 160,
+      "height": 70,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_f3",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_f3",
+      "x": 985,
+      "y": 1090,
+      "width": 140,
+      "height": 50,
+      "text": "Производство",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "f3",
+      "originalText": "Производство",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "fa3",
+      "x": 895,
+      "y": 1115,
+      "width": 80,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ],
+      "strokeColor": "#0f766e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "f4",
+      "x": 1215,
+      "y": 1080,
+      "width": 160,
+      "height": 70,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_f4",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_f4",
+      "x": 1225,
+      "y": 1090,
+      "width": 140,
+      "height": 50,
+      "text": "Отгрузка",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "f4",
+      "originalText": "Отгрузка",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "fa4",
+      "x": 1135,
+      "y": 1115,
+      "width": 80,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ],
+      "strokeColor": "#0f766e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "f5",
+      "x": 1455,
+      "y": 1080,
+      "width": 160,
+      "height": 70,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_f5",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_f5",
+      "x": 1465,
+      "y": 1090,
+      "width": 140,
+      "height": 50,
+      "text": "Оплата",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "f5",
+      "originalText": "Оплата",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "fa5",
+      "x": 1375,
+      "y": 1115,
+      "width": 80,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ],
+      "strokeColor": "#0f766e",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "rectangle",
+      "id": "c0",
+      "x": 110,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c0",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c0",
+      "x": 120,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "Аудит\n10 дней",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c0",
+      "originalText": "Аудит\n10 дней",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "c1",
+      "x": 315,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c1",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c1",
+      "x": 325,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "Комитет\nеженедельно",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c1",
+      "originalText": "Комитет\nеженедельно",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "c2",
+      "x": 520,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c2",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c2",
+      "x": 530,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "План\n13/8/4/1",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c2",
+      "originalText": "План\n13/8/4/1",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "c3",
+      "x": 725,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c3",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c3",
+      "x": 735,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "Качество\n≥90% плана",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c3",
+      "originalText": "Качество\n≥90% плана",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "c4",
+      "x": 930,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c4",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c4",
+      "x": 940,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "Воронка\nдо 2000 т",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c4",
+      "originalText": "Воронка\nдо 2000 т",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "c5",
+      "x": 1135,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c5",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c5",
+      "x": 1145,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "Астана\n1500 т",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c5",
+      "originalText": "Астана\n1500 т",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "c6",
+      "x": 1340,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c6",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c6",
+      "x": 1350,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "B2G\nтехпакет",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c6",
+      "originalText": "B2G\nтехпакет",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "c7",
+      "x": 1545,
+      "y": 1270,
+      "width": 170,
+      "height": 82,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "opacity": 100,
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "t_c7",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_c7",
+      "x": 1555,
+      "y": 1280,
+      "width": 150,
+      "height": 62,
+      "text": "Панель\nтонн и маржи",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "c7",
+      "originalText": "Панель\nтонн и маржи",
+      "autoResize": true
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff"
+  }
+}

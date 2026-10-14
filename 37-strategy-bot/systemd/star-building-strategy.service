@@ -1,0 +1,20 @@
+[Unit]
+Description=Star Building — Драмкнот (стратегический штаб)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/roman/37-strategy-bot
+EnvironmentFile=/home/roman/.config/star-building/strategy-bot.env
+ExecStart=/srv/hermes-agent/venv/bin/python3 /home/roman/37-strategy-bot/strategy_bot.py
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=/home/roman/35-commercial-marketing-strategy /home/roman/36-marketing-budget-2026
+
+[Install]
+WantedBy=default.target
