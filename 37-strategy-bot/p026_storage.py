@@ -25,6 +25,99 @@ class PathTraversalError(ValueError):
 class JournalCorruptionError(RuntimeError):
     """Исключение при синтаксическом или структурном повреждении журнала решений."""
 
+ALLOWED_DECISION_STATUSES = {"active", "archived", "superseded"}
+
+def validate_ownership_id(val: Any, field_name: str = "user_id") -> int | None:
+    """Строгая типизация идентификаторов актора и чата Telegram:
+    Исключает bool (в Python bool является подклассом int: True == 1).
+    Разрешает положительные user ID и отрицательные chat ID (-100...).
+    """
+    if val is None:
+        return None
+    if type(val) is not int or isinstance(val, bool):
+        raise ValueError(f"Поле {field_name} должно быть целым числом (int) и не может быть bool: {val!r}")
+    return val
+
+def validate_iso8601_timestamp(ts: Any) -> str:
+    """Строгая валидация формата timestamp:
+    Требует полный ISO-8601 с датой, временем и явным часовым поясом (timezone offset).
+    Date-only (2026-10-15) и naive timestamps без таймзоны отклоняются.
+    """
+    if not isinstance(ts, str) or not ts.strip():
+        raise ValueError("timestamp должен быть непустой строкой")
+    ts_clean = ts.strip()
+    if "T" not in ts_clean and " " not in ts_clean:
+        raise ValueError(f"timestamp '{ts_clean}' должен содержать дату и время, разделенные 'T' или пробелом")
+    try:
+        dt = datetime.datetime.fromisoformat(ts_clean.replace("Z", "+00:00"))
+    except Exception as err:
+        raise ValueError(f"Невалидный ISO-8601 timestamp '{ts_clean}': {err}") from err
+    if dt.tzinfo is None:
+        raise ValueError(f"timestamp '{ts_clean}' должен содержать явный часовой пояс (timezone offset)")
+    return ts_clean
+
+def validate_decision_record(
+    item: Any,
+    idx: int | None = None,
+    seen_ids: set[str] | None = None,
+) -> dict[str, Any]:
+    """Единый канонический валидатор записей решений для чтения и записи.
+    Обеспечивает fail-closed валидацию обязательных полей, разрешение алиасов
+    и запрет конфликтующих значений.
+    """
+    prefix = f"Запись #{idx}: " if idx is not None else "Запись решения: "
+    if not isinstance(item, dict):
+        raise ValueError(f"{prefix}не является объектом словаря")
+
+    # Проверка конфликтующих канонических полей и устаревших алиасов
+    if "id" in item and "decision_id" in item and item["id"] != item["decision_id"]:
+        raise ValueError(f"{prefix}конфликт канонического поля 'id' ('{item['id']}') и устаревшего алиаса 'decision_id' ('{item['decision_id']}')")
+    raw_id = item.get("id") if "id" in item else item.get("decision_id")
+    if not raw_id or not isinstance(raw_id, str) or not raw_id.strip():
+        raise ValueError(f"{prefix}не содержит строкового идентификатора решения ('id')")
+    item_id = raw_id.strip()
+    if seen_ids is not None:
+        if item_id in seen_ids:
+            raise ValueError(f"{prefix}содержит дублирующийся идентификатор решения '{item_id}'")
+        seen_ids.add(item_id)
+
+    if "question_context" in item and "context" in item and item["question_context"] != item["context"]:
+        raise ValueError(f"{prefix}конфликт канонического поля 'question_context' и алиаса 'context'")
+    raw_ctx = item.get("question_context") if "question_context" in item else item.get("context")
+    if raw_ctx is None or not isinstance(raw_ctx, str) or not raw_ctx.strip():
+        raise ValueError(f"{prefix}не содержит строкового поля контекста ('question_context')")
+
+    if "exact_text" in item and "text" in item and item["exact_text"] != item["text"]:
+        raise ValueError(f"{prefix}конфликт канонического поля 'exact_text' и алиаса 'text'")
+    raw_txt = item.get("exact_text") if "exact_text" in item else item.get("text")
+    if raw_txt is None or not isinstance(raw_txt, str) or not raw_txt.strip():
+        raise ValueError(f"{prefix}не содержит содержательного текста решения ('exact_text')")
+
+    ts = validate_iso8601_timestamp(item.get("timestamp"))
+
+    status = item.get("status", "active")
+    if not status or not isinstance(status, str) or status not in ALLOWED_DECISION_STATUSES:
+        raise ValueError(f"{prefix}содержит недопустимый статус '{status}'. Разрешены: {sorted(ALLOWED_DECISION_STATUSES)}")
+
+    author = item.get("author")
+    if author is not None and not isinstance(author, str):
+        raise ValueError(f"{prefix}автор должен быть строкой")
+    author_str = author.strip() if (isinstance(author, str) and author.strip()) else "Руководитель"
+
+    user_id = validate_ownership_id(item.get("user_id"), "user_id")
+    chat_id = validate_ownership_id(item.get("chat_id"), "chat_id")
+
+    return {
+        "id": item_id,
+        "timestamp": ts,
+        "author": author_str,
+        "user_id": user_id,
+        "chat_id": chat_id,
+        "question_context": raw_ctx.strip(),
+        "exact_text": raw_txt.strip(),
+        "status": status,
+    }
+
 
 def get_default_storage_dir() -> Path:
     """Определяет базовый путь хранилища с поддержкой systemd STATE_DIRECTORY."""
@@ -254,63 +347,10 @@ class P026Storage:
 
             normalized_list: list[dict[str, Any]] = []
             seen_ids: set[str] = set()
-            allowed_statuses = {"active", "archived", "superseded"}
 
             for idx, item in enumerate(data):
-                if not isinstance(item, dict):
-                    raise ValueError(f"Запись #{idx} не является объектом словаря")
-
-                raw_id = item.get("id") or item.get("decision_id")
-                if not raw_id or not isinstance(raw_id, str) or not raw_id.strip():
-                    raise ValueError(f"Запись #{idx} не содержит строкового идентификатора решения ('id')")
-                item_id = raw_id.strip()
-                if item_id in seen_ids:
-                    raise ValueError(f"Запись #{idx} содержит дублирующийся идентификатор решения '{item_id}'")
-                seen_ids.add(item_id)
-
-                ts = item.get("timestamp")
-                if not ts or not isinstance(ts, str):
-                    raise ValueError(f"Запись #{idx} не содержит корректного timestamp")
-                # Строгая валидация формата ISO-8601 даты/времени
-                try:
-                    datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                except Exception as ts_err:
-                    raise ValueError(f"Запись #{idx} содержит невалидный ISO-8601 timestamp '{ts}': {ts_err}") from ts_err
-
-                ctx = item.get("question_context") or item.get("context")
-                if ctx is None or not isinstance(ctx, str) or not ctx.strip():
-                    raise ValueError(f"Запись #{idx} не содержит строкового поля контекста")
-
-                txt = item.get("exact_text") or item.get("text")
-                if txt is None or not isinstance(txt, str) or not txt.strip():
-                    raise ValueError(f"Запись #{idx} не содержит содержательного текста решения")
-
-                status = item.get("status", "active")
-                if not status or not isinstance(status, str) or status not in allowed_statuses:
-                    raise ValueError(f"Запись #{idx} содержит недопустимый статус '{status}'")
-
-                author = item.get("author") or "Руководитель"
-                if not isinstance(author, str):
-                    author = "Руководитель"
-
-                user_id = item.get("user_id")
-                if user_id is not None and not isinstance(user_id, int):
-                    raise ValueError(f"Запись #{idx} содержит некорректный user_id")
-
-                chat_id = item.get("chat_id")
-                if chat_id is not None and not isinstance(chat_id, int):
-                    raise ValueError(f"Запись #{idx} содержит некорректный chat_id")
-
-                normalized_list.append({
-                    "id": item_id,
-                    "timestamp": ts,
-                    "author": author,
-                    "user_id": user_id,
-                    "chat_id": chat_id,
-                    "question_context": ctx.strip(),
-                    "exact_text": txt.strip(),
-                    "status": status,
-                })
+                norm_item = validate_decision_record(item, idx=idx, seen_ids=seen_ids)
+                normalized_list.append(norm_item)
 
             return normalized_list
         except Exception as err:
@@ -334,26 +374,30 @@ class P026Storage:
     ) -> dict[str, Any]:
         """Фиксирует точное решение владельца в журнале с сериализацией и изоляцией."""
         self._ensure_dirs()
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         with self._exclusive_lock(self.decisions_lock_file):
             current = self._read_decisions_raw()
+            seen_ids = {r["id"] for r in current}
             now = datetime.datetime.now(datetime.timezone.utc).isoformat()
             ts_micro = int(datetime.datetime.now().timestamp() * 1_000_000)
             next_num = len(current) + 1
             decision_id = f"dec_{next_num}_{ts_micro}"
 
-            record = {
+            candidate = {
                 "id": decision_id,
                 "timestamp": now,
                 "author": author,
                 "user_id": user_id,
                 "chat_id": chat_id,
-                "question_context": question_context.strip(),
-                "exact_text": exact_text.strip(),
+                "question_context": question_context.strip() if isinstance(question_context, str) else "",
+                "exact_text": exact_text.strip() if isinstance(exact_text, str) else "",
                 "status": status,
             }
-            current.append(record)
+            validated_record = validate_decision_record(candidate, seen_ids=seen_ids)
+            current.append(validated_record)
             self._write_json_atomic(self.decisions_file, current)
-            return record
+            return validated_record
 
     def list_decisions(
         self,
@@ -363,15 +407,21 @@ class P026Storage:
     ) -> list[dict[str, Any]]:
         """Возвращает список решений со строгой actor/chat фильтрацией."""
         self._ensure_dirs()
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         with self._exclusive_lock(self.decisions_lock_file):
             items = self._read_decisions_raw()
 
         results = []
         for item in items:
-            if user_id is not None and item.get("user_id") != user_id:
-                continue
-            if chat_id is not None and item.get("chat_id") != chat_id:
-                continue
+            item_uid = item.get("user_id")
+            if user_id is not None:
+                if type(item_uid) is not int or isinstance(item_uid, bool) or item_uid != user_id:
+                    continue
+            item_cid = item.get("chat_id")
+            if chat_id is not None:
+                if type(item_cid) is not int or isinstance(item_cid, bool) or item_cid != chat_id:
+                    continue
             if status is not None and item.get("status") != status:
                 continue
             results.append(item)
@@ -387,6 +437,8 @@ class P026Storage:
     ) -> dict[str, Any]:
         """Сохраняет версионный рабочий черновик с защитой от коллизий и перезаписи."""
         self._ensure_dirs()
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         safe_name = self._validate_safe_name(doc_name)
 
         with self._exclusive_lock(self.drafts_lock_file):
@@ -505,12 +557,16 @@ class P026Storage:
     ) -> list[dict[str, Any]]:
         """Возвращает список сохранённых версионных черновиков (от новых к старым)."""
         self._ensure_dirs()
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         with self._exclusive_lock(self.drafts_lock_file):
             return self._list_drafts_unlocked(doc_name=doc_name, user_id=user_id, chat_id=chat_id)
 
     def read_draft(self, filename: str, user_id: int | None = None, chat_id: int | None = None) -> str:
         """Безопасное чтение черновика со строгой проверкой symlinks и actor isolation."""
         self._ensure_dirs()
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         if not filename or not isinstance(filename, str):
             raise PathTraversalError("Недопустимое имя файла")
         if (

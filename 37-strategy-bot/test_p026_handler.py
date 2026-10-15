@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from p026_handler import P026Handler
-from p026_storage import P026Storage
+from p026_storage import P026Storage, JournalCorruptionError
 from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 from unittest.mock import patch
 
@@ -166,6 +166,78 @@ class P026HandlerTest(unittest.TestCase):
         res = self.handler.record_owner_decision("A", "подтверждаю", user_id=123, chat_id=123)
         self.assertTrue(res["ok"])
         self.assertEqual("Утвердить регламент РОП v0.3", res["decision"]["exact_text"])
+
+    def test_t1_pseudo_agreements_without_pending_are_rejected(self):
+        """T1 / S3: Без предложения запрещено сохранять псевдосогласия как решения."""
+        pseudo_agreements = [
+            "Всё устраивает",
+            "Возражений не имею",
+            "Именно так и поступим",
+            "Не возражаю",
+        ]
+        for phrase in pseudo_agreements:
+            with self.subTest(phrase=phrase):
+                res = self.handler.record_owner_decision("A", phrase, user_id=123, chat_id=123)
+                self.assertFalse(res["ok"], f"Фраза '{phrase}' не должна приниматься как самостоятельное решение")
+                self.assertIsNone(res["decision"])
+
+        # Структурированная норма принимается
+        res_valid = self.handler.record_owner_decision("A", "Утвердить лимит скидки РОП до 12.5%", user_id=123, chat_id=123)
+        self.assertTrue(res_valid["ok"])
+        self.assertIsNotNone(res_valid["decision"])
+
+    def test_t1_pending_proposal_rejects_empty_dots_disagreement_and_conditional(self):
+        """T1 / S3: Пустая строка, точки, отказ и условные фразы не должны утверждать норму."""
+        invalid_inputs = ["", "...", "Не согласен", "Подтверждаю, но только после уточнения"]
+        for text in invalid_inputs:
+            with self.subTest(text=text):
+                self.handler.set_pending_proposal(
+                    user_id=123, chat_id=123,
+                    proposal_text="Утвердить лимит скидки РОП до 12.5%",
+                    proposal_id="specific-Q1",
+                )
+                res = self.handler.record_owner_decision("A", text, question_context="OTHER QUESTION", user_id=123, chat_id=123)
+                self.assertFalse(res["ok"], f"Ввод '{text}' не должен приводить к утверждению нормы")
+                self.assertIsNone(res["decision"])
+                # Pending proposal не должен теряться при невалидном вводе
+                self.assertIsNotNone(self.handler.get_pending_proposal(123, 123))
+
+    def test_t1_proposal_id_binding_foreign_and_reuse_rejection(self):
+        """T1 / S3: Привязка подтверждения к proposal_id, отказ для чужого и повторного ID."""
+        self.handler.set_pending_proposal(
+            user_id=123, chat_id=123,
+            proposal_text="Утвердить норматив РОП 4 часа",
+            proposal_id="prop_fixed_42",
+            question_context="Нормативы РОП",
+        )
+        # 1. Неверный proposal_id
+        res_wrong = self.handler.record_owner_decision("A", "подтверждаю", user_id=123, chat_id=123, proposal_id="wrong_id")
+        self.assertFalse(res_wrong["ok"])
+        self.assertIn("неверный", res_wrong["message"].lower())
+
+        # 2. Чужой user_id
+        res_foreign = self.handler.record_owner_decision("B", "подтверждаю", user_id=999, chat_id=123, proposal_id="prop_fixed_42")
+        self.assertFalse(res_foreign["ok"])
+
+        # 3. Успешное подтверждение владельцем с правильным proposal_id
+        res_ok = self.handler.record_owner_decision("A", "подтверждаю", user_id=123, chat_id=123, proposal_id="prop_fixed_42")
+        self.assertTrue(res_ok["ok"])
+        self.assertEqual("Утвердить норматив РОП 4 часа", res_ok["decision"]["exact_text"])
+        # После успешной записи pending предложение сброшено
+        self.assertIsNone(self.handler.get_pending_proposal(123, 123))
+
+        # 4. Повторное подтверждение того же ID отклоняется
+        res_reuse = self.handler.record_owner_decision("A", "подтверждаю", user_id=123, chat_id=123, proposal_id="prop_fixed_42")
+        self.assertFalse(res_reuse["ok"])
+        self.assertIn("уже", res_reuse["message"].lower())
+
+    def test_t1_pending_preserved_if_storage_fails(self):
+        """T1 / S3: Pending proposal не теряется, если запись в хранилище завершилась ошибкой."""
+        self.handler.set_pending_proposal(user_id=123, chat_id=123, proposal_text="Norm", proposal_id="p_err")
+        with patch.object(self.storage, "record_decision", side_effect=JournalCorruptionError("DISK_FAIL")):
+            res = self.handler.record_owner_decision("A", "подтверждаю", user_id=123, chat_id=123, proposal_id="p_err")
+            self.assertFalse(res["ok"])
+            self.assertIsNotNone(self.handler.get_pending_proposal(123, 123), "Pending не должен сбрасываться при ошибке записи")
 
 if __name__ == "__main__":
     unittest.main()

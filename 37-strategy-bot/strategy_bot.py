@@ -384,13 +384,89 @@ async def handle_record_decision(update, context) -> None:
         )
         return
     decision_text = parts[1].strip()
+    if decision_text.lower().startswith(("confirm", "подтверждаю")):
+        subparts = decision_text.split(maxsplit=1)
+        prop_id = subparts[1].strip() if len(subparts) > 1 else None
+        result = get_p026_handler().record_owner_decision(
+            author=user.full_name or "Руководитель",
+            text="подтверждаю",
+            user_id=user.id,
+            chat_id=chat.id if chat else None,
+            proposal_id=prop_id,
+        )
+    else:
+        result = get_p026_handler().record_owner_decision(
+            author=user.full_name or "Руководитель",
+            text=decision_text,
+            user_id=user.id,
+            chat_id=chat.id if chat else None,
+        )
+    await update.effective_message.reply_text(result["message"])
+
+
+async def handle_confirm_decision(update, context) -> None:
+    user = update.effective_user
+    chat = update.effective_chat
+    if not is_authorized(user.id if user else None):
+        await deny(update)
+        return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Подтверждение решений разрешено только в личном диалоге.")
+        return
+
+    message_text = update.effective_message.text or ""
+    parts = message_text.split(maxsplit=1)
+    prop_id = parts[1].strip() if len(parts) > 1 and parts[1].strip() else None
+
     result = get_p026_handler().record_owner_decision(
         author=user.full_name or "Руководитель",
-        text=decision_text,
+        text="подтверждаю",
         user_id=user.id,
         chat_id=chat.id if chat else None,
+        proposal_id=prop_id,
     )
     await update.effective_message.reply_text(result["message"])
+
+
+async def handle_propose_decision(update, context) -> None:
+    user = update.effective_user
+    chat = update.effective_chat
+    if not is_authorized(user.id if user else None):
+        await deny(update)
+        return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Формирование предложений разрешено только в личном диалоге.")
+        return
+
+    message_text = update.effective_message.text or ""
+    parts = message_text.split(maxsplit=1)
+    if len(parts) < 2 or not parts[1].strip():
+        await update.effective_message.reply_text(
+            "⚠ Укажите текст предлагаемой нормы после команды.\n"
+            "Пример: `/propose_decision Утвердить лимит скидки РОП до 12.5%`",
+            parse_mode="Markdown",
+        )
+        return
+
+    prop_text = parts[1].strip()
+    is_valid, reason = get_p026_handler().validate_decision_input(prop_text)
+    if not is_valid:
+        await update.effective_message.reply_text(f"⚠ {reason}")
+        return
+
+    prop = get_p026_handler().set_pending_proposal(
+        user_id=user.id,
+        chat_id=chat.id if chat else None,
+        proposal_text=prop_text,
+    )
+    await update.effective_message.reply_text(
+        f"💡 Сформировано предложение управленческого решения P-026:\n"
+        f"• ID: `{prop['proposal_id']}`\n"
+        f"• Текст: «{prop['proposal_text']}»\n\n"
+        f"Для утверждения отправьте:\n"
+        f"`/confirm {prop['proposal_id']}`",
+        parse_mode="Markdown",
+    )
 
 
 async def handle_export_draft(update, context) -> None:
@@ -510,10 +586,25 @@ async def process_and_reply(update, context=None, supplied_text: str | None = No
     try:
         await message.reply_chat_action("typing")
         text, image = (supplied_text, None) if supplied_text else await extract_message(update)
+        if text.strip().startswith(("/confirm", "confirm")):
+            parts = text.split(maxsplit=1)
+            p_id = parts[1].strip() if len(parts) > 1 else None
+            res = get_p026_handler().record_owner_decision(
+                author=user.full_name or "Руководитель",
+                text="подтверждаю",
+                user_id=user.id,
+                chat_id=chat.id if chat else None,
+                proposal_id=p_id,
+            )
+            await message.reply_text(res["message"])
+            return
+
         is_valid_decision, reason = get_p026_handler().validate_decision_input(text)
-        if not is_valid_decision and text.lower().strip() in {
+        pending = get_p026_handler().get_pending_proposal(user.id, chat.id if chat else None)
+        if not is_valid_decision and (pending or text.lower().strip() in {
             "да", "ок", "согласен", "хорошо", "+", "yes", "да согласен", "ок хорошо", "всё верно",
-        }:
+            "всё устраивает", "возражений не имею", "именно так и поступим", "не возражаю",
+        }):
             await message.reply_text(f"ℹ {reason}")
             return
 
@@ -570,6 +661,8 @@ def main() -> None:
     app.add_handler(CommandHandler("clear", handle_clear))
     app.add_handler(CommandHandler(["project", "p026"], handle_project))
     app.add_handler(CommandHandler(["record_decision", "decision"], handle_record_decision))
+    app.add_handler(CommandHandler(["confirm_decision", "confirm"], handle_confirm_decision))
+    app.add_handler(CommandHandler(["propose_decision", "propose"], handle_propose_decision))
     app.add_handler(CommandHandler("export_draft", handle_export_draft))
     for command in ("status", "risks", "decisions"):
         app.add_handler(CommandHandler(command, handle_named_request))

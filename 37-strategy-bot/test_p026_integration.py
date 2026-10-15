@@ -149,6 +149,96 @@ class P026StrategyBotIntegrationTest(unittest.IsolatedAsyncioTestCase):
         call_text = update.effective_message.reply_text.call_args[0][0]
         self.assertIn("неоднозначн", call_text.lower())
 
+    async def test_handle_record_decision_pseudo_agreements_rejected(self):
+        """T1 / S3: Псевдосогласия («Всё устраивает», «Возражений не имею» и т.д.) отклоняются на уровне транспорта."""
+        for phrase in ["Всё устраивает", "Возражений не имею", "Именно так и поступим", "Не возражаю"]:
+            with self.subTest(phrase=phrase):
+                update = MagicMock()
+                update.effective_user.id = 123
+                update.effective_user.full_name = "Корж И.С."
+                update.effective_chat.id = 123
+                update.effective_chat.type = "private"
+                update.effective_message.text = f"/record_decision {phrase}"
+                update.effective_message.reply_text = AsyncMock()
+
+                with patch.dict(
+                    os.environ,
+                    {"STAR_BUILDING_STRATEGY_ALLOWED_USER_IDS": "123", "DRAMKNOTE_P026_STORAGE_DIR": self.temp_dir.name},
+                    clear=True,
+                ):
+                    await self.module.handle_record_decision(update, None)
+
+                update.effective_message.reply_text.assert_called()
+                call_text = update.effective_message.reply_text.call_args[0][0]
+                self.assertIn("согласие", call_text.lower())
+                self.assertEqual(0, len(self.storage.list_decisions(user_id=123)))
+
+    async def test_e2e_propose_and_confirm_decision_transport(self):
+        """T1 / S3: End-to-end проверка transport → handler → storage для предложений и подтверждений."""
+        user_id = 123
+        env_dict = {"STAR_BUILDING_STRATEGY_ALLOWED_USER_IDS": "123,999", "DRAMKNOTE_P026_STORAGE_DIR": self.temp_dir.name}
+
+        # 1. Формирование предложения через /propose_decision
+        up_prop = MagicMock()
+        up_prop.effective_user.id = user_id
+        up_prop.effective_user.full_name = "Корж И.С."
+        up_prop.effective_chat.id = user_id
+        up_prop.effective_chat.type = "private"
+        up_prop.effective_message.text = "/propose_decision Утвердить норматив РОП 4 часа"
+        up_prop.effective_message.reply_text = AsyncMock()
+
+        with patch.dict(os.environ, env_dict, clear=True):
+            await self.module.handle_propose_decision(up_prop, None)
+
+        up_prop.effective_message.reply_text.assert_called()
+        prop_reply = up_prop.effective_message.reply_text.call_args[0][0]
+        self.assertIn("сформировано предложение", prop_reply.lower())
+        import re
+        prop_id_match = re.search(r"`(prop_[^`]+)`", prop_reply)
+        self.assertIsNotNone(prop_id_match, "ID предложения должен присутствовать в ответе бота")
+        assert prop_id_match is not None
+        prop_id = prop_id_match.group(1)
+
+        # 2. Негативная попытка: чужой пользователь (999) пытается подтвердить чужое предложение
+        up_foreign = MagicMock()
+        up_foreign.effective_user.id = 999
+        up_foreign.effective_user.full_name = "Чужой"
+        up_foreign.effective_chat.id = 999
+        up_foreign.effective_chat.type = "private"
+        up_foreign.effective_message.text = f"/confirm_decision {prop_id}"
+        up_foreign.effective_message.reply_text = AsyncMock()
+
+        with patch.dict(os.environ, env_dict, clear=True):
+            await self.module.handle_confirm_decision(up_foreign, None)
+
+        foreign_reply = up_foreign.effective_message.reply_text.call_args[0][0]
+        self.assertIn("чужой", foreign_reply.lower())
+        self.assertEqual(0, len(self.storage.list_decisions(user_id=123)))
+
+        # 3. Позитивное подтверждение владельцем через /confirm_decision
+        up_confirm = MagicMock()
+        up_confirm.effective_user.id = user_id
+        up_confirm.effective_user.full_name = "Корж И.С."
+        up_confirm.effective_chat.id = user_id
+        up_confirm.effective_chat.type = "private"
+        up_confirm.effective_message.text = f"/confirm_decision {prop_id}"
+        up_confirm.effective_message.reply_text = AsyncMock()
+
+        with patch.dict(os.environ, env_dict, clear=True):
+            await self.module.handle_confirm_decision(up_confirm, None)
+
+        confirm_reply = up_confirm.effective_message.reply_text.call_args[0][0]
+        self.assertIn("успешно зафиксировано", confirm_reply.lower())
+        decisions = self.storage.list_decisions(user_id=user_id)
+        self.assertEqual(1, len(decisions))
+        self.assertEqual("Утвердить норматив РОП 4 часа", decisions[0]["exact_text"])
+
+        # 4. Повторное подтверждение отклоняется
+        with patch.dict(os.environ, env_dict, clear=True):
+            await self.module.handle_confirm_decision(up_confirm, None)
+        repeat_reply = up_confirm.effective_message.reply_text.call_args[0][0]
+        self.assertIn("уже", repeat_reply.lower())
+
     async def test_handle_export_draft_sends_real_telegram_document(self):
         update = MagicMock()
         update.effective_user.id = 123

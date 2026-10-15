@@ -160,6 +160,43 @@ class P026SecurityTest(unittest.TestCase):
         self.assertNotIn("/etc", str(default_dir))
         self.assertNotIn("/var", str(default_dir))
 
+    def test_t2_rollback_procedure_tampered_backup_fails_closed_without_mutations(self):
+        """T2 / S4: Процедура отката из DEPLOYMENT_PLAN.md на повреждённом бэкапе обязана завершаться fail-closed ДО любых мутаций."""
+        import subprocess
+        import json
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        self.assertTrue(plan_path.is_file(), "DEPLOYMENT_PLAN.md должен существовать")
+        text = plan_path.read_text(encoding="utf-8")
+        section = text.split("### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа")[1]
+        match = re.search(r"```bash\n(.*?)```", section, re.S)
+        self.assertIsNotNone(match, "Блок bash отката должен присутствовать в плане")
+        assert match is not None
+        block = match.group(1)
+
+        p = Path(self.temp_dir.name) / "rollback_sandbox"
+        p.mkdir(parents=True, exist_ok=True)
+        bindir = p / "bin"
+        bindir.mkdir()
+        backup = p / "pinned"
+        backup.mkdir()
+        (backup / "code").mkdir()
+        (backup / "star-building-strategy.service").write_text("TAMPERED UNIT", encoding="utf-8")
+        (backup / "code/app.py").write_text("TAMPERED CODE", encoding="utf-8")
+        (backup / "pinned_metadata.json").write_text(json.dumps({"unit_sha256": "0" * 64, "code_files_count": 9999, "live_work_dir": "PINNED_OTHER_DIRECTORY"}), encoding="utf-8")
+
+        for name in ["systemctl", "cp", "rsync"]:
+            f = bindir / name
+            if name == "systemctl":
+                f.write_text('#!/bin/sh\nif [ "$1" = "--user" ] && [ "$2" = "show" ]; then printf "%s\\n" "$SAFE_WORK_DIR"; else printf "INTERCEPT systemctl %s\\n" "$*" >&2; fi\n', encoding="utf-8")
+            else:
+                f.write_text('#!/bin/sh\nprintf "INTERCEPT ' + name + ' %s\\n" "$*"\n', encoding="utf-8")
+            f.chmod(0o700)
+
+        env = {"HOME": str(p), "PATH": str(bindir) + ":/usr/bin:/bin", "PINNED_BACKUP_DIR": str(backup), "SAFE_WORK_DIR": str(p / "unrelated-directory"), "LANG": "C.UTF-8"}
+        result = subprocess.run(["/bin/bash", "-c", block], env=env, text=True, capture_output=True)
+        self.assertNotEqual(0, result.returncode, "Повреждённый бэкап обязан приводить к ненулевому коду завершения")
+        self.assertNotIn("INTERCEPT cp", result.stdout, "cp не должен вызываться при сбое валидации бэкапа")
+        self.assertNotIn("INTERCEPT rsync", result.stdout, "rsync не должен вызываться при сбое валидации бэкапа")
 
 if __name__ == "__main__":
     unittest.main()

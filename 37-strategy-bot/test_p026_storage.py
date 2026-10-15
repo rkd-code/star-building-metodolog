@@ -281,5 +281,67 @@ class P026StorageTest(unittest.TestCase):
         self.assertIn("timestamp", dec)
         self.assertIn("status", dec)
 
+    def test_t3_boolean_ownership_in_journal_raises_corruption_and_quarantines(self):
+        """T3 / S5: user_id=True / chat_id=True в журнале не должны принадлежать actor=1 / chat=1."""
+        import json
+        raw = [{
+            "id": "dec_bool",
+            "timestamp": "2026-10-15T06:46:00.196602+00:00",
+            "author": "A",
+            "user_id": True,
+            "chat_id": True,
+            "question_context": "Q",
+            "exact_text": "Valid rule",
+            "status": "active"
+        }]
+        self.storage.decisions_file.write_text(json.dumps(raw), encoding="utf-8")
+        with self.assertRaises(JournalCorruptionError):
+            self.storage.list_decisions(1, 1)
+        baks = list(self.storage.decisions_dir.glob("decisions_corrupted_*.json.bak"))
+        self.assertGreater(len(baks), 0, "Карантинная копия должна быть создана при boolean ownership")
+
+    def test_t3_boolean_ownership_rejected_in_api_before_write(self):
+        """T3 / S5: API должно отвергать bool в user_id / chat_id без записи на диск."""
+        with self.assertRaises((TypeError, ValueError)):
+            self.storage.record_decision("A", "Q", "Text", user_id=True, chat_id=123)
+        with self.assertRaises((TypeError, ValueError)):
+            self.storage.record_decision("A", "Q", "Text", user_id=123, chat_id=False)
+        with self.assertRaises((TypeError, ValueError)):
+            self.storage.list_decisions(user_id=True, chat_id=123)
+        with self.assertRaises((TypeError, ValueError)):
+            self.storage.list_decisions(user_id=123, chat_id=True)
+        with self.assertRaises((TypeError, ValueError)):
+            self.storage.save_draft("DOC", "Content", user_id=True)
+
+    def test_t4_writer_rejects_invalid_status_without_corrupting_healthy_journal(self):
+        """T4 / S5: Запись с недопустимым статусом (INVALID) отклоняется ДО модификации здорового журнала."""
+        rec = self.storage.record_decision("A", "Q", "Healthy entry", 123, 123)
+        before_bytes = self.storage.decisions_file.read_bytes()
+        with self.assertRaises(ValueError):
+            self.storage.record_decision("A", "Q", "Bad entry", 123, 123, status="INVALID")
+        after_bytes = self.storage.decisions_file.read_bytes()
+        self.assertEqual(before_bytes, after_bytes, "Здоровый журнал не должен быть модифицирован при ошибке валидации")
+        # Последующее чтение должно проходить без ошибок и без карантина
+        items = self.storage.list_decisions(123, 123)
+        self.assertEqual(1, len(items))
+        self.assertEqual(rec["id"], items[0]["id"])
+
+    def test_t4_strict_iso8601_with_tz_required(self):
+        """T4 / S5: Date-only (2026-10-15) и naive timestamp без таймзоны отклоняются fail-closed."""
+        import json
+        for bad_ts in ["2026-10-15", "2026-10-15T12:00:00"]:
+            raw = [{"id": "dec_bad_ts", "timestamp": bad_ts, "question_context": "Q", "exact_text": "T", "user_id": 123, "chat_id": 123, "status": "active"}]
+            self.storage.decisions_file.write_text(json.dumps(raw), encoding="utf-8")
+            with self.assertRaises(JournalCorruptionError):
+                self.storage.list_decisions(123, 123)
+
+    def test_t4_conflicting_aliases_rejected_fail_closed(self):
+        """T4 / S5: Конфликтующие значения canonical и legacy алиасов вызывают отказ."""
+        import json
+        raw = [{"id": "canonical_id", "decision_id": "different_id", "timestamp": "2026-10-15T00:00:00+00:00", "question_context": "Q", "exact_text": "T", "user_id": 123, "chat_id": 123, "status": "active"}]
+        self.storage.decisions_file.write_text(json.dumps(raw), encoding="utf-8")
+        with self.assertRaises(JournalCorruptionError):
+            self.storage.list_decisions(123, 123)
+
 if __name__ == "__main__":
     unittest.main()

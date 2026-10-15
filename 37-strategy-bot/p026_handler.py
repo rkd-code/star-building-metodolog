@@ -1,11 +1,13 @@
 """Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота."""
 from __future__ import annotations
 
+import datetime
 import re
 from pathlib import Path
 from typing import Any
 
 from p026_storage import JournalCorruptionError, P026Storage
+from p026_storage import validate_ownership_id
 from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 
 DOC_TYPE_MAP = {
@@ -40,6 +42,7 @@ class P026Handler:
         self.storage = storage or P026Storage()
         self.subject_base = subject_base or P026SubjectBase()
         self._pending_proposals: dict[tuple[int | None, int | None], dict[str, Any]] = {}
+        self._used_proposal_ids: set[str] = set()
 
     def set_pending_proposal(
         self,
@@ -48,15 +51,21 @@ class P026Handler:
         proposal_text: str,
         question_context: str = "Общие решения P-026",
         proposal_id: str | None = None,
+        question_id: str | None = None,
     ) -> dict[str, Any]:
         """Устанавливает точное ожидающее утверждения предложение для конкретного актора и чата."""
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         key = (user_id, chat_id)
+        prop_id = proposal_id or f"prop_{user_id or 0}_{int(datetime.datetime.now().timestamp() * 1_000_000)}"
         proposal = {
-            "proposal_id": proposal_id or f"prop_{len(self._pending_proposals) + 1}",
+            "proposal_id": prop_id,
+            "question_id": question_id,
             "proposal_text": proposal_text.strip(),
             "question_context": question_context.strip(),
             "user_id": user_id,
             "chat_id": chat_id,
+            "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         }
         self._pending_proposals[key] = proposal
         return proposal
@@ -67,6 +76,8 @@ class P026Handler:
         chat_id: int | None,
     ) -> dict[str, Any] | None:
         """Возвращает текущее ожидающее предложение для актора и чата."""
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         return self._pending_proposals.get((user_id, chat_id))
 
     def clear_pending_proposal(
@@ -75,72 +86,124 @@ class P026Handler:
         chat_id: int | None,
     ) -> None:
         """Сбрасывает ожидающее предложение."""
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
         self._pending_proposals.pop((user_id, chat_id), None)
 
     @staticmethod
-    def is_agreement_input(text: str) -> bool:
-        """Определяет, является ли ввод согласием, подтверждением или отсылкой к внешнему контексту."""
-        cleaned = text.strip().lower()
-        tokens = [t for t in re.sub(r"[^\w\s+]", " ", cleaned).split() if t]
-        words = [w for w in tokens if w != "+"]
-        if not words:
+    def is_unambiguous_confirmation(text: str) -> bool:
+        """Проверяет, является ли текст недвусмысленным безусловным подтверждением.
+        Пустые строки, многоточия, отказы, возражения и условные согласия («только после...»)
+        категорически отклоняются.
+        """
+        cleaned = text.strip()
+        if not cleaned:
+            return False
+        if not re.search(r"[a-zA-Zа-яА-ЯёЁ0-9]", cleaned):
+            return False
+
+        lower = cleaned.lower()
+        rejection_markers = (
+            "не соглас", "отклон", "против", "не подтвержд", "не утвержда",
+            "возража", "отказ", "не подходит", "нет ", "нет,",
+        )
+        if any(rm in lower for rm in rejection_markers) or lower in {"нет", "no"}:
+            return False
+
+        conditional_markers = (
+            "только после", "при условии", "если ", "но только",
+            "после уточнен", "с доработк", "но с услови", "но при",
+        )
+        if any(cm in lower for cm in conditional_markers):
+            return False
+
+        if lower.startswith(("/confirm", "confirm")):
             return True
 
-        exact_agreement = {"да", "ок", "ok", "yes", "ага", "+", "плюс", "хорошо", "ладно", "верно", "точно", "ясно", "добро"}
-        agreement_prefixes = (
-            "соглас", "подтвержд", "одобря", "поддержив", "принят", "принима",
-            "договор", "ладно", "верно", "точно", "ясно", "понял", "отлично", "добро",
-        )
-        referential_prefixes = (
-            "сказанн", "предложен", "предложени", "вышеизложенн", "вышесказанн",
-            "вышеуказанн", "ранее", "вариант", "проект", "регламент", "документ",
-        )
+        exact_confirmations = {
+            "подтверждаю", "утверждаю", "согласовано", "да подтверждаю", "да утверждаю",
+            "подтвердить", "утвердить", "принять", "да", "ок", "ok", "yes",
+        }
+        tokens = [t for t in re.sub(r"[^\w\s+]", " ", lower).split() if t]
+        if " ".join(tokens) in exact_confirmations:
+            return True
 
-        has_agreement_word = any(t in exact_agreement for t in tokens) or any(
-            any(w.startswith(pfx) for pfx in agreement_prefixes) for w in words
-        )
+        first_word = tokens[0] if tokens else ""
+        if first_word in {"подтверждаю", "утверждаю", "согласовано"} and not any(w in {"но", "если"} for w in tokens):
+            return True
 
-        if not has_agreement_word:
-            return False
+        return False
 
-        # Проверяем, содержит ли фраза конкретное числовое значение или процент
-        has_number_or_percent = bool(re.search(r"\b\d+([.,]\d+)?\s*(%|процент|дн|час|млрд|млн|тенге|рубл)?\b", cleaned))
-        has_imperative_rule = any(
-            cleaned.startswith(pfx) for pfx in ("утвердить", "установить", "запретить", "ограничить", "согласовать")
-        ) and has_number_or_percent
-
-        # Если это самостоятельное нормативное распоряжение с параметром (напр. "Согласовать минимальную маржу 15%")
-        if has_imperative_rule and not any(any(w.startswith(r) for r in referential_prefixes) for w in words):
-            return False
-
-        return True
+    def is_agreement_input(self, text: str) -> bool:
+        """Сохраняется для совместимости: делегирует к is_unambiguous_confirmation."""
+        return self.is_unambiguous_confirmation(text)
 
     def validate_decision_input(self, text: str) -> tuple[bool, str]:
-        """Проверяет валидность формулировки решения.
-
-        Неоднозначные короткие и многословные согласия («да», «ок», «согласен», «да согласен»,
-        «ок хорошо», «всё верно») отклоняются с требованием указать конкретную норму.
+        """Положительная структурная валидация решения (Star Building P-026 / РЕГ-001..010).
+        Без предметной нормы и без явно показанного предложения категорически запрещено
+        сохранять фразы «Всё устраивает», «Возражений не имею», «Именно так и поступим»,
+        «Не возражаю» как самостоятельные решения.
         """
-        cleaned = text.strip().lower()
-        tokens = [t for t in re.sub(r"[^\w\s+]", " ", cleaned).split() if t]
-
-        if not tokens:
+        cleaned = text.strip()
+        if not cleaned:
             return False, "Формулировка решения не может быть пустой."
 
-        if self.is_agreement_input(text):
+        lower = cleaned.lower()
+        tokens = [t for t in re.sub(r"[^\w\s+]", " ", lower).split() if t]
+        if len(tokens) < 2 or len(cleaned) < 8:
             return (
                 False,
-                f"Неоднозначное или неопределённое согласие («{text.strip()}») не привязано к ранее показанному предложению "
-                "(pending proposal) и не содержит самостоятельной нормы.\n"
-                "Пожалуйста, укажите законченное решение с числовым параметром или правилом "
-                "(например: «Утвердить лимит скидки РОП до 12.5%» или «Согласовать минимальную маржу 15%»).",
+                f"Слишком краткая формулировка («{cleaned}»). "
+                "Решение должно содержать законченную мысль с указанием роли, норматива или правила.",
             )
 
-        if len(tokens) < 2 and len(cleaned) < 10:
+        # 1. Проверка явного префикса структурированного решения
+        has_structured_prefix = bool(re.match(r"^([a-zA-Zа-яА-ЯёЁ0-9_\-\s]+:|\s*\[.*?\])", cleaned))
+
+        # 2. Нормативные директивы / глаголы / статусы распоряжений
+        normative_directives = (
+            "утверд", "установ", "запрет", "огранич", "обяза", "закреп", "определ",
+            "ввест", "отмен", "разреш", "переда", "возлож", "делегир", "назнач",
+        )
+        has_normative_directive = any(
+            any(w.startswith(pfx) for pfx in normative_directives) or w.startswith("согласова")
+            for w in tokens
+        )
+
+        # 3. Предметная область: роли и сущности управления
+        domain_subjects = (
+            "роп", "од", "гд", "пто", "лидоруб", "агент", "руководител", "директор", "менеджер",
+            "юрист", "бухгалтер", "сотрудник", "отдел", "штаб", "скидк", "марж", "лимит", "порог",
+            "срок", "сделк", "договор", "аванс", "бюджет", "полномоч", "структур", "регламент",
+            "ответственност", "обязанност", "штраф", "неустойк", "комисси", "оплат", "расход",
+            "нормати", "правил", "чек лист", "чеклист", "тендер", "маркетинг", "продаж", "поставк",
+        )
+        has_domain_subject = any(any(w.startswith(subj) for subj in domain_subjects) for w in tokens)
+
+        # 4. Числовой параметр / процент / сумма / срок
+        has_parameter = bool(re.search(r"\b\d+([.,]\d+)?\s*(%|процент|дн|час|мес|млрд|млн|тенге|рубл|к)?\b", lower))
+
+        referential_markers = (
+            "вышеизложенн", "вышесказанн", "вышеуказанн", "ранее сказанн", "ваше предложен",
+            "предложенн", "с этим", "со всем", "всё верно", "хорошо",
+        )
+        if any(rm in lower for rm in referential_markers) and not has_parameter:
+            has_normative_directive = False
+
+        is_structured_norm = (
+            (has_normative_directive and (has_domain_subject or has_parameter))
+            or (has_structured_prefix and (has_domain_subject or has_parameter))
+            or (has_domain_subject and has_parameter)
+        )
+
+        if not is_structured_norm:
             return (
                 False,
-                f"Слишком краткая формулировка («{text.strip()}»). "
-                "Решение должно содержать законченную мысль с указанием роли, норматива или правила.",
+                f"Неоднозначное или неопределённое согласие («{cleaned}») не привязано к ранее показанному предложению "
+                "(pending proposal) и не содержит самостоятельной нормы.\n"
+                "Пожалуйста, укажите законченное решение с числовым параметром или правилом "
+                "(например: «Утвердить лимит скидки РОП до 12.5%» или «Согласовать минимальную маржу 15%»).\n"
+                "Для подтверждения предложения системы используйте команду /confirm <ID_предложения>.",
             )
 
         return True, "Формулировка корректна"
@@ -190,30 +253,157 @@ class P026Handler:
         question_context: str = "Общие решения P-026",
         user_id: int | None = None,
         chat_id: int | None = None,
+        proposal_id: str | None = None,
+        question_id: str | None = None,
     ) -> dict[str, Any]:
         """Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией."""
-        if self.is_agreement_input(text):
-            pending = self.get_pending_proposal(user_id, chat_id)
-            if not pending:
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
+        key = (user_id, chat_id)
+
+        # 1. Извлечение proposal_id из текста (команда /confirm ID или фраза "подтверждаю ID")
+        target_prop_id = proposal_id
+        if not target_prop_id and text:
+            cleaned_text = text.strip()
+            match_cmd = re.match(r"^/(?:confirm_decision|confirm)\s+([a-zA-Z0-9_-]+)", cleaned_text, re.I)
+            if match_cmd:
+                target_prop_id = match_cmd.group(1).strip()
+            else:
+                match_words = re.match(r"^(?:подтверждаю|утверждаю)\s+([a-zA-Z0-9_-]+)", cleaned_text, re.I)
+                if match_words:
+                    target_prop_id = match_words.group(1).strip()
+
+        # 2. Если proposal_id передан или извлечён — строгая верификация и подтверждение
+        if target_prop_id:
+            if target_prop_id in self._used_proposal_ids:
+                return {
+                    "ok": False,
+                    "message": f"Предложение '{target_prop_id}' уже было утверждено ранее (повторное подтверждение запрещено).",
+                    "decision": None,
+                }
+            pending = self._pending_proposals.get(key)
+            if not pending or pending.get("proposal_id") != target_prop_id:
+                # Проверяем принадлежность другому пользователю/чату
+                for other_key, other_p in self._pending_proposals.items():
+                    if other_p.get("proposal_id") == target_prop_id and other_key != key:
+                        return {
+                            "ok": False,
+                            "message": f"Предложение '{target_prop_id}' принадлежит другому пользователю или чату (чужой ID).",
+                            "decision": None,
+                        }
+                return {
+                    "ok": False,
+                    "message": f"Неверный идентификатор предложения: ожидался '{pending.get('proposal_id') if pending else None}', передан '{target_prop_id}'.",
+                    "decision": None,
+                }
+
+            # Проверка неконфликтности контекста вопроса при явной передаче
+            if question_context and question_context != "Общие решения P-026":
+                if question_context != pending.get("question_context"):
+                    return {
+                        "ok": False,
+                        "message": f"Контекст вопроса ('{question_context}') не соответствует ожидающему предложению ('{pending.get('question_context')}').",
+                        "decision": None,
+                    }
+
+            if question_id and pending.get("question_id") and question_id != pending.get("question_id"):
+                return {
+                    "ok": False,
+                    "message": f"Идентификатор вопроса ('{question_id}') не соответствует ожидающему предложению ('{pending.get('question_id')}').",
+                    "decision": None,
+                }
+
+            # Проверка однозначности подтверждения
+            if not self.is_unambiguous_confirmation(text):
+                return {
+                    "ok": False,
+                    "message": "Подтверждение должно быть безусловным и однозначным (отказы и условные согласия отклоняются).",
+                    "decision": None,
+                }
+
+            # Фиксация в хранилище (сброс pending ТОЛЬКО после успеха)
+            try:
+                decision = self.storage.record_decision(
+                    author=author,
+                    question_context=pending["question_context"],
+                    exact_text=pending["proposal_text"],
+                    user_id=user_id,
+                    chat_id=chat_id,
+                )
+                self.clear_pending_proposal(user_id, chat_id)
+                self._used_proposal_ids.add(target_prop_id)
+                return {
+                    "ok": True,
+                    "message": (
+                        f"✅ Предложение '{target_prop_id}' успешно зафиксировано в журнале P-026:\n"
+                        f"• ID решения: {decision['id']}\n"
+                        f"• Автор: {decision['author']}\n"
+                        f"• Контекст: {decision['question_context']}\n"
+                        f"• Текст: «{decision['exact_text']}»"
+                    ),
+                    "decision": decision,
+                }
+            except JournalCorruptionError as err:
+                return {
+                    "ok": False,
+                    "message": f"⚠ Ошибка хранилища решений: {err}",
+                    "decision": None,
+                }
+
+        # 3. Если proposal_id НЕ указан, но есть pending и текст является однозначным подтверждением:
+        pending = self._pending_proposals.get(key)
+        if pending and self.is_unambiguous_confirmation(text):
+            if question_context and question_context != "Общие решения P-026" and question_context != pending.get("question_context"):
+                return {
+                    "ok": False,
+                    "message": f"Контекст вопроса ('{question_context}') не соответствует ожидающему предложению ('{pending.get('question_context')}').",
+                    "decision": None,
+                }
+            try:
+                decision = self.storage.record_decision(
+                    author=author,
+                    question_context=pending["question_context"],
+                    exact_text=pending["proposal_text"],
+                    user_id=user_id,
+                    chat_id=chat_id,
+                )
+                self.clear_pending_proposal(user_id, chat_id)
+                self._used_proposal_ids.add(pending["proposal_id"])
+                return {
+                    "ok": True,
+                    "message": (
+                        f"✅ Предложение '{pending['proposal_id']}' успешно зафиксировано в журнале P-026:\n"
+                        f"• ID решения: {decision['id']}\n"
+                        f"• Автор: {decision['author']}\n"
+                        f"• Контекст: {decision['question_context']}\n"
+                        f"• Текст: «{decision['exact_text']}»"
+                    ),
+                    "decision": decision,
+                }
+            except JournalCorruptionError as err:
+                return {
+                    "ok": False,
+                    "message": f"⚠ Ошибка хранилища решений: {err}",
+                    "decision": None,
+                }
+
+        # 4. Прямой ввод самостоятельного структурированного решения
+        valid, msg = self.validate_decision_input(text)
+        if not valid:
+            if pending:
                 return {
                     "ok": False,
                     "message": (
-                        f"Неоднозначное или неопределённое согласие («{text.strip()}») не привязано к ранее показанному предложению "
-                        "(pending proposal) и не содержит самостоятельной нормы.\n"
-                        "Пожалуйста, укажите законченное решение с числовым параметром или правилом "
-                        "(например: «Утвердить лимит скидки РОП до 12.5%» или «Согласовать минимальную маржу 15%»)."
+                        f"Ввод «{text.strip()}» не содержит законченной нормы.\n"
+                        f"Имеется ожидающее предложение: «{pending['proposal_text']}» (ID: {pending['proposal_id']}).\n"
+                        f"Для подтверждения предложения укажите его ID: /confirm {pending['proposal_id']} или «подтверждаю {pending['proposal_id']}»."
                     ),
                     "decision": None,
                 }
-            decision_text = pending["proposal_text"]
-            context_bound = pending["question_context"]
-            self.clear_pending_proposal(user_id, chat_id)
-        else:
-            valid, msg = self.validate_decision_input(text)
-            if not valid:
-                return {"ok": False, "message": msg, "decision": None}
-            decision_text = text.strip()
-            context_bound = self._infer_question_context(decision_text, question_context)
+            return {"ok": False, "message": msg, "decision": None}
+
+        decision_text = text.strip()
+        context_bound = self._infer_question_context(decision_text, question_context)
 
         try:
             decision = self.storage.record_decision(
@@ -240,6 +430,25 @@ class P026Handler:
                 "message": f"⚠ Ошибка хранилища решений: {err}",
                 "decision": None,
             }
+
+    def confirm_pending_proposal(
+        self,
+        author: str,
+        proposal_id: str,
+        user_id: int | None = None,
+        chat_id: int | None = None,
+        confirmation_text: str = "подтверждаю",
+        question_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Явный метод подтверждения ожидающего предложения системы."""
+        return self.record_owner_decision(
+            author=author,
+            text=confirmation_text,
+            user_id=user_id,
+            chat_id=chat_id,
+            proposal_id=proposal_id,
+            question_id=question_id,
+        )
 
     def handle_project_command(self, user_id: int | None = None, chat_id: int | None = None) -> str:
         """Формирует сводный статус проекта P-026 со строгой actor/chat изоляцией решений."""

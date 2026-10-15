@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `0e39cd865d46487b1f0e74f1503038deeb75a12526eaaefebf5a0bd10985638a`
+Отпечаток исходной структуры: `b781cb61ec24a808cdb3effd45dc1d34847cc50cb3ca1018d001892c18cf5469`
 
 ## .git-templates
 
@@ -345,7 +345,7 @@
 | [`37-strategy-bot/strategy_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_healthcheck.py) | Проверяет Telegram API, службу и источники стратегического бота без вывода секретов. |
 | [`37-strategy-bot/systemd/star-building-strategy.service`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/systemd/star-building-strategy.service) | Файл проекта: star-building-strategy.service. |
 | [`37-strategy-bot/test_p026_deep_probes_repro.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_deep_probes_repro.py) | Воспроизведение независимых deep_probes ревизии f9ae76f8 в изолированных фикстурах. |
-| [`37-strategy-bot/test_p026_handler.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_handler.py) | import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_handler import P026Handler from p026_storage import P026Storage from p026_subject_base import P026Subject |
+| [`37-strategy-bot/test_p026_handler.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_handler.py) | import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_handler import P026Handler from p026_storage import P026Storage, JournalCorruptionError from p026_subject |
 | [`37-strategy-bot/test_p026_integration.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_integration.py) | import importlib.util import os import sys import tempfile import unittest from pathlib import Path from unittest.mock import AsyncMock, MagicMock, patch ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) BOT = ROOT / "str |
 | [`37-strategy-bot/test_p026_security.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_security.py) | import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalError, get_defaul |
 | [`37-strategy-bot/test_p026_storage.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_storage.py) | import os import sys import tempfile import threading import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_storage import JournalCorruptionError, P026Storage, PathTraversalError class P |

@@ -167,34 +167,48 @@ if [ ! -s "$PINNED_BACKUP_DIR/star-building-strategy.service" ]; then
     exit 1
 fi
 
-# 3. Сохранение активного рабочего кода службы в бэкап
-cp -a "$LIVE_WORK_DIR" "$PINNED_BACKUP_DIR/code"
-if [ ! -d "$PINNED_BACKUP_DIR/code" ]; then
-    echo "ОШИБКА: Каталог кода не скопирован в бэкап!"
-    exit 1
-fi
-
-# 4. Сохранение снимка состояния runtime (decisions и drafts)
-if [ -d /home/roman/.local/share/star-building/dramknote-p026 ]; then
-    cp -a /home/roman/.local/share/star-building/dramknote-p026 "$PINNED_BACKUP_DIR/state"
-fi
-
-# 5. Формирование манифеста бэкапа с контрольными суммами
+# 3. Сохранение кода службы СТРОГО по положительному allowlist (без секретов/токенов)
+mkdir -p "$PINNED_BACKUP_DIR/code"
 python3 -c "
-import hashlib, json, pathlib
-p_dir = pathlib.Path('$PINNED_BACKUP_DIR')
-unit_bytes = (p_dir / 'star-building-strategy.service').read_bytes()
+import hashlib, json, os, pathlib, shutil, sys
+
+src_dir = pathlib.Path('$LIVE_WORK_DIR')
+dst_code = pathlib.Path('$PINNED_BACKUP_DIR/code')
+
+ALLOWED_EXTENSIONS = {'.py', '.md', '.txt', '.json', '.service'}
+FORBIDDEN_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
+
+copied_files = {}
+for p in src_dir.rglob('*'):
+    if p.is_file():
+        name_lower = p.name.lower()
+        if any(bad in name_lower for bad in FORBIDDEN_PATTERNS):
+            continue
+        if p.suffix.lower() in ALLOWED_EXTENSIONS:
+            rel = p.relative_to(src_dir)
+            target = dst_code / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(p, target)
+            copied_files[str(rel)] = hashlib.sha256(target.read_bytes()).hexdigest()
+
+unit_bytes = (pathlib.Path('$PINNED_BACKUP_DIR') / 'star-building-strategy.service').read_bytes()
 meta = {
     'timestamp': '$BACKUP_TIMESTAMP',
     'live_unit_path': '$LIVE_UNIT_PATH',
     'live_exec_start': '$LIVE_EXEC_START',
     'live_work_dir': '$LIVE_WORK_DIR',
     'unit_sha256': hashlib.sha256(unit_bytes).hexdigest(),
-    'code_files_count': len(list((p_dir / 'code').rglob('*'))),
+    'code_files_count': len(copied_files),
+    'files': copied_files,
 }
-(p_dir / 'pinned_metadata.json').write_text(json.dumps(meta, indent=2, ensure_ascii=False))
-print('Pinned backup успешно зафиксирован:', meta)
+(pathlib.Path('$PINNED_BACKUP_DIR') / 'pinned_metadata.json').write_text(json.dumps(meta, indent=2, ensure_ascii=False))
+print(f'Pinned backup успешно сформирован ({len(copied_files)} файлов кода, 0 секретов).')
 "
+
+# 4. Сохранение снимка состояния runtime (decisions и drafts)
+if [ -d /home/roman/.local/share/star-building/dramknote-p026 ]; then
+    cp -a /home/roman/.local/share/star-building/dramknote-p026 "$PINNED_BACKUP_DIR/state"
+fi
 
 # ВАЖНО: Секретные файлы (strategy-bot.env) СТРОГО НЕ копируются в бэкап.
 echo "Бэкап работающего релиза надёжно зафиксирован в: $PINNED_BACKUP_DIR"
@@ -306,48 +320,114 @@ systemctl --user stop star-building-strategy.service
 ```bash
 set -euo pipefail
 
-# Идентификация каталога бэкапа (используется $PINNED_BACKUP_DIR либо последний pinned-бэкап)
+# 1. Строгая проверка наличия явно переданного идентификатора бэкапа
+# Категорический запрет молчаливого fallback на «последний» бэкап (latest)!
 if [ -z "${PINNED_BACKUP_DIR:-}" ]; then
-    PINNED_BACKUP_DIR=$(ls -td /home/roman/srv/star-building-strategy/backups/pinned_live_* 2>/dev/null | head -n 1 || echo "")
+    echo "КРИТИЧЕСКАЯ ОШИБКА: Идентификатор бэкапа PINNED_BACKUP_DIR не задан! Молчаливый fallback на latest запрещён." >&2
+    exit 1
 fi
 
 if [ -z "$PINNED_BACKUP_DIR" ] || [ ! -d "$PINNED_BACKUP_DIR" ]; then
-    echo "КРИТИЧЕСКАЯ ОШИБКА: Каталог pinned-бэкапа не найден! Откат заблокирован fail-closed."
+    echo "КРИТИЧЕСКАЯ ОШИБКА: Каталог pinned-бэкапа не найден! Откат заблокирован fail-closed." >&2
     exit 1
 fi
 
-echo "Восстановление состояния из проверенного бэкапа: $PINNED_BACKUP_DIR"
-
-# 1. Верификация наличия файлов в бэкапе ДО любых изменений
-if [ ! -s "$PINNED_BACKUP_DIR/star-building-strategy.service" ]; then
-    echo "КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует или пуст!"
-    exit 1
-fi
-
-if [ ! -d "$PINNED_BACKUP_DIR/code" ]; then
-    echo "КРИТИЧЕСКАЯ ОШИБКА: Каталог кода в бэкапе отсутствует!"
-    exit 1
-fi
-
-# 2. Чтение метаданных бэкапа
+# 2. Комплексная верификация бэкапа ДО ПЕРВОЙ МУТАЦИИ (fail-closed)
+# Сверяются: обязательный манифест, хэши unit-файла, инвентарь файлов кода,
+# хэши каждого разрешённого файла кода, pinned WorkingDirectory,
+# запрет секретов/токенов в бэкапе.
+# Любое несоответствие приводит к немедленному fail-closed отказу (exit 1) с 0 мутаций.
 python3 -c "
-import json, pathlib
-meta_p = pathlib.Path('$PINNED_BACKUP_DIR/pinned_metadata.json')
-if meta_p.exists():
-    meta = json.loads(meta_p.read_text())
-    print('Откат к состоянию:', meta)
+import hashlib, json, os, pathlib, subprocess, sys
+
+backup_dir = pathlib.Path(os.environ['PINNED_BACKUP_DIR'])
+meta_path = backup_dir / 'pinned_metadata.json'
+
+if not meta_path.is_file():
+    print('КРИТИЧЕСКАЯ ОШИБКА: Обязательный манифест pinned_metadata.json отсутствует в бэкапе!', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    meta = json.loads(meta_path.read_text(encoding='utf-8'))
+except Exception as err:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Манифест pinned_metadata.json повреждён: {err}', file=sys.stderr)
+    sys.exit(1)
+
+required_fields = {'unit_sha256', 'code_files_count', 'live_work_dir'}
+missing_fields = required_fields - set(meta.keys())
+if missing_fields:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: В манифесте отсутствуют обязательные поля: {missing_fields}', file=sys.stderr)
+    sys.exit(1)
+
+unit_path = backup_dir / 'star-building-strategy.service'
+if not unit_path.is_file() or unit_path.stat().st_size == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует или пуст!', file=sys.stderr)
+    sys.exit(1)
+
+actual_unit_sha = hashlib.sha256(unit_path.read_bytes()).hexdigest()
+exp_unit_sha = str(meta.get('unit_sha256', ''))
+if actual_unit_sha != exp_unit_sha:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш unit-файла ({actual_unit_sha}) не совпадает с манифестом ({exp_unit_sha})!', file=sys.stderr)
+    sys.exit(1)
+
+code_dir = backup_dir / 'code'
+if not code_dir.is_dir():
+    print('КРИТИЧЕСКАЯ ОШИБКА: Каталог кода отсутствует в бэкапе!', file=sys.stderr)
+    sys.exit(1)
+
+code_files = [p for p in code_dir.rglob('*') if p.is_file()]
+exp_count = meta.get('code_files_count', -1)
+if len(code_files) != exp_count:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Число файлов кода ({len(code_files)}) не совпадает с манифестом ({exp_count})!', file=sys.stderr)
+    sys.exit(1)
+
+if 'files' in meta and isinstance(meta['files'], dict):
+    for rel_str, exp_hash in meta['files'].items():
+        fp = code_dir / rel_str
+        if not fp.is_file():
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {rel_str} из манифеста отсутствует в бэкапе!', file=sys.stderr)
+            sys.exit(1)
+        if hashlib.sha256(fp.read_bytes()).hexdigest() != exp_hash:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} повреждён!', file=sys.stderr)
+            sys.exit(1)
+
+FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
+for p in backup_dir.rglob('*'):
+    if p.is_file():
+        name_lower = p.name.lower()
+        if any(pat in name_lower for pat in FORBIDDEN_SECRET_PATTERNS):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый секретный файл: {p.name}', file=sys.stderr)
+            sys.exit(1)
+
+pinned_work_dir = meta['live_work_dir']
+try:
+    proc = subprocess.run(
+        ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
+        capture_output=True, text=True, check=False
+    )
+    current_work_dir = proc.stdout.strip()
+    if current_work_dir and current_work_dir != pinned_work_dir:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Pinned WorkingDirectory ({pinned_work_dir}) не совпадает со значением службы ({current_work_dir})!', file=sys.stderr)
+        sys.exit(1)
+except Exception:
+    pass
+
+print('Верификация бэкапа успешно пройдена: все хэши и инвентарь подтверждены fail-closed.')
 "
 
 # 3. Атомарное восстановление unit-файла службы
-cp -p "$PINNED_BACKUP_DIR/star-building-strategy.service" ~/.config/systemd/user/star-building-strategy.service
+TARGET_UNIT_PATH="${HOME}/.config/systemd/user/star-building-strategy.service"
+mkdir -p "${HOME}/.config/systemd/user"
+cp -p "$PINNED_BACKUP_DIR/star-building-strategy.service" "$TARGET_UNIT_PATH"
 systemctl --user daemon-reload
 
-# 4. Восстановление рабочего каталога кода (если unit указывал на него)
-LIVE_WORK_DIR=$(systemctl --user show star-building-strategy.service -p WorkingDirectory --value 2>/dev/null || echo "")
-if [ -n "$LIVE_WORK_DIR" ] && [ -d "$PINNED_BACKUP_DIR/code" ]; then
-    mkdir -p "$LIVE_WORK_DIR"
-    rsync -a --delete "$PINNED_BACKUP_DIR/code/" "$LIVE_WORK_DIR/"
+# 4. Восстановление рабочего каталога кода строго в подтверждённый pinned каталог
+TARGET_WORK_DIR=$(python3 -c "import json, pathlib, os; print(json.loads((pathlib.Path(os.environ['PINNED_BACKUP_DIR']) / 'pinned_metadata.json').read_text())['live_work_dir'])")
+if [ -n "$TARGET_WORK_DIR" ] && [ -d "$PINNED_BACKUP_DIR/code" ]; then
+    mkdir -p "$TARGET_WORK_DIR"
+    rsync -a --delete "$PINNED_BACKUP_DIR/code/" "$TARGET_WORK_DIR/"
 fi
+echo "Откат к проверенному снимку $PINNED_BACKUP_DIR успешно завершён."
 ```
 
 ### Шаг 3. Сохранность данных runtime

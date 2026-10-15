@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "0e39cd865d46487b1f0e74f1503038deeb75a12526eaaefebf5a0bd10985638a",
+  "source_tree_hash": "b781cb61ec24a808cdb3effd45dc1d34847cc50cb3ca1018d001892c18cf5469",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1119,7 +1119,7 @@
       "path": "37-strategy-bot/test_p026_handler.py",
       "name": "test_p026_handler.py",
       "area": "37-strategy-bot",
-      "description": "import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_handler import P026Handler from p026_storage import P026Storage from p026_subject_base import P026Subject",
+      "description": "import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_handler import P026Handler from p026_storage import P026Storage, JournalCorruptionError from p026_subject",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_handler.py"
     },
     {
