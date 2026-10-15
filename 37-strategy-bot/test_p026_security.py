@@ -223,8 +223,10 @@ class P026SecurityTest(unittest.TestCase):
                 (backup / "code").mkdir()
                 work = p / "old-release"
                 work.mkdir()
+                (work / "app.py").write_text("print('current')\n", encoding="utf-8")
                 if case == "changed_current_release":
                     (p / "new-release").mkdir(exist_ok=True)
+                    ((p / "new-release") / "app.py").write_text("print('current')\n", encoding="utf-8")
                 (backup / "star-building-strategy.service").write_text(f"[Service]\nWorkingDirectory={work}\nExecStart=/fixture/python {work}/app.py\n", encoding="utf-8")
                 (backup / "code/app.py").write_text("print('safe')\n", encoding="utf-8")
                 meta = {
@@ -380,6 +382,7 @@ class P026SecurityTest(unittest.TestCase):
                 new = p / "new-release"
                 if case not in {"nonexistent_current", "empty_current_handle"}:
                     new.mkdir(parents=True, exist_ok=True)
+                    (new / "app.py").write_text('print("current")\n')
                 dest = str(old)
                 handle = str(new)
 
@@ -933,5 +936,180 @@ if "show" in a:
         self.assertEqual("RECOVERED_OK", restored_run.stdout.strip())
         self.assertEqual("", restored_run.stderr)
 
+    def test_y1_execstart_identity_and_command_validation(self):
+        """Y1 (HIGH): Валидация ExecStart: отказ echo, python -c pass, structured bad path и отсутствующего entrypoint."""
+        import json
+        import subprocess
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        def get_block(title):
+            m = re.search(r"```bash\n(.*?)```", plan.split(title)[1], re.S)
+            assert m is not None
+            return m.group(1)
+
+        stop_block = get_block("### Шаг 1. Остановка службы")
+        restore_block = get_block("### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа")
+
+        cases = [
+            "echo_interpreter",
+            "python_c",
+            "current_structured_bad_path",
+            "current_missing_entry",
+        ]
+        for phase, script in [("stop", stop_block), ("restore", restore_block)]:
+            for case in cases:
+                with self.subTest(phase=phase, case=case):
+                    p = Path(self.temp_dir.name) / f"y1_{phase}_{case}"
+                    p.mkdir(parents=True, exist_ok=True)
+                    home = p / "home"; old = home / "old"; cur = home / "current"; backup = home / "backup"; code = backup / "code"; bindir = p / "bin"
+                    for d in [home, old, cur, backup, code, bindir]:
+                        d.mkdir(parents=True, exist_ok=True)
+                    for d in [old, cur, code]:
+                        (d / "app.py").write_text("print('OK')\n", encoding="utf-8")
+
+                    dest = str(old)
+                    current = str(cur)
+                    oldexec = f"/fixture/python {old}/app.py"
+                    curexec = f"/fixture/python {cur}/app.py"
+
+                    if case == "echo_interpreter":
+                        oldexec = f"/bin/echo {old}/app.py"
+                        curexec = f"/bin/echo {cur}/app.py"
+                    elif case == "python_c":
+                        oldexec = f"/usr/bin/python3 -c pass {old}/app.py"
+                        curexec = f"/usr/bin/python3 -c pass {cur}/app.py"
+                    elif case == "current_structured_bad_path":
+                        curexec = "{ path=/bin/echo ; argv[]=/fixture/python " + str(cur) + "/app.py ; ignore_errors=no ; }"
+                    elif case == "current_missing_entry":
+                        (cur / "app.py").unlink()
+
+                    unit = f"[Service]\nWorkingDirectory={dest}\nExecStart={oldexec}\n"
+                    (backup / "star-building-strategy.service").write_text(unit, encoding="utf-8")
+                    (backup / "pinned_metadata.json").write_text(json.dumps({
+                        "unit_sha256": hashlib.sha256(unit.encode()).hexdigest(),
+                        "code_files_count": 1,
+                        "live_work_dir": dest,
+                        "files": {"app.py": hashlib.sha256((code / "app.py").read_bytes()).hexdigest()}
+                    }), encoding="utf-8")
+
+                    log = p / "calls.log"
+                    systemctl = bindir / "systemctl"
+                    systemctl.write_text(f"""#!/usr/bin/python3
+import sys
+a = sys.argv[1:]
+if "show" in a:
+    if "ExecStart" in a:
+        print({repr(curexec)})
+    elif "WorkingDirectory" in a:
+        print({repr(current)})
+    else:
+        print("")
+else:
+    with open({repr(str(log))}, "a") as f:
+        f.write("systemctl " + " ".join(a) + "\\n")
+""", encoding="utf-8")
+                    systemctl.chmod(0o700)
+
+                    for cmd in ["cp", "rsync", "mkdir"]:
+                        f_cmd = bindir / cmd
+                        f_cmd.write_text(f'#!/bin/sh\nprintf "MUTATION {cmd}\\n" >> "{str(log)}"\n', encoding="utf-8")
+                        f_cmd.chmod(0o700)
+
+                    env = {
+                        "HOME": str(home),
+                        "PATH": str(bindir) + ":/usr/bin:/bin",
+                        "PINNED_BACKUP_DIR": str(backup),
+                        "LANG": "C.UTF-8",
+                        "PYTHONDONTWRITEBYTECODE": "1"
+                    }
+                    proc = subprocess.run(["/bin/bash", "-c", script], env=env, capture_output=True, text=True, timeout=15)
+                    self.assertNotEqual(0, proc.returncode, f"Сценарий Y1 {case} в фазе {phase} обязан завершаться fail-closed (rc!=0): {proc.stdout}")
+                    mutations = [line for line in (log.read_text().splitlines() if log.exists() else []) if "MUTATION" in line or "systemctl --user stop" in line]
+                    self.assertEqual([], mutations, f"Мутации или остановка службы выполнены в {case} ({phase}): {mutations}")
+
+    def test_y2_backup_target_hardlink_protection(self):
+        """Y2 (HIGH): Запрет перезаписи внешнего inode через существующий target hardlink."""
+        import json
+        import subprocess
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        m_block = re.search(r"```bash\n(.*?)```", plan.split("### Шаг 2. Фиксация и полный бэкап")[1], re.S)
+        assert m_block is not None
+        backup_block = m_block.group(1)
+        m_code = re.search(r"python3 -c \"\n(.*?)\n\"", backup_block, re.S)
+        assert m_code is not None
+        backup_code = m_code.group(1)
+
+        p = Path(self.temp_dir.name) / "y2_hardlink"
+        p.mkdir(parents=True, exist_ok=True)
+        src = p / "src"; src.mkdir()
+        dst = p / "dst"; dst.mkdir()
+        ext = p / "external"; ext.mkdir()
+        (ext / "app.py").write_text("EXTERNAL_UNCHANGED\n", encoding="utf-8")
+        (src / "app.py").write_text("SYNTHETIC_SRC_APP\n", encoding="utf-8")
+        (src / "p026_storage.py").write_text("VALUE='OK'\n", encoding="utf-8")
+
+        (dst / "code").mkdir()
+        os.link(ext / "app.py", dst / "code/app.py")
+        (dst / "star-building-strategy.service").write_text("[Service]\n", encoding="utf-8")
+
+        code = backup_code
+        for a, b in {
+            "$LIVE_WORK_DIR": str(src),
+            "$PINNED_BACKUP_DIR": str(dst),
+            "$BACKUP_TIMESTAMP": "FIXTURE",
+            "$LIVE_UNIT_PATH": "FIXTURE",
+            "$LIVE_EXEC_START": f"/fixture/python {src}/app.py",
+        }.items():
+            code = code.replace(a, b)
+
+        proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=15)
+        self.assertNotEqual(0, proc.returncode, "Бэкап в существующий hardlink target обязан завершаться с ошибкой")
+        self.assertEqual("EXTERNAL_UNCHANGED\n", (ext / "app.py").read_text(encoding="utf-8"), "Внешний sentinel был перезаписан через hardlink!")
+        self.assertFalse((dst / "pinned_metadata.json").exists(), "pinned_metadata.json не должна создаваться при сбое")
+
+    def test_y3_backup_full_preflight_before_first_mutation(self):
+        """Y3 (MEDIUM): Полный preflight всего инвентаря source/target до первой операции записи (0 скопированных файлов кода при сбое)."""
+        import json
+        import subprocess
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        m_block = re.search(r"```bash\n(.*?)```", plan.split("### Шаг 2. Фиксация и полный бэкап")[1], re.S)
+        assert m_block is not None
+        backup_block = m_block.group(1)
+        m_code = re.search(r"python3 -c \"\n(.*?)\n\"", backup_block, re.S)
+        assert m_code is not None
+        backup_code = m_code.group(1)
+
+        p = Path(self.temp_dir.name) / "y3_preflight"
+        p.mkdir(parents=True, exist_ok=True)
+        src = p / "src"; src.mkdir()
+        dst = p / "dst"; dst.mkdir()
+        ext = p / "external"; ext.mkdir()
+        (src / "app.py").write_text("SYNTHETIC_SRC_APP\n", encoding="utf-8")
+        (src / "p026_storage.py").write_text("VALUE='OK'\n", encoding="utf-8")
+        (src / "systemd").mkdir()
+        (src / "systemd/star-building-strategy.service").write_text("[Service]\n", encoding="utf-8")
+        (ext / "app.py").write_text("EXTERNAL_UNCHANGED\n", encoding="utf-8")
+
+        (dst / "code").mkdir()
+        (dst / "code/systemd").symlink_to(ext, target_is_directory=True)
+        (dst / "star-building-strategy.service").write_text("[Service]\n", encoding="utf-8")
+
+        code = backup_code
+        for a, b in {
+            "$LIVE_WORK_DIR": str(src),
+            "$PINNED_BACKUP_DIR": str(dst),
+            "$BACKUP_TIMESTAMP": "FIXTURE",
+            "$LIVE_UNIT_PATH": "FIXTURE",
+            "$LIVE_EXEC_START": f"/fixture/python {src}/app.py",
+        }.items():
+            code = code.replace(a, b)
+
+        proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=15)
+        self.assertNotEqual(0, proc.returncode, "Бэкап при nested symlink target обязан завершаться с ошибкой")
+        self.assertFalse((dst / "code/app.py").exists(), "app.py НЕ должен быть скопирован при позднем symlink!")
+        self.assertFalse((dst / "code/p026_storage.py").exists(), "p026_storage.py НЕ должен быть скопирован при позднем symlink!")
+        self.assertEqual("EXTERNAL_UNCHANGED\n", (ext / "app.py").read_text(encoding="utf-8"), "Внешний sentinel изменён!")
 if __name__ == "__main__":
     unittest.main()
