@@ -223,6 +223,8 @@ class P026SecurityTest(unittest.TestCase):
                 (backup / "code").mkdir()
                 work = p / "old-release"
                 work.mkdir()
+                if case == "changed_current_release":
+                    (p / "new-release").mkdir(exist_ok=True)
                 (backup / "star-building-strategy.service").write_text(f"[Service]\nWorkingDirectory={work}\n", encoding="utf-8")
                 (backup / "code/app.py").write_text("print('safe')\n", encoding="utf-8")
                 meta = {
@@ -273,7 +275,7 @@ class P026SecurityTest(unittest.TestCase):
                     self.assertNotIn("INTERCEPT rsync", proc.stdout)
 
     def test_u5_backup_allowlist_and_symlink_protection(self):
-        """U5: Бэкап кода игнорирует .json/settings и блокирует разыменование внешних symlink."""
+        """U5 / W4: Бэкап кода игнорирует settings.json, а symlink entrypoint отвергается fail-closed."""
         plan_path = ROOT / "DEPLOYMENT_PLAN.md"
         text = plan_path.read_text(encoding="utf-8")
         step = text.split("### Шаг 2. Фиксация и полный бэкап")[1].split("### Шаг 3.")[0]
@@ -294,12 +296,20 @@ class P026SecurityTest(unittest.TestCase):
         (src / "app.py").symlink_to(p / "external-fixture")
         (dst / "star-building-strategy.service").write_text("SAFE FIXTURE UNIT", encoding="utf-8")
 
-        code = code.replace("$LIVE_WORK_DIR", str(src)).replace("$PINNED_BACKUP_DIR", str(dst)).replace("$BACKUP_TIMESTAMP", "FIXTURE").replace("$LIVE_UNIT_PATH", "FIXTURE_UNIT").replace("$LIVE_EXEC_START", "FIXTURE_EXEC")
-        exec(compile(code, "DEPLOYMENT_PLAN backup excerpt", "exec"), {})
+        code_u5 = code.replace("$LIVE_WORK_DIR", str(src)).replace("$PINNED_BACKUP_DIR", str(dst)).replace("$BACKUP_TIMESTAMP", "FIXTURE").replace("$LIVE_UNIT_PATH", "FIXTURE_UNIT").replace("$LIVE_EXEC_START", f"/fixture/python {src}/app.py")
+        # W4: symlink entrypoint обязан вызывать немедленный fail-closed отказ (SystemExit)
+        with self.assertRaises(SystemExit):
+            exec(compile(code_u5, "DEPLOYMENT_PLAN backup excerpt", "exec"), {})
 
         self.assertFalse((dst / "code/settings.json").exists(), "settings.json не должен копироваться в бэкап кода")
-        if (dst / "code/app.py").exists():
-            self.assertNotEqual("SYNTHETIC_EXTERNAL_SENTINEL", (dst / "code/app.py").read_text(encoding="utf-8"), "Внешний symlink target не должен копироваться")
+        self.assertFalse((dst / "code/app.py").exists(), "symlink app.py не должен копироваться в бэкап")
+
+        # Позитивный сценарий: обычный валидный app.py копируется, settings.json игнорируется
+        (src / "app.py").unlink()
+        (src / "app.py").write_text("SAFE_REGULAR_CODE", encoding="utf-8")
+        exec(compile(code_u5, "DEPLOYMENT_PLAN backup excerpt", "exec"), {})
+        self.assertTrue((dst / "code/app.py").exists(), "Обычный файл app.py обязан быть скопирован в бэкап")
+        self.assertFalse((dst / "code/settings.json").exists(), "settings.json не должен копироваться")
 
     def test_v2_v3_v4_v5_deployment_plan_probes(self):
         """V2, V3, V4, V5: Независимая верификация preflight, инвентаря, корней, whitelist и roundtrip."""
@@ -344,15 +354,21 @@ class P026SecurityTest(unittest.TestCase):
         self.assertTrue((dst_v4 / "code/app.py").exists(), "V4: app.py обязан быть скопирован в бэкап")
         self.assertFalse((dst_v4 / "code/linked.py").exists(), "V4: symlink linked.py не должен заменяться заглушкой!")
 
-        # Проверка V2, V3, V5 на rollback
+        # Проверка V2, V3, V5, W1, W2 на rollback
         test_cases = [
             "valid_changed_release",
+            "unexported_backup",
             "code_root_symlink",
             "extra_fifo",
             "boolean_count",
             "redirect_destination",
             "empty_current_handle",
-            "unexported_backup",
+            "backup_ancestor_symlink",
+            "unapproved_current",
+            "symlink_current",
+            "nonexistent_current",
+            "symlink_destination",
+            "unapproved_destination",
         ]
         for case in test_cases:
             with self.subTest(case=case):
@@ -360,19 +376,44 @@ class P026SecurityTest(unittest.TestCase):
                 p.mkdir(parents=True, exist_ok=True)
                 backup = p / "backup"; backup.mkdir(); (backup / "code").mkdir()
                 (backup / "code/app.py").write_text('print("fixture")\n')
+                old = p / "old-release"; old.mkdir(parents=True, exist_ok=True)
+                new = p / "new-release"
+                if case not in {"nonexistent_current", "empty_current_handle"}:
+                    new.mkdir(parents=True, exist_ok=True)
+                dest = str(old)
+                handle = str(new)
+
+                if case == "unapproved_current":
+                    handle = "/unapproved-root/current"
+                elif case == "nonexistent_current":
+                    handle = str(p / "missing")
+                elif case == "symlink_current":
+                    (p / "current-link").symlink_to(new, target_is_directory=True)
+                    handle = str(p / "current-link")
+                elif case == "symlink_destination":
+                    (p / "old-link").symlink_to(old, target_is_directory=True)
+                    dest = str(p / "old-link")
+                elif case == "unapproved_destination":
+                    dest = "/unapproved-root/restore"
+                elif case == "redirect_destination":
+                    dest = str(p / "unrelated-target")
+
                 unit = backup / "star-building-strategy.service"
-                unit.write_text(f"[Service]\nWorkingDirectory={p}/old-release\nExecStart=/fixture/python {p}/old-release/app.py\n")
+                unit.write_text(f"[Service]\nWorkingDirectory={dest}\nExecStart=/fixture/python {dest}/app.py\n")
                 meta = {
                     "unit_sha256": hashlib.sha256(unit.read_bytes()).hexdigest(),
                     "code_files_count": 1,
-                    "live_work_dir": str(p / "old-release"),
+                    "live_work_dir": dest,
                     "files": {"app.py": hashlib.sha256((backup / "code/app.py").read_bytes()).hexdigest()},
                 }
                 if case == "redirect_destination":
-                    meta["live_work_dir"] = str(p / "unrelated-target")
+                    meta["live_work_dir"] = str(p / "unrelated-target-wrong")
                 if case == "code_root_symlink":
                     (backup / "code").rename(p / "outside")
                     (backup / "code").symlink_to(p / "outside", target_is_directory=True)
+                if case == "backup_ancestor_symlink":
+                    (p / "alias").symlink_to(p, target_is_directory=True)
+                    backup = p / "alias/backup"
                 if case == "extra_fifo":
                     os.mkfifo(backup / "code/untracked.pipe")
                 if case == "boolean_count":
@@ -393,7 +434,7 @@ class P026SecurityTest(unittest.TestCase):
                     "PATH": str(bindir) + ":/usr/bin:/bin",
                     "LANG": "C.UTF-8",
                     "QUERY_FAIL": "0",
-                    "CURRENT_HANDLE": "" if case == "empty_current_handle" else str(p / "new-release"),
+                    "CURRENT_HANDLE": "" if case == "empty_current_handle" else handle,
                 }
                 prefix = ""
                 if case == "unexported_backup":
@@ -414,7 +455,7 @@ class P026SecurityTest(unittest.TestCase):
                     self.assertIn("INTERCEPT cp", proc.stdout)
                     self.assertIn("INTERCEPT rsync", proc.stdout)
                 else:
-                    # Отрицательные сценарии V2, V3 обязаны давать отказ ДО вызова stop и любых мутаций!
+                    # Отрицательные сценарии V2, V3, W1, W2 обязаны давать отказ ДО вызова stop и любых мутаций!
                     self.assertNotEqual(0, proc.returncode, f"Отрицательный сценарий {case} обязан завершаться с ненулевым кодом: {proc.stdout}")
                     self.assertNotIn("INTERCEPT systemctl --user stop", proc.stdout, f"Служба не должна останавливаться в сценарии {case}!")
                     self.assertNotIn("INTERCEPT cp", proc.stdout, f"cp не должен вызываться в сценарии {case}!")
@@ -478,6 +519,142 @@ class P026SecurityTest(unittest.TestCase):
                 self.assertTrue(unit.read_text() == oldunit, "Unit-файл службы должен быть точно восстановлен к старому релизу")
                 self.assertEqual("PRESERVE_STATE", (old / "runtime-state.bin").read_text(), "Runtime-state не должен повреждаться/удаляться")
                 self.assertEqual("OLD_FIXTURE_CODE\n", (old / "app.py").read_text(), "Код приложения должен быть точно восстановлен")
+
+    def test_w3_w4_backup_security_probes(self):
+        """W3, W4 (HIGH): Проверка доверенного inventory, canonical containment и отказа при неполном backup."""
+        import json
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        m_block = re.search(r"```bash\n(.*?)```", plan.split("### Шаг 2. Фиксация и полный бэкап")[1], re.S)
+        assert m_block is not None
+        backup_block = m_block.group(1)
+        m_code = re.search(r"python3 -c \"\n(.*?)\n\"", backup_block, re.S)
+        assert m_code is not None
+        backup_code = m_code.group(1)
+
+        cases = ["canonical_control", "manifest_private", "manifest_traversal", "missing_entrypoint", "symlink_entrypoint", "empty_code"]
+        for case in cases:
+            with self.subTest(case=case):
+                p = Path(self.temp_dir.name) / f"w_backup_{case}"
+                p.mkdir(parents=True, exist_ok=True)
+                live = p / "live"; live.mkdir()
+                dst = p / "pinned"; dst.mkdir(); (dst / "code").mkdir()
+                (dst / "star-building-strategy.service").write_text("[Service]\n")
+                (live / "app.py").write_text("SAFE_APP")
+                (live / "README.md").write_text("SAFE_README")
+                (live / "private").mkdir()
+                (live / "private/notes.txt").write_text("SYNTHETIC_PRIVATE_SENTINEL")
+
+                if case == "manifest_private":
+                    (live / "release_manifest.json").write_text(json.dumps({"files": ["app.py", "private/notes.txt"]}))
+                elif case == "manifest_traversal":
+                    (live / "sub").mkdir()
+                    (live / "release_manifest.json").write_text(json.dumps({"files": ["sub/../../live/app.py"]}))
+                elif case == "missing_entrypoint":
+                    (live / "app.py").unlink()
+                elif case == "symlink_entrypoint":
+                    (live / "app.py").rename(live / "payload.py")
+                    (live / "app.py").symlink_to(live / "payload.py")
+                elif case == "empty_code":
+                    (live / "app.py").unlink()
+                    (live / "README.md").unlink()
+
+                code = backup_code
+                for a, b in {
+                    "$LIVE_WORK_DIR": str(live),
+                    "$PINNED_BACKUP_DIR": str(dst),
+                    "$BACKUP_TIMESTAMP": "FIXTURE",
+                    "$LIVE_UNIT_PATH": "FIXTURE",
+                    "$LIVE_EXEC_START": f"/fixture/python {live}/app.py",
+                }.items():
+                    code = code.replace(a, b)
+
+                if case == "canonical_control":
+                    exec(compile(code, "exact backup excerpt", "exec"), {})
+                    self.assertFalse((dst / "code/private/notes.txt").exists(), "private/notes.txt не должен копироваться")
+                    self.assertFalse((dst / "live/app.py").exists(), "Файлы не должны выходить за пределы code/")
+                    self.assertTrue((dst / "code/app.py").exists(), "app.py обязан присутствовать в бэкапе")
+                else:
+                    with self.assertRaises(SystemExit):
+                        exec(compile(code, "exact backup excerpt", "exec"), {})
+                    self.assertFalse((dst / "code/private/notes.txt").exists(), f"Небезопасный файл скопирован в {case}")
+                    self.assertFalse((dst / "live/app.py").exists(), f"Path traversal произошёл в {case}")
+
+    def test_w4_destructive_recovery_roundtrip(self):
+        """W4 (HIGH): Деструктивный сценарий восстановления: код удаляется/модифицируется, rollback восстанавливает exact файлы."""
+        import subprocess
+        import shutil
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        def get_block(title):
+            m = re.search(r"```bash\n(.*?)```", plan.split(title)[1], re.S)
+            assert m is not None
+            return m.group(1)
+
+        backup = get_block("### Шаг 2. Фиксация и полный бэкап")
+        switch = get_block("### Шаг 4. Атомарное переключение службы")
+        stop = get_block("### Шаг 1. Остановка службы")
+        restore = get_block("### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа")
+        start = get_block("### Шаг 4. Запуск восстановленной службы")
+
+        p = Path(self.temp_dir.name) / "destructive_roundtrip"
+        p.mkdir(parents=True, exist_ok=True)
+        home = p / "home"; home.mkdir()
+        old = home / "old-release"; old.mkdir()
+        (old / "app.py").write_text("AUTHENTIC_ORIGINAL_CODE\n")
+        (old / "README.md").write_text("AUTHENTIC_README\n")
+        (old / "runtime-state.bin").write_text("PRESERVE_STATE")
+        unit = home / ".config/systemd/user/star-building-strategy.service"
+        unit.parent.mkdir(parents=True)
+        oldunit = f"[Service]\nWorkingDirectory={old}\nExecStart=/fixture/python {old}/app.py\n"
+        unit.write_text(oldunit)
+
+        release = home / "new-release"
+        (release / "37-strategy-bot/systemd").mkdir(parents=True)
+        shutil.copyfile(ROOT / "systemd/star-building-strategy.service", release / "37-strategy-bot/systemd/star-building-strategy.service")
+
+        bindir = p / "bin"; bindir.mkdir()
+        log = p / "calls.log"
+        systemctl = bindir / "systemctl"
+        systemctl.write_text('#!/usr/bin/python3\nimport os,sys,pathlib\na=sys.argv[1:]\nu=pathlib.Path(os.environ["FIXTURE_UNIT"])\nif a[1]=="show":\n key=a[a.index("-p")+1]\n if key=="FragmentPath": print(u)\n else:\n  lines=u.read_text().splitlines()\n  print(next((l.split("=",1)[1] for l in lines if l.startswith(key+"=")),""))\nelse:\n with open(os.environ["FIXTURE_LOG"],"a") as f:\n  f.write("systemctl "+" ".join(a)+"\\n")\n')
+        systemctl.chmod(0o700)
+
+        rsync = bindir / "rsync"
+        rsync.write_text('#!/usr/bin/python3\nimport os,pathlib,shutil,sys\ns=pathlib.Path(sys.argv[-2]); d=pathlib.Path(sys.argv[-1]); root=pathlib.Path(os.environ["FIXTURE_ROOT"])\nassert s.resolve().is_relative_to(root) and d.resolve().is_relative_to(root)\nshutil.copytree(s,d,dirs_exist_ok=True)\nwith open(os.environ["FIXTURE_LOG"],"a") as f:\n  f.write("rsync sandbox-copy\\n")\n')
+        rsync.chmod(0o700)
+
+        journal = bindir / "journalctl"
+        journal.write_text("#!/bin/sh\nexit 0\n")
+        journal.chmod(0o700)
+
+        # 1. Выполняем backup и switch
+        script_part1 = (backup + "\n" + switch).replace("/home/roman", str(home))
+        script_part1 = "set -euo pipefail\nTARGET_COMMIT=FIXTURE\nRELEASE_DIR=" + str(release) + "\n" + script_part1
+        env = {"HOME": str(home), "PATH": str(bindir) + ":/usr/bin:/bin", "LANG": "C.UTF-8", "FIXTURE_UNIT": str(unit), "FIXTURE_LOG": str(log), "FIXTURE_ROOT": str(p)}
+        proc1 = subprocess.run(["/bin/bash", "-c", script_part1], env=env, capture_output=True, text=True, timeout=20)
+        self.assertEqual(0, proc1.returncode, f"Backup + switch завершились с ошибкой: {proc1.stderr}")
+
+        m_dir = re.search(r"Бэкап работающего релиза надёжно зафиксирован в: (.*)", proc1.stdout)
+        assert m_dir is not None
+        pinned_dir = m_dir.group(1).strip()
+        env["PINNED_BACKUP_DIR"] = pinned_dir
+
+        # 2. ДЕСТРУКТИВНОЕ ВОЗДЕЙСТВИЕ: удаляем app.py и модифицируем README в старом каталоге
+        (old / "app.py").unlink()
+        (old / "README.md").write_text("TAMPERED_CONTENT")
+
+        # 3. Выполняем stop + restore + start
+        script_part2 = (stop + "\n" + restore + "\n" + start).replace("/home/roman", str(home))
+        script_part2 = "set -euo pipefail\nTARGET_COMMIT=FIXTURE\nRELEASE_DIR=" + str(release) + "\n" + script_part2
+        proc2 = subprocess.run(["/bin/bash", "-c", script_part2], env=env, capture_output=True, text=True, timeout=20)
+        self.assertEqual(0, proc2.returncode, f"Rollback после деструктивного воздействия завершился с ошибкой: {proc2.stderr}\nSTDOUT:\n{proc2.stdout}")
+
+        # 4. Проверяем полное и точное восстановление удалённого entrypoint и хэшей
+        self.assertTrue((old / "app.py").exists(), "Удалённый entrypoint app.py обязан быть восстановлен!")
+        self.assertEqual("AUTHENTIC_ORIGINAL_CODE\n", (old / "app.py").read_text(), "Содержимое entrypoint app.py обязано быть в точности восстановлено!")
+        self.assertEqual("AUTHENTIC_README\n", (old / "README.md").read_text(), "Содержимое README.md обязано быть восстановлено из бэкапа!")
+        self.assertEqual("PRESERVE_STATE", (old / "runtime-state.bin").read_text(), "Runtime-state не должен повреждаться!")
+        self.assertTrue(unit.read_text() == oldunit, "Unit-файл службы должен быть точно восстановлен к старому релизу")
 
 if __name__ == "__main__":
     unittest.main()

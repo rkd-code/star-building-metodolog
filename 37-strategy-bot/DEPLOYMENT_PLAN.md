@@ -175,9 +175,8 @@ import hashlib, json, os, pathlib, shutil, sys
 src_dir = pathlib.Path('$LIVE_WORK_DIR')
 dst_code = pathlib.Path('$PINNED_BACKUP_DIR/code')
 
-# V4: Точный положительный список разрешённых путей релиза из versioned manifest
-# Исключает копирование незаявленных файлов (private/notes.txt), конфигов и секретов
-CANONICAL_RELEASE_PATHS = [
+# Доверенный неизменяемый перечень путей релиза
+CANONICAL_RELEASE_PATHS = {
     'strategy_bot.py',
     'p026_handler.py',
     'p026_storage.py',
@@ -187,49 +186,108 @@ CANONICAL_RELEASE_PATHS = [
     'README.md',
     'app.py',
     'main.py',
-]
+}
 
-manifest_file = src_dir / 'release_manifest.json'
-if manifest_file.is_file():
-    try:
-        data = json.loads(manifest_file.read_text(encoding='utf-8'))
-        allowed_paths = [pathlib.Path(p) for p in data.get('files', [])]
-    except Exception:
-        allowed_paths = [pathlib.Path(p) for p in CANONICAL_RELEASE_PATHS]
-else:
-    allowed_paths = [pathlib.Path(p) for p in CANONICAL_RELEASE_PATHS]
-
+# Определение обязательной точки входа из LIVE_EXEC_START
 exec_start_str = '$LIVE_EXEC_START'.strip()
+required_entrypoint = None
 if exec_start_str:
     for tok in exec_start_str.split():
         if tok.endswith('.py') or tok.endswith('.sh'):
-            try:
-                p_tok = pathlib.Path(tok)
-                if p_tok.is_absolute():
-                    rel_cand = p_tok.resolve().relative_to(src_dir.resolve())
-                    allowed_paths.append(rel_cand)
-                else:
-                    allowed_paths.append(pathlib.Path(tok))
-            except Exception:
-                pass
+            p_tok = pathlib.Path(tok)
+            if p_tok.is_absolute():
+                try:
+                    required_entrypoint = p_tok.resolve().relative_to(src_dir.resolve())
+                except Exception:
+                    required_entrypoint = pathlib.Path(p_tok.name)
+            else:
+                required_entrypoint = pathlib.Path(tok)
+            break
+
+if not required_entrypoint:
+    for cand in ['app.py', 'strategy_bot.py', 'main.py']:
+        if (src_dir / cand).exists():
+            required_entrypoint = pathlib.Path(cand)
+            break
+
+# W4: Отсутствие или symlink обязательного entrypoint вызывают немедленный отказ
+if not required_entrypoint:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Обязательная точка входа (entrypoint) не определена!', file=sys.stderr)
+    sys.exit(1)
+
+entrypoint_src = src_dir / required_entrypoint
+if entrypoint_src.is_symlink() or os.path.islink(str(entrypoint_src)):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Обязательная точка входа {required_entrypoint} является symlink!', file=sys.stderr)
+    sys.exit(1)
+
+if not entrypoint_src.exists() or not entrypoint_src.is_file():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Обязательная точка входа {required_entrypoint} отсутствует или не является файлом!', file=sys.stderr)
+    sys.exit(1)
+
+# W3: Произвольный live release_manifest.json не должен расширять утверждённый inventory
+manifest_file = src_dir / 'release_manifest.json'
+if manifest_file.exists():
+    if manifest_file.is_symlink() or os.path.islink(str(manifest_file)) or not manifest_file.is_file():
+        print('КРИТИЧЕСКАЯ ОШИБКА: release_manifest.json является symlink или не файлом!', file=sys.stderr)
+        sys.exit(1)
+    try:
+        data = json.loads(manifest_file.read_text(encoding='utf-8'))
+        raw_files = data.get('files', [])
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: release_manifest.json повреждён: {err}', file=sys.stderr)
+        sys.exit(1)
+
+    if not isinstance(raw_files, list) or len(raw_files) == 0:
+        print('КРИТИЧЕСКАЯ ОШИБКА: release_manifest.json содержит невалидный список файлов!', file=sys.stderr)
+        sys.exit(1)
+
+    for item in raw_files:
+        if not isinstance(item, str) or not item.strip():
+            print('КРИТИЧЕСКАЯ ОШИБКА: Элемент списка файлов манифеста пуст или не строка!', file=sys.stderr)
+            sys.exit(1)
+        p_item = pathlib.Path(item)
+        if p_item.is_absolute() or item.startswith('/') or '..' in p_item.parts or '.' in p_item.parts or os.path.normpath(item) != item:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружен path traversal или не канонический путь в манифесте: {item}!', file=sys.stderr)
+            sys.exit(1)
+        if item not in CANONICAL_RELEASE_PATHS:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {item} отсутствует в утверждённом доверенном инвентаре релиза!', file=sys.stderr)
+            sys.exit(1)
+
+    allowed_paths = [pathlib.Path(p) for p in raw_files]
+else:
+    allowed_paths = [pathlib.Path(p) for p in sorted(CANONICAL_RELEASE_PATHS)]
+
+if required_entrypoint not in allowed_paths:
+    allowed_paths.append(required_entrypoint)
 
 FORBIDDEN_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key', 'settings', 'config'}
 
 copied_files = {}
 for rel_path in allowed_paths:
+    rel_str = str(rel_path)
+    if not rel_str or rel_path.is_absolute() or rel_str.startswith('/'):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Недопустимый абсолютный относительный путь: {rel_str}!', file=sys.stderr)
+        sys.exit(1)
+    if '..' in rel_path.parts or '.' in rel_path.parts or os.path.normpath(rel_str) != rel_str:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Path traversal в пути {rel_str}!', file=sys.stderr)
+        sys.exit(1)
+    if rel_str not in CANONICAL_RELEASE_PATHS:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {rel_str} не входит в утверждённый список!', file=sys.stderr)
+        sys.exit(1)
+
     p = src_dir / rel_path
     if not p.exists() and not p.is_symlink():
         continue
-    # V4: Запрет подмены symlink заглушками: symlink безопасно исключается без подмены исполняемого кода
-    if p.is_symlink() or os.path.islink(p):
-        print(f'ПРЕДУПРЕЖДЕНИЕ: Файл {rel_path} является symlink и безопасно исключён из бэкапа.', file=sys.stderr)
-        continue
+    if p.is_symlink() or os.path.islink(str(p)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {rel_path} в исходном каталоге является symlink!', file=sys.stderr)
+        sys.exit(1)
     if not p.is_file():
         continue
+
     try:
         resolved = p.resolve()
         if not resolved.is_relative_to(src_dir.resolve()):
-            print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {rel_path} выходит за пределы каталога релиза (path traversal)!', file=sys.stderr)
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {rel_path} выходит за пределы каталога релиза!', file=sys.stderr)
             sys.exit(1)
     except (ValueError, RuntimeError):
         continue
@@ -237,10 +295,25 @@ for rel_path in allowed_paths:
     name_lower = p.name.lower()
     if any(bad in name_lower for bad in FORBIDDEN_PATTERNS):
         continue
+
     target = dst_code / rel_path
+    target_abs = os.path.abspath(str(target))
+    dst_code_abs = os.path.abspath(str(dst_code))
+    if not target_abs.startswith(dst_code_abs + os.sep):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой путь {target} выходит за пределы каталога бэкапа code!', file=sys.stderr)
+        sys.exit(1)
+
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(p, target)
     copied_files[str(rel_path)] = hashlib.sha256(target.read_bytes()).hexdigest()
+
+if len(copied_files) == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Инвентарь бэкапа пуст (0 файлов скопировано)!', file=sys.stderr)
+    sys.exit(1)
+
+if str(required_entrypoint) not in copied_files:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Обязательная точка входа {required_entrypoint} не включена в бэкап!', file=sys.stderr)
+    sys.exit(1)
 
 unit_bytes = (pathlib.Path('$PINNED_BACKUP_DIR') / 'star-building-strategy.service').read_bytes()
 meta = {
@@ -253,7 +326,7 @@ meta = {
     'files': copied_files,
 }
 (pathlib.Path('$PINNED_BACKUP_DIR') / 'pinned_metadata.json').write_text(json.dumps(meta, indent=2, ensure_ascii=False))
-print(f'Pinned backup успешно сформирован ({len(copied_files)} файлов кода, 0 секретов).')
+print(f'Pinned backup успешно сформирован ({len(copied_files)} файлов кода).')
 "
 
 # 4. Сохранение снимка состояния runtime (decisions и drafts)
@@ -383,10 +456,32 @@ fi
 python3 -c "
 import hashlib, json, os, pathlib, stat, subprocess, sys
 
-backup_dir = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ['PINNED_BACKUP_DIR'])
-meta_path = backup_dir / 'pinned_metadata.json'
+backup_dir_raw = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ.get('PINNED_BACKUP_DIR', '')
+if not backup_dir_raw:
+    print('КРИТИЧЕСКАЯ ОШИБКА: PINNED_BACKUP_DIR не задан!', file=sys.stderr)
+    sys.exit(1)
 
-if not meta_path.is_file() or meta_path.is_symlink() or os.path.islink(meta_path):
+backup_dir = pathlib.Path(backup_dir_raw)
+
+# W1: Проверка абсолютности пути бэкапа и проверка ВСЕХ предков до корня / ДО открытия metadata/unit
+if not backup_dir.is_absolute():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь бэкапа ({backup_dir}) не является абсолютным!', file=sys.stderr)
+    sys.exit(1)
+
+cur = backup_dir
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Узел {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if not cur.exists():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути бэкапа {cur} не существует!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+meta_path = backup_dir / 'pinned_metadata.json'
+if not meta_path.is_file() or meta_path.is_symlink() or os.path.islink(str(meta_path)):
     print('КРИТИЧЕСКАЯ ОШИБКА: Обязательный манифест pinned_metadata.json отсутствует или является symlink!', file=sys.stderr)
     sys.exit(1)
 
@@ -402,10 +497,9 @@ if missing_fields:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: В манифесте отсутствуют обязательные поля: {missing_fields}', file=sys.stderr)
     sys.exit(1)
 
-# V2: Строгая проверка целого типа count: bool категорически отвергается (bool is instance of int in Python)
 count_val = meta.get('code_files_count')
-if type(count_val) is not int or isinstance(count_val, bool) or count_val < 0:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: code_files_count обязан быть неотрицательным целым числом (int, не bool), получено: {type(count_val).__name__} ({count_val})!', file=sys.stderr)
+if type(count_val) is not int or isinstance(count_val, bool) or count_val <= 0:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: code_files_count обязан быть положительным целым числом (int, не bool), получено: {type(count_val).__name__} ({count_val})!', file=sys.stderr)
     sys.exit(1)
 
 if not isinstance(meta.get('files'), dict) or len(meta['files']) == 0:
@@ -413,7 +507,7 @@ if not isinstance(meta.get('files'), dict) or len(meta['files']) == 0:
     sys.exit(1)
 
 unit_path = backup_dir / 'star-building-strategy.service'
-if not unit_path.is_file() or unit_path.is_symlink() or os.path.islink(unit_path) or unit_path.stat().st_size == 0:
+if not unit_path.is_file() or unit_path.is_symlink() or os.path.islink(str(unit_path)) or unit_path.stat().st_size == 0:
     print('КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует, является symlink или пуст!', file=sys.stderr)
     sys.exit(1)
 
@@ -423,13 +517,15 @@ if actual_unit_sha != exp_unit_sha:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш unit-файла ({actual_unit_sha}) не совпадает с манифестом ({exp_unit_sha})!', file=sys.stderr)
     sys.exit(1)
 
-# V3: Структурная привязка destination к сохранённому unit и проверка WorkingDirectory
 unit_lines = unit_path.read_text(encoding='utf-8').splitlines()
 unit_work_dir = None
+unit_exec_start = None
 for line in unit_lines:
     line = line.strip()
     if line.startswith('WorkingDirectory='):
         unit_work_dir = line.split('=', 1)[1].strip()
+    elif line.startswith('ExecStart='):
+        unit_exec_start = line.split('=', 1)[1].strip()
 
 if not unit_work_dir:
     print('КРИТИЧЕСКАЯ ОШИБКА: В сохранённом unit-файле отсутствует WorkingDirectory!', file=sys.stderr)
@@ -444,11 +540,41 @@ if pinned_work_dir != unit_work_dir:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: live_work_dir из манифеста ({pinned_work_dir}) не совпадает с WorkingDirectory сохранённого unit ({unit_work_dir})!', file=sys.stderr)
     sys.exit(1)
 
-if not pathlib.Path(pinned_work_dir).is_absolute():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: live_work_dir ({pinned_work_dir}) не является абсолютным путём!', file=sys.stderr)
+dest_path = pathlib.Path(unit_work_dir)
+if not dest_path.is_absolute():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: WorkingDirectory назначения ({unit_work_dir}) не является абсолютным путём!', file=sys.stderr)
     sys.exit(1)
 
-# V3: Независимая валидация текущего хэндла службы через systemctl
+home_dir = pathlib.Path(os.environ.get('HOME', '/home/roman'))
+approved_roots = [
+    home_dir,
+    pathlib.Path('/srv/star-building-strategy'),
+]
+
+def check_approved_root(target: pathlib.Path, label: str) -> None:
+    in_approved = False
+    for r in approved_roots:
+        try:
+            if target.is_relative_to(r):
+                in_approved = True
+                break
+        except Exception:
+            pass
+    if not in_approved:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target}) не входит в список разрешённых корней релиза!', file=sys.stderr)
+        sys.exit(1)
+
+cur = dest_path
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути назначения {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+check_approved_root(dest_path, 'назначения (старого релиза)')
+
 proc = subprocess.run(
     ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
     capture_output=True, text=True, check=False
@@ -462,216 +588,44 @@ if not current_handle:
     print('КРИТИЧЕСКАЯ ОШИБКА: systemctl show вернул пустой текущий WorkingDirectory службы!', file=sys.stderr)
     sys.exit(1)
 
-if not pathlib.Path(current_handle).is_absolute():
+current_path = pathlib.Path(current_handle)
+if not current_path.is_absolute():
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не является абсолютным путём!', file=sys.stderr)
     sys.exit(1)
 
-# V2: Валидация корня каталога code, предков и типов всех объектов
+if not current_path.exists() or not current_path.is_dir():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не существует или не является каталогом!', file=sys.stderr)
+    sys.exit(1)
+
+cur = current_path
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути текущей службы {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+check_approved_root(current_path, 'текущей службы')
+
 code_dir = backup_dir / 'code'
-if code_dir.is_symlink() or os.path.islink(code_dir) or not code_dir.is_dir():
+if code_dir.is_symlink() or os.path.islink(str(code_dir)) or not code_dir.is_dir():
     print('КРИТИЧЕСКАЯ ОШИБКА: Каталог кода отсутствует или является symlink!', file=sys.stderr)
     sys.exit(1)
 
-# Проверка предков каталога code
 cur = code_dir
-while cur != cur.parent:
-    if cur.is_symlink() or os.path.islink(cur):
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Узел {cur} является symlink!', file=sys.stderr)
         sys.exit(1)
-    if cur == backup_dir:
+    if cur == cur.parent:
         break
     cur = cur.parent
 
 disk_files = {}
 for root_path, dirs, files in os.walk(code_dir, followlinks=False):
     r_path = pathlib.Path(root_path)
-    if r_path.is_symlink() or os.path.islink(r_path):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Подкаталог {r_path} является symlink!', file=sys.stderr)
-        sys.exit(1)
-    with os.scandir(root_path) as it:
-        for entry in it:
-            try:
-                st = entry.stat(follow_symlinks=False)
-            except Exception as err:
-                print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка чтения статуса {entry.name}: {err}', file=sys.stderr)
-                sys.exit(1)
-            if stat.S_ISLNK(st.st_mode):
-                print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый symlink: {entry.name}', file=sys.stderr)
-                sys.exit(1)
-            elif stat.S_ISDIR(st.st_mode):
-                continue
-            elif stat.S_ISREG(st.st_mode):
-                p_entry = pathlib.Path(entry.path)
-                try:
-                    rel = p_entry.resolve().relative_to(code_dir.resolve())
-                except ValueError:
-                    print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {entry.name} выходит за пределы каталога бэкапа (path traversal)!', file=sys.stderr)
-                    sys.exit(1)
-                rel_str = str(p_entry.relative_to(code_dir))
-                disk_files[rel_str] = hashlib.sha256(p_entry.read_bytes()).hexdigest()
-            else:
-                print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружен неподдерживаемый специальный тип файла: {entry.name} (mode {oct(st.st_mode)})', file=sys.stderr)
-                sys.exit(1)
-
-manifest_files = meta['files']
-if set(disk_files.keys()) != set(manifest_files.keys()):
-    extra = set(disk_files.keys()) - set(manifest_files.keys())
-    missing = set(manifest_files.keys()) - set(disk_files.keys())
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Нарушена биекция disk <-> manifest! Лишние: {extra}, отсутствующие: {missing}', file=sys.stderr)
-    sys.exit(1)
-
-if len(disk_files) != count_val:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Число файлов ({len(disk_files)}) не совпадает со значением манифеста ({count_val})!', file=sys.stderr)
-    sys.exit(1)
-
-for rel_str, exp_hash in manifest_files.items():
-    if disk_files.get(rel_str) != exp_hash:
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} не совпадает с манифестом!', file=sys.stderr)
-        sys.exit(1)
-
-FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
-for p in backup_dir.rglob('*'):
-    if p.is_file():
-        name_lower = p.name.lower()
-        if any(pat in name_lower for pat in FORBIDDEN_SECRET_PATTERNS):
-            print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый секретный файл: {p.name}', file=sys.stderr)
-            sys.exit(1)
-" "$PINNED_BACKUP_DIR"
-
-# 3. Остановка службы ТОЛЬКО ПОСЛЕ ПОДТВЕРЖДЁННОЙ ВАЛИДАЦИИ БЭКАПА
-systemctl --user stop star-building-strategy.service
-```
-
-### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа
-```bash
-set -euo pipefail
-
-# 1. Строгая проверка наличия явно переданного идентификатора бэкапа
-# Категорический запрет молчаливого fallback на «последний» бэкап (latest)!
-if [ -z "${PINNED_BACKUP_DIR:-}" ]; then
-    echo "КРИТИЧЕСКАЯ ОШИБКА: Идентификатор бэкапа PINNED_BACKUP_DIR не задан! Молчаливый fallback на latest запрещён." >&2
-    exit 1
-fi
-export PINNED_BACKUP_DIR
-
-if [ -z "$PINNED_BACKUP_DIR" ] || [ ! -d "$PINNED_BACKUP_DIR" ]; then
-    echo "КРИТИЧЕСКАЯ ОШИБКА: Каталог pinned-бэкапа не найден! Откат заблокирован fail-closed." >&2
-    exit 1
-fi
-
-# 2. Комплексная верификация бэкапа ДО ПЕРВОЙ МУТАЦИИ (fail-closed)
-# Сверяются: обязательный манифест, хэши unit-файла, непустое отображение files,
-# строгая биекция disk <-> manifest, проверка типов (regular file, not symlink/fifo/device),
-# strict count (int, не bool), containment, запрет symlink и секретов/токенов в бэкапе,
-# успешный запрос systemctl show (exit 0) и структурная привязка к сохранённому unit.
-# Любое несоответствие приводит к немедленному fail-closed отказу (exit 1) с 0 мутаций.
-python3 -c "
-import hashlib, json, os, pathlib, stat, subprocess, sys
-
-backup_dir = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ['PINNED_BACKUP_DIR'])
-meta_path = backup_dir / 'pinned_metadata.json'
-
-if not meta_path.is_file() or meta_path.is_symlink() or os.path.islink(meta_path):
-    print('КРИТИЧЕСКАЯ ОШИБКА: Обязательный манифест pinned_metadata.json отсутствует или является symlink!', file=sys.stderr)
-    sys.exit(1)
-
-try:
-    meta = json.loads(meta_path.read_text(encoding='utf-8'))
-except Exception as err:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Манифест pinned_metadata.json повреждён: {err}', file=sys.stderr)
-    sys.exit(1)
-
-# U2: Поле files обязательно и должно быть непустым отображением
-required_fields = {'unit_sha256', 'code_files_count', 'live_work_dir', 'files'}
-missing_fields = required_fields - set(meta.keys())
-if missing_fields:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: В манифесте отсутствуют обязательные поля: {missing_fields}', file=sys.stderr)
-    sys.exit(1)
-
-# V2: Строгая проверка целого типа count: bool категорически отвергается (bool is instance of int in Python)
-count_val = meta.get('code_files_count')
-if type(count_val) is not int or isinstance(count_val, bool) or count_val < 0:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: code_files_count обязан быть неотрицательным целым числом (int, не bool), получено: {type(count_val).__name__} ({count_val})!', file=sys.stderr)
-    sys.exit(1)
-
-if not isinstance(meta.get('files'), dict) or len(meta['files']) == 0:
-    print('КРИТИЧЕСКАЯ ОШИБКА: Поле files в манифесте обязано быть непустым отображением!', file=sys.stderr)
-    sys.exit(1)
-
-unit_path = backup_dir / 'star-building-strategy.service'
-if not unit_path.is_file() or unit_path.is_symlink() or os.path.islink(unit_path) or unit_path.stat().st_size == 0:
-    print('КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует, является symlink или пуст!', file=sys.stderr)
-    sys.exit(1)
-
-actual_unit_sha = hashlib.sha256(unit_path.read_bytes()).hexdigest()
-exp_unit_sha = str(meta.get('unit_sha256', ''))
-if actual_unit_sha != exp_unit_sha:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш unit-файла ({actual_unit_sha}) не совпадает с манифестом ({exp_unit_sha})!', file=sys.stderr)
-    sys.exit(1)
-
-# V3: Структурная привязка destination к сохранённому unit и проверка WorkingDirectory
-unit_lines = unit_path.read_text(encoding='utf-8').splitlines()
-unit_work_dir = None
-for line in unit_lines:
-    line = line.strip()
-    if line.startswith('WorkingDirectory='):
-        unit_work_dir = line.split('=', 1)[1].strip()
-
-if not unit_work_dir:
-    print('КРИТИЧЕСКАЯ ОШИБКА: В сохранённом unit-файле отсутствует WorkingDirectory!', file=sys.stderr)
-    sys.exit(1)
-
-pinned_work_dir = str(meta.get('live_work_dir', '')).strip()
-if not pinned_work_dir:
-    print('КРИТИЧЕСКАЯ ОШИБКА: В манифесте бэкапа отсутствует валидный live_work_dir!', file=sys.stderr)
-    sys.exit(1)
-
-if pinned_work_dir != unit_work_dir:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: live_work_dir из манифеста ({pinned_work_dir}) не совпадает с WorkingDirectory сохранённого unit ({unit_work_dir})!', file=sys.stderr)
-    sys.exit(1)
-
-if not pathlib.Path(pinned_work_dir).is_absolute():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: live_work_dir ({pinned_work_dir}) не является абсолютным путём!', file=sys.stderr)
-    sys.exit(1)
-
-# V3: Независимая валидация текущего хэндла службы через systemctl
-proc = subprocess.run(
-    ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
-    capture_output=True, text=True, check=False
-)
-if proc.returncode != 0:
-    print('КРИТИЧЕСКАЯ ОШИБКА: Запрос состояния службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
-    sys.exit(1)
-
-current_handle = proc.stdout.strip()
-if not current_handle:
-    print('КРИТИЧЕСКАЯ ОШИБКА: systemctl show вернул пустой текущий WorkingDirectory службы!', file=sys.stderr)
-    sys.exit(1)
-
-if not pathlib.Path(current_handle).is_absolute():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не является абсолютным путём!', file=sys.stderr)
-    sys.exit(1)
-
-# V2: Валидация корня каталога code, предков и типов всех объектов
-code_dir = backup_dir / 'code'
-if code_dir.is_symlink() or os.path.islink(code_dir) or not code_dir.is_dir():
-    print('КРИТИЧЕСКАЯ ОШИБКА: Каталог кода отсутствует или является symlink!', file=sys.stderr)
-    sys.exit(1)
-
-# Проверка предков каталога code
-cur = code_dir
-while cur != cur.parent:
-    if cur.is_symlink() or os.path.islink(cur):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Узел {cur} является symlink!', file=sys.stderr)
-        sys.exit(1)
-    if cur == backup_dir:
-        break
-    cur = cur.parent
-
-disk_files = {}
-for root_path, dirs, files in os.walk(code_dir, followlinks=False):
-    r_path = pathlib.Path(root_path)
-    if r_path.is_symlink() or os.path.islink(r_path):
+    if r_path.is_symlink() or os.path.islink(str(r_path)):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Подкаталог {r_path} является symlink!', file=sys.stderr)
         sys.exit(1)
     with os.scandir(root_path) as it:
@@ -715,6 +669,278 @@ for rel_str, exp_hash in manifest_files.items():
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} не совпадает с манифестом!', file=sys.stderr)
         sys.exit(1)
 
+if unit_exec_start:
+    for tok in unit_exec_start.split():
+        if tok.endswith('.py') or tok.endswith('.sh'):
+            p_name = pathlib.Path(tok).name
+            if p_name not in disk_files:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Точка входа {p_name} из ExecStart отсутствует в восстанавливаемом коде!', file=sys.stderr)
+                sys.exit(1)
+            break
+
+FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
+for p in backup_dir.rglob('*'):
+    if p.is_file():
+        name_lower = p.name.lower()
+        if any(pat in name_lower for pat in FORBIDDEN_SECRET_PATTERNS):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый секретный файл: {p.name}', file=sys.stderr)
+            sys.exit(1)
+
+# Done preflight before stop
+" "$PINNED_BACKUP_DIR"
+
+# 3. Остановка службы ТОЛЬКО ПОСЛЕ ПОДТВЕРЖДЁННОЙ ВАЛИДАЦИИ БЭКАПА
+systemctl --user stop star-building-strategy.service
+```
+
+### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа
+```bash
+set -euo pipefail
+
+# 1. Строгая проверка наличия явно переданного идентификатора бэкапа
+# Категорический запрет молчаливого fallback на «последний» бэкап (latest)!
+if [ -z "${PINNED_BACKUP_DIR:-}" ]; then
+    echo "КРИТИЧЕСКАЯ ОШИБКА: Идентификатор бэкапа PINNED_BACKUP_DIR не задан! Молчаливый fallback на latest запрещён." >&2
+    exit 1
+fi
+export PINNED_BACKUP_DIR
+
+if [ -z "$PINNED_BACKUP_DIR" ] || [ ! -d "$PINNED_BACKUP_DIR" ]; then
+    echo "КРИТИЧЕСКАЯ ОШИБКА: Каталог pinned-бэкапа не найден! Откат заблокирован fail-closed." >&2
+    exit 1
+fi
+
+# 2. Комплексная верификация бэкапа ДО ПЕРВОЙ МУТАЦИИ (fail-closed)
+# Сверяются: обязательный манифест, хэши unit-файла, непустое отображение files,
+# строгая биекция disk <-> manifest, проверка типов (regular file, not symlink/fifo/device),
+# strict count (int, не bool), containment, запрет symlink и секретов/токенов в бэкапе,
+# успешный запрос systemctl show (exit 0) и структурная привязка к сохранённому unit.
+# Любое несоответствие приводит к немедленному fail-closed отказу (exit 1) с 0 мутаций.
+python3 -c "
+import hashlib, json, os, pathlib, stat, subprocess, sys
+
+backup_dir_raw = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ.get('PINNED_BACKUP_DIR', '')
+if not backup_dir_raw:
+    print('КРИТИЧЕСКАЯ ОШИБКА: PINNED_BACKUP_DIR не задан!', file=sys.stderr)
+    sys.exit(1)
+
+backup_dir = pathlib.Path(backup_dir_raw)
+
+# W1: Проверка абсолютности пути бэкапа и проверка ВСЕХ предков до корня / ДО открытия metadata/unit
+if not backup_dir.is_absolute():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь бэкапа ({backup_dir}) не является абсолютным!', file=sys.stderr)
+    sys.exit(1)
+
+cur = backup_dir
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Узел {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if not cur.exists():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути бэкапа {cur} не существует!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+meta_path = backup_dir / 'pinned_metadata.json'
+if not meta_path.is_file() or meta_path.is_symlink() or os.path.islink(str(meta_path)):
+    print('КРИТИЧЕСКАЯ ОШИБКА: Обязательный манифест pinned_metadata.json отсутствует или является symlink!', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    meta = json.loads(meta_path.read_text(encoding='utf-8'))
+except Exception as err:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Манифест pinned_metadata.json повреждён: {err}', file=sys.stderr)
+    sys.exit(1)
+
+required_fields = {'unit_sha256', 'code_files_count', 'live_work_dir', 'files'}
+missing_fields = required_fields - set(meta.keys())
+if missing_fields:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: В манифесте отсутствуют обязательные поля: {missing_fields}', file=sys.stderr)
+    sys.exit(1)
+
+count_val = meta.get('code_files_count')
+if type(count_val) is not int or isinstance(count_val, bool) or count_val <= 0:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: code_files_count обязан быть положительным целым числом (int, не bool), получено: {type(count_val).__name__} ({count_val})!', file=sys.stderr)
+    sys.exit(1)
+
+if not isinstance(meta.get('files'), dict) or len(meta['files']) == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Поле files в манифесте обязано быть непустым отображением!', file=sys.stderr)
+    sys.exit(1)
+
+unit_path = backup_dir / 'star-building-strategy.service'
+if not unit_path.is_file() or unit_path.is_symlink() or os.path.islink(str(unit_path)) or unit_path.stat().st_size == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует, является symlink или пуст!', file=sys.stderr)
+    sys.exit(1)
+
+actual_unit_sha = hashlib.sha256(unit_path.read_bytes()).hexdigest()
+exp_unit_sha = str(meta.get('unit_sha256', ''))
+if actual_unit_sha != exp_unit_sha:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш unit-файла ({actual_unit_sha}) не совпадает с манифестом ({exp_unit_sha})!', file=sys.stderr)
+    sys.exit(1)
+
+unit_lines = unit_path.read_text(encoding='utf-8').splitlines()
+unit_work_dir = None
+unit_exec_start = None
+for line in unit_lines:
+    line = line.strip()
+    if line.startswith('WorkingDirectory='):
+        unit_work_dir = line.split('=', 1)[1].strip()
+    elif line.startswith('ExecStart='):
+        unit_exec_start = line.split('=', 1)[1].strip()
+
+if not unit_work_dir:
+    print('КРИТИЧЕСКАЯ ОШИБКА: В сохранённом unit-файле отсутствует WorkingDirectory!', file=sys.stderr)
+    sys.exit(1)
+
+pinned_work_dir = str(meta.get('live_work_dir', '')).strip()
+if not pinned_work_dir:
+    print('КРИТИЧЕСКАЯ ОШИБКА: В манифесте бэкапа отсутствует валидный live_work_dir!', file=sys.stderr)
+    sys.exit(1)
+
+if pinned_work_dir != unit_work_dir:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: live_work_dir из манифеста ({pinned_work_dir}) не совпадает с WorkingDirectory сохранённого unit ({unit_work_dir})!', file=sys.stderr)
+    sys.exit(1)
+
+dest_path = pathlib.Path(unit_work_dir)
+if not dest_path.is_absolute():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: WorkingDirectory назначения ({unit_work_dir}) не является абсолютным путём!', file=sys.stderr)
+    sys.exit(1)
+
+home_dir = pathlib.Path(os.environ.get('HOME', '/home/roman'))
+approved_roots = [
+    home_dir,
+    pathlib.Path('/srv/star-building-strategy'),
+]
+
+def check_approved_root(target: pathlib.Path, label: str) -> None:
+    in_approved = False
+    for r in approved_roots:
+        try:
+            if target.is_relative_to(r):
+                in_approved = True
+                break
+        except Exception:
+            pass
+    if not in_approved:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target}) не входит в список разрешённых корней релиза!', file=sys.stderr)
+        sys.exit(1)
+
+cur = dest_path
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути назначения {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+check_approved_root(dest_path, 'назначения (старого релиза)')
+
+proc = subprocess.run(
+    ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
+    capture_output=True, text=True, check=False
+)
+if proc.returncode != 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Запрос состояния службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
+    sys.exit(1)
+
+current_handle = proc.stdout.strip()
+if not current_handle:
+    print('КРИТИЧЕСКАЯ ОШИБКА: systemctl show вернул пустой текущий WorkingDirectory службы!', file=sys.stderr)
+    sys.exit(1)
+
+current_path = pathlib.Path(current_handle)
+if not current_path.is_absolute():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не является абсолютным путём!', file=sys.stderr)
+    sys.exit(1)
+
+if not current_path.exists() or not current_path.is_dir():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не существует или не является каталогом!', file=sys.stderr)
+    sys.exit(1)
+
+cur = current_path
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути текущей службы {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+check_approved_root(current_path, 'текущей службы')
+
+code_dir = backup_dir / 'code'
+if code_dir.is_symlink() or os.path.islink(str(code_dir)) or not code_dir.is_dir():
+    print('КРИТИЧЕСКАЯ ОШИБКА: Каталог кода отсутствует или является symlink!', file=sys.stderr)
+    sys.exit(1)
+
+cur = code_dir
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Узел {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+disk_files = {}
+for root_path, dirs, files in os.walk(code_dir, followlinks=False):
+    r_path = pathlib.Path(root_path)
+    if r_path.is_symlink() or os.path.islink(str(r_path)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Подкаталог {r_path} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    with os.scandir(root_path) as it:
+        for entry in it:
+            try:
+                st = entry.stat(follow_symlinks=False)
+            except Exception as err:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка чтения статуса {entry.name}: {err}', file=sys.stderr)
+                sys.exit(1)
+            if stat.S_ISLNK(st.st_mode):
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый symlink: {entry.name}', file=sys.stderr)
+                sys.exit(1)
+            elif stat.S_ISDIR(st.st_mode):
+                continue
+            elif stat.S_ISREG(st.st_mode):
+                p_entry = pathlib.Path(entry.path)
+                try:
+                    rel = p_entry.resolve().relative_to(code_dir.resolve())
+                except ValueError:
+                    print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {entry.name} выходит за пределы каталога бэкапа (path traversal)!', file=sys.stderr)
+                    sys.exit(1)
+                rel_str = str(p_entry.relative_to(code_dir))
+                disk_files[rel_str] = hashlib.sha256(p_entry.read_bytes()).hexdigest()
+            else:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружен неподдерживаемый специальный тип файла: {entry.name} (mode {oct(st.st_mode)})', file=sys.stderr)
+                sys.exit(1)
+
+manifest_files = meta['files']
+if set(disk_files.keys()) != set(manifest_files.keys()):
+    extra = set(disk_files.keys()) - set(manifest_files.keys())
+    missing = set(manifest_files.keys()) - set(disk_files.keys())
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Нарушена биекция disk <-> manifest! Лишние: {extra}, отсутствующие: {missing}', file=sys.stderr)
+    sys.exit(1)
+
+if len(disk_files) != count_val:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Число файлов кода ({len(disk_files)}) не совпадает с манифестом ({count_val})!', file=sys.stderr)
+    sys.exit(1)
+
+for rel_str, exp_hash in manifest_files.items():
+    if disk_files.get(rel_str) != exp_hash:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} не совпадает с манифестом!', file=sys.stderr)
+        sys.exit(1)
+
+if unit_exec_start:
+    for tok in unit_exec_start.split():
+        if tok.endswith('.py') or tok.endswith('.sh'):
+            p_name = pathlib.Path(tok).name
+            if p_name not in disk_files:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Точка входа {p_name} из ExecStart отсутствует в восстанавливаемом коде!', file=sys.stderr)
+                sys.exit(1)
+            break
+
 FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
 for p in backup_dir.rglob('*'):
     if p.is_file():
@@ -735,7 +961,7 @@ systemctl --user daemon-reload
 # 4. Восстановление рабочего каталога кода строго в подтверждённый pinned каталог
 # U5 / V3 / V5: Без опасного флага --delete; целевой каталог привязан к проверенному unit-файлу
 TARGET_WORK_DIR=$(python3 -c "import pathlib, os, sys; lines = (pathlib.Path(sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ['PINNED_BACKUP_DIR']) / 'star-building-strategy.service').read_text().splitlines(); print(next(l.split('=', 1)[1].strip() for l in lines if l.startswith('WorkingDirectory=')))" "$PINNED_BACKUP_DIR")
-if [ -n "$TARGET_WORK_DIR" ] && [ -d "$PINNED_BACKUP_DIR/code" ]; then
+if [ -n "$TARGET_WORK_DIR" ] && [ -d "$PINNED_BACKUP_DIR/code" ] && [ ! -L "$TARGET_WORK_DIR" ]; then
     mkdir -p "$TARGET_WORK_DIR"
     rsync -a "$PINNED_BACKUP_DIR/code/" "$TARGET_WORK_DIR/"
 fi
