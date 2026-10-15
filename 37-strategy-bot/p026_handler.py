@@ -8,24 +8,6 @@ from typing import Any
 from p026_storage import JournalCorruptionError, P026Storage
 from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 
-AMBIGUOUS_TOKENS = {
-    "да", "нет", "согласен", "согласна", "согласны", "согласенли", "соглашаюсь", "согласен(на)",
-    "ок", "ok", "хорошо", "ага", "плюс", "+", "yes", "y",
-    "подтверждаю", "подтвердил", "подтвердила", "подтверждено", "подтверждаем",
-    "одобряю", "одобрено", "одобряем", "поддерживаю", "поддержано", "поддерживаем",
-    "принято", "принимаю", "принимается", "ладно", "верно", "точно", "договорились", "понял", "поняла", "понятно",
-    "все", "всё", "ясно", "сделаем", "добро", "так", "отлично", "го", "правильно", "именно",
-    "я", "мы", "вы", "он", "она", "они",
-    "с", "со", "этим", "это", "этом", "этой", "этого", "этому", "эти", "этих", "этими", "эта", "эту",
-    "то", "тем", "том", "того", "тому", "та", "ту", "той", "те", "тех", "теми",
-    "на", "в", "во", "по", "за", "к", "ко", "из", "у", "о", "об", "обо", "от", "для",
-    "же", "ли", "бы", "уже", "полностью", "абсолютно", "целиком",
-    "выше", "вышеизложенное", "вышеизложенного", "вышеизложенному", "вышеизложенным", "вышеизложенной",
-    "вышесказанное", "вышесказанного", "вышеуказанное", "вышеуказанного", "написанное", "написанного",
-    "предложенное", "предложенного", "предложение", "предложения", "вариант", "варианта",
-    "пункт", "пункты", "пунктов", "пунктами", "пунктах",
-}
-
 DOC_TYPE_MAP = {
     "kd": "КД",
     "кд": "КД",
@@ -57,6 +39,81 @@ class P026Handler:
     ) -> None:
         self.storage = storage or P026Storage()
         self.subject_base = subject_base or P026SubjectBase()
+        self._pending_proposals: dict[tuple[int | None, int | None], dict[str, Any]] = {}
+
+    def set_pending_proposal(
+        self,
+        user_id: int | None,
+        chat_id: int | None,
+        proposal_text: str,
+        question_context: str = "Общие решения P-026",
+        proposal_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Устанавливает точное ожидающее утверждения предложение для конкретного актора и чата."""
+        key = (user_id, chat_id)
+        proposal = {
+            "proposal_id": proposal_id or f"prop_{len(self._pending_proposals) + 1}",
+            "proposal_text": proposal_text.strip(),
+            "question_context": question_context.strip(),
+            "user_id": user_id,
+            "chat_id": chat_id,
+        }
+        self._pending_proposals[key] = proposal
+        return proposal
+
+    def get_pending_proposal(
+        self,
+        user_id: int | None,
+        chat_id: int | None,
+    ) -> dict[str, Any] | None:
+        """Возвращает текущее ожидающее предложение для актора и чата."""
+        return self._pending_proposals.get((user_id, chat_id))
+
+    def clear_pending_proposal(
+        self,
+        user_id: int | None,
+        chat_id: int | None,
+    ) -> None:
+        """Сбрасывает ожидающее предложение."""
+        self._pending_proposals.pop((user_id, chat_id), None)
+
+    @staticmethod
+    def is_agreement_input(text: str) -> bool:
+        """Определяет, является ли ввод согласием, подтверждением или отсылкой к внешнему контексту."""
+        cleaned = text.strip().lower()
+        tokens = [t for t in re.sub(r"[^\w\s+]", " ", cleaned).split() if t]
+        words = [w for w in tokens if w != "+"]
+        if not words:
+            return True
+
+        exact_agreement = {"да", "ок", "ok", "yes", "ага", "+", "плюс", "хорошо", "ладно", "верно", "точно", "ясно", "добро"}
+        agreement_prefixes = (
+            "соглас", "подтвержд", "одобря", "поддержив", "принят", "принима",
+            "договор", "ладно", "верно", "точно", "ясно", "понял", "отлично", "добро",
+        )
+        referential_prefixes = (
+            "сказанн", "предложен", "предложени", "вышеизложенн", "вышесказанн",
+            "вышеуказанн", "ранее", "вариант", "проект", "регламент", "документ",
+        )
+
+        has_agreement_word = any(t in exact_agreement for t in tokens) or any(
+            any(w.startswith(pfx) for pfx in agreement_prefixes) for w in words
+        )
+
+        if not has_agreement_word:
+            return False
+
+        # Проверяем, содержит ли фраза конкретное числовое значение или процент
+        has_number_or_percent = bool(re.search(r"\b\d+([.,]\d+)?\s*(%|процент|дн|час|млрд|млн|тенге|рубл)?\b", cleaned))
+        has_imperative_rule = any(
+            cleaned.startswith(pfx) for pfx in ("утвердить", "установить", "запретить", "ограничить", "согласовать")
+        ) and has_number_or_percent
+
+        # Если это самостоятельное нормативное распоряжение с параметром (напр. "Согласовать минимальную маржу 15%")
+        if has_imperative_rule and not any(any(w.startswith(r) for r in referential_prefixes) for w in words):
+            return False
+
+        return True
 
     def validate_decision_input(self, text: str) -> tuple[bool, str]:
         """Проверяет валидность формулировки решения.
@@ -65,32 +122,20 @@ class P026Handler:
         «ок хорошо», «всё верно») отклоняются с требованием указать конкретную норму.
         """
         cleaned = text.strip().lower()
-        cleaned_no_punct = re.sub(r"[^\w\s+]", " ", cleaned)
-        tokens = [t for t in cleaned_no_punct.split() if t]
+        tokens = [t for t in re.sub(r"[^\w\s+]", " ", cleaned).split() if t]
 
         if not tokens:
             return False, "Формулировка решения не может быть пустой."
 
-        # Если все слова состоят исключительно из маркеров согласия/подтверждения
-        if set(tokens).issubset(AMBIGUOUS_TOKENS):
+        if self.is_agreement_input(text):
             return (
                 False,
-                f"Неоднозначное согласие («{text.strip()}») не может быть зафиксировано как норма или решение. "
-                "Пожалуйста, сформулируйте точное нормативное решение с указанием роли, норматива или правила "
+                f"Неоднозначное или неопределённое согласие («{text.strip()}») не привязано к ранее показанному предложению "
+                "(pending proposal) и не содержит самостоятельной нормы.\n"
+                "Пожалуйста, укажите законченное решение с числовым параметром или правилом "
                 "(например: «Утвердить лимит скидки РОП до 12.5%» или «Согласовать минимальную маржу 15%»).",
             )
 
-        has_agreement = any(term in cleaned for term in ("соглас", "подтвержд", "одобря", "поддержив", "принят"))
-        has_substantive = any(k in cleaned for k in SUBSTANTIVE_KEYWORDS)
-        if has_agreement and not has_substantive:
-            return (
-                False,
-                f"Общее согласие («{text.strip()}») не содержит предметной нормы или параметра. "
-                "Пожалуйста, сформулируйте точное нормативное решение с указанием роли, норматива или правила "
-                "(например: «Утвердить лимит скидки РОП до 12.5%» или «Согласовать минимальную маржу 15%»).",
-            )
-
-        # Проверка на минимальную длину и смысловую нагрузку
         if len(tokens) < 2 and len(cleaned) < 10:
             return (
                 False,
@@ -147,17 +192,34 @@ class P026Handler:
         chat_id: int | None = None,
     ) -> dict[str, Any]:
         """Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией."""
-        valid, msg = self.validate_decision_input(text)
-        if not valid:
-            return {"ok": False, "message": msg, "decision": None}
-
-        context_bound = self._infer_question_context(text, question_context)
+        if self.is_agreement_input(text):
+            pending = self.get_pending_proposal(user_id, chat_id)
+            if not pending:
+                return {
+                    "ok": False,
+                    "message": (
+                        f"Неоднозначное или неопределённое согласие («{text.strip()}») не привязано к ранее показанному предложению "
+                        "(pending proposal) и не содержит самостоятельной нормы.\n"
+                        "Пожалуйста, укажите законченное решение с числовым параметром или правилом "
+                        "(например: «Утвердить лимит скидки РОП до 12.5%» или «Согласовать минимальную маржу 15%»)."
+                    ),
+                    "decision": None,
+                }
+            decision_text = pending["proposal_text"]
+            context_bound = pending["question_context"]
+            self.clear_pending_proposal(user_id, chat_id)
+        else:
+            valid, msg = self.validate_decision_input(text)
+            if not valid:
+                return {"ok": False, "message": msg, "decision": None}
+            decision_text = text.strip()
+            context_bound = self._infer_question_context(decision_text, question_context)
 
         try:
             decision = self.storage.record_decision(
                 author=author,
                 question_context=context_bound,
-                exact_text=text,
+                exact_text=decision_text,
                 user_id=user_id,
                 chat_id=chat_id,
             )

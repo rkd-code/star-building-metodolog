@@ -132,6 +132,40 @@ class P026HandlerTest(unittest.TestCase):
             "Чужое решение не должно попадать в черновик другого пользователя!",
         )
 
+    def test_s3_agreement_variations_without_pending_proposal_are_rejected(self):
+        """S3 / R5: Вариации согласий без pending proposal обязаны отклоняться."""
+        agreement_phrases = [
+            "да я согласен",
+            "я согласен",
+            "подтверждаю всё вышеизложенное",
+            "подтверждаю всё сказанное ранее",
+            "поддерживаю ваше предложение",
+            "согласен с предложенным регламентом",
+            "одобряю предложенный вариант",
+        ]
+        for phrase in agreement_phrases:
+            with self.subTest(phrase=phrase):
+                res = self.handler.record_owner_decision("A", phrase, user_id=123, chat_id=123)
+                self.assertFalse(res["ok"], f"Фраза согласия '{phrase}' не должна быть принята без pending proposal")
+                self.assertIsNone(res["decision"])
+                self.assertIn("согласие", res["message"].lower())
+
+        # А контрольная конкретная норма принимается
+        valid_res = self.handler.record_owner_decision("A", "Утвердить лимит скидки РОП до 12.5%", user_id=123, chat_id=123)
+        self.assertTrue(valid_res["ok"])
+        self.assertIsNotNone(valid_res["decision"])
+
+    def test_s3_two_step_pending_proposal_confirmation(self):
+        """S3 / R5: Двухшаговый механизм: подтверждение согласует точное ранее показанное предложение."""
+        self.handler.set_pending_proposal(
+            user_id=123, chat_id=123,
+            proposal_text="Утвердить регламент РОП v0.3",
+            question_context="Регламент РОП",
+            proposal_id="prop_101",
+        )
+        res = self.handler.record_owner_decision("A", "подтверждаю", user_id=123, chat_id=123)
+        self.assertTrue(res["ok"])
+        self.assertEqual("Утвердить регламент РОП v0.3", res["decision"]["exact_text"])
 
 if __name__ == "__main__":
     unittest.main()

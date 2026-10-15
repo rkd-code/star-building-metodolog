@@ -1,5 +1,7 @@
 """Предметная база знаний P-026 («Коммерческий департамент») в режиме read-only с контролем целостности."""
 from __future__ import annotations
+import html
+import re
 import copy
 import logging
 
@@ -346,6 +348,33 @@ class P026SubjectBase:
     def __init__(self) -> None:
         self.DOCUMENT_VERSIONS = copy.deepcopy(P026SubjectBase.DOCUMENT_VERSIONS)
 
+    @staticmethod
+    def _clean_html_text(raw_bytes: bytes) -> str:
+        text = raw_bytes.decode("utf-8", errors="replace")
+        no_script = re.sub(r"<script.*?</script>", " ", text, flags=re.DOTALL | re.IGNORECASE)
+        no_style = re.sub(r"<style.*?</style>", " ", no_script, flags=re.DOTALL | re.IGNORECASE)
+        no_tags = re.sub(r"<[^>]+>", " ", no_style)
+        no_b64 = re.sub(r"data:[^;]+;base64,[A-Za-z0-9+/=]+", " ", no_tags)
+        return " ".join(html.unescape(no_b64).split())
+
+    @staticmethod
+    def _get_normative_priority(rel_path: str) -> tuple[int, str]:
+        if "107-commercial" in rel_path and "OWNER_DECISIONS" in rel_path:
+            return 1, "ВЫСШИЙ ПРИОРИТЕТ: Решения владельца по КД и лимитам (итерация 107)"
+        if "109-commercial" in rel_path and "OWNER_DECISIONS" in rel_path:
+            return 1, "ВЫСШИЙ ПРИОРИТЕТ: Решения владельца по ответам РОП (итерация 109)"
+        if "REG006_ROUTE88_REMINDER" in rel_path:
+            return 1, "ВЫСШИЙ ПРИОРИТЕТ: Пояснение маршрута договоров №88/89"
+        if "CONTRACT_APPROVAL_FINAL" in rel_path or "CONTRACT_SIGNATORY" in rel_path or "00_OWNER_APPROVAL" in rel_path:
+            return 1, "ВЫСШИЙ ПРИОРИТЕТ: Первичные согласованные акты и решения владельца"
+        if "02_УТВЕРЖДЕНО" in rel_path:
+            return 2, "ОФИЦИАЛЬНОЕ ЯДРО: Действующий утверждённый корпоративный регламент Компании (read-only)"
+        if any(k in rel_path for k in ("107-commercial", "109-commercial", "101-commercial", "100-commercial", "102-commercial", "106-commercial")):
+            return 3, "РАБОЧИЙ ПРОЕКТ: Ролевой функционал и регламент коммерческого департамента (в разработке)"
+        if "76-commercial" in rel_path:
+            return 4, "БАЗОВАЯ МОДЕЛЬ: Материалы и архитектура каталога 76"
+        return 5, "РЕЕСТРЫ: Контрольные реестры статусов и регламентов"
+
     def _resolve_source_path(self, rel_path: str) -> Path:
         p = Path("/home/roman") / rel_path
         if not p.exists():
@@ -478,19 +507,36 @@ class P026SubjectBase:
         """Формирует нормативный контекст предметной базы P-026 для диалоговой модели."""
         try:
             self.verify_all_sources()
-            # Считываем реальные подтверждённые материалы из проверенных источников
-            cd_decisions_path = self._resolve_source_path("107-commercial-role-functions-cd-limits-04/OWNER_DECISIONS.md")
-            rop_decisions_path = self._resolve_source_path("109-commercial-role-functions-rop-answers-02/OWNER_DECISIONS.md")
-            reg006_path = self._resolve_source_path("107-commercial-role-functions-cd-limits-04/REG006_ROUTE88_REMINDER.md")
 
-            cd_text = cd_decisions_path.read_bytes().decode("utf-8") if cd_decisions_path.exists() else ""
-            rop_text = rop_decisions_path.read_bytes().decode("utf-8") if rop_decisions_path.exists() else ""
-            reg006_text = reg006_path.read_bytes().decode("utf-8") if reg006_path.exists() else ""
+            # Содержательно считываем все 30 источников предметной базы с учётом нормативной иерархии
+            source_entries = list(self.CANONICAL_SOURCE_MANIFEST)
+            source_entries.sort(key=lambda s: self._get_normative_priority(s["relative_path"])[0])
+
+            loaded_sections = []
+            for entry in source_entries:
+                rel_path = entry["relative_path"]
+                status = entry.get("status", "")
+                p = self._resolve_source_path(rel_path)
+                data = p.read_bytes()
+                priority_lvl, priority_desc = self._get_normative_priority(rel_path)
+
+                if p.suffix.lower() == ".html":
+                    content = self._clean_html_text(data)
+                else:
+                    content = data.decode("utf-8", errors="replace")
+
+                loaded_sections.append(
+                    f"\n\n=== ИСТОЧНИК: {rel_path} ===\n"
+                    f"НОРМАТИВНЫЙ СТАТУС: {status}\n"
+                    f"ИЕРАРХИЯ: [Приоритет {priority_lvl}] {priority_desc}\n"
+                    f"ВЕРСИЯ/ХЭШ: {entry.get('sha256', '')[:16]}...\n\n"
+                    f"{content}"
+                )
+
+            real_materials = "\n\nРЕАЛЬНЫЕ МАТЕРИАЛЫ ИЗ 30 ПРОВЕРЕННЫХ ИСТОЧНИКОВ P-026:" + "".join(loaded_sections)
         except Exception as err:
             logger.warning("Ошибка проверки/чтения источников P-026: %s", err)
             return ""
-
-        real_materials = f"\n\nРЕАЛЬНЫЕ МАТЕРИАЛЫ ИЗ ПРОВЕРЕННЫХ ИСТОЧНИКОВ P-026:\n=== 107-CD РЕШЕНИЯ ВЛАДЕЛЬЦА ===\n{cd_text}\n\n=== 109-ROP ОТВЕТЫ РОП ===\n{rop_text}\n\n=== 107-REG006 МАРШРУТ ДОГОВОРОВ ===\n{reg006_text}"
 
         return f"""ПРЕДМЕТНЫЙ КОНТЕКСТ ПРОЕКТА P-026 («Коммерческий департамент»):
 

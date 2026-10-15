@@ -251,22 +251,68 @@ class P026Storage:
             data = json.loads(raw_text)
             if not isinstance(data, list):
                 raise ValueError("Корневой элемент журнала решений должен быть списком")
+
+            normalized_list: list[dict[str, Any]] = []
+            seen_ids: set[str] = set()
+            allowed_statuses = {"active", "archived", "superseded"}
+
             for idx, item in enumerate(data):
                 if not isinstance(item, dict):
                     raise ValueError(f"Запись #{idx} не является объектом словаря")
-                item_id = item.get("id") or item.get("decision_id")
-                if not item_id or not isinstance(item_id, str):
+
+                raw_id = item.get("id") or item.get("decision_id")
+                if not raw_id or not isinstance(raw_id, str) or not raw_id.strip():
                     raise ValueError(f"Запись #{idx} не содержит строкового идентификатора решения ('id')")
+                item_id = raw_id.strip()
+                if item_id in seen_ids:
+                    raise ValueError(f"Запись #{idx} содержит дублирующийся идентификатор решения '{item_id}'")
+                seen_ids.add(item_id)
+
                 ts = item.get("timestamp")
                 if not ts or not isinstance(ts, str):
                     raise ValueError(f"Запись #{idx} не содержит корректного timestamp")
+                # Строгая валидация формата ISO-8601 даты/времени
+                try:
+                    datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                except Exception as ts_err:
+                    raise ValueError(f"Запись #{idx} содержит невалидный ISO-8601 timestamp '{ts}': {ts_err}") from ts_err
+
                 ctx = item.get("question_context") or item.get("context")
-                if ctx is None or not isinstance(ctx, str):
+                if ctx is None or not isinstance(ctx, str) or not ctx.strip():
                     raise ValueError(f"Запись #{idx} не содержит строкового поля контекста")
+
                 txt = item.get("exact_text") or item.get("text")
                 if txt is None or not isinstance(txt, str) or not txt.strip():
                     raise ValueError(f"Запись #{idx} не содержит содержательного текста решения")
-            return data
+
+                status = item.get("status", "active")
+                if not status or not isinstance(status, str) or status not in allowed_statuses:
+                    raise ValueError(f"Запись #{idx} содержит недопустимый статус '{status}'")
+
+                author = item.get("author") or "Руководитель"
+                if not isinstance(author, str):
+                    author = "Руководитель"
+
+                user_id = item.get("user_id")
+                if user_id is not None and not isinstance(user_id, int):
+                    raise ValueError(f"Запись #{idx} содержит некорректный user_id")
+
+                chat_id = item.get("chat_id")
+                if chat_id is not None and not isinstance(chat_id, int):
+                    raise ValueError(f"Запись #{idx} содержит некорректный chat_id")
+
+                normalized_list.append({
+                    "id": item_id,
+                    "timestamp": ts,
+                    "author": author,
+                    "user_id": user_id,
+                    "chat_id": chat_id,
+                    "question_context": ctx.strip(),
+                    "exact_text": txt.strip(),
+                    "status": status,
+                })
+
+            return normalized_list
         except Exception as err:
             # Повреждённый журнал: fail-closed карантин, запрет немой перезаписи
             now_ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")

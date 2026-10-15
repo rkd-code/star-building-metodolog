@@ -238,5 +238,48 @@ class P026StorageTest(unittest.TestCase):
             self.storage.read_draft(legacy["filename"], user_id=999, chat_id=999)
 
 
+    def test_invalid_timestamp_raises_journal_corruption_and_quarantines(self):
+        """S5 / R4: Невалидный ISO-8601 timestamp в журнале отвергается с JournalCorruptionError."""
+        import json
+        raw = [{"decision_id": "x", "timestamp": "not-a-time", "context": "Q", "text": "TEXT", "user_id": 123, "chat_id": 123, "status": "active"}]
+        self.storage.decisions_file.write_text(json.dumps(raw), encoding="utf-8")
+        with self.assertRaises(JournalCorruptionError):
+            self.storage.list_decisions(123, 123)
+        baks = list(self.storage.decisions_dir.glob("decisions_corrupted_*.json.bak"))
+        self.assertGreater(len(baks), 0, "Карантинная копия должна быть создана при невалидном timestamp")
+
+    def test_duplicate_decision_id_raises_journal_corruption(self):
+        """S5 / R4: Дублирующийся id записи вызывает JournalCorruptionError."""
+        import json
+        raw = [
+            {"id": "dup_1", "timestamp": "2026-10-15T00:00:00Z", "question_context": "Q", "exact_text": "T1", "user_id": 123, "chat_id": 123, "status": "active"},
+            {"id": "dup_1", "timestamp": "2026-10-15T00:01:00Z", "question_context": "Q", "exact_text": "T2", "user_id": 123, "chat_id": 123, "status": "active"},
+        ]
+        self.storage.decisions_file.write_text(json.dumps(raw), encoding="utf-8")
+        with self.assertRaises(JournalCorruptionError):
+            self.storage.list_decisions(123, 123)
+
+    def test_invalid_status_raises_journal_corruption(self):
+        """S5 / R4: Некорректный статус решения вызывает JournalCorruptionError."""
+        import json
+        raw = [{"id": "dec_valid", "timestamp": "2026-10-15T00:00:00Z", "question_context": "Q", "exact_text": "T", "user_id": 123, "chat_id": 123, "status": "INVALID_STATUS"}]
+        self.storage.decisions_file.write_text(json.dumps(raw), encoding="utf-8")
+        with self.assertRaises(JournalCorruptionError):
+            self.storage.list_decisions(123, 123)
+
+    def test_legacy_aliases_normalized_to_canonical_schema(self):
+        """S5 / R4: Алиасы полей нормализуются до единой канонической схемы (id, question_context, exact_text)."""
+        import json
+        raw = [{"decision_id": "alias_1", "timestamp": "2026-10-15T05:00:00+00:00", "context": "Контекст", "text": "Текст решения", "user_id": 123, "chat_id": 123, "status": "active"}]
+        self.storage.decisions_file.write_text(json.dumps(raw), encoding="utf-8")
+        items = self.storage.list_decisions(123, 123)
+        self.assertEqual(1, len(items))
+        dec = items[0]
+        self.assertEqual("alias_1", dec["id"])
+        self.assertEqual("Контекст", dec["question_context"])
+        self.assertEqual("Текст решения", dec["exact_text"])
+        self.assertIn("timestamp", dec)
+        self.assertIn("status", dec)
+
 if __name__ == "__main__":
     unittest.main()

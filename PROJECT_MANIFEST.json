@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "d0dbddfe1bb726ba24bf6f158af62d132103f9a05266ac577094f3dd60d873d2",
+  "source_tree_hash": "0e39cd865d46487b1f0e74f1503038deeb75a12526eaaefebf5a0bd10985638a",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1107,6 +1107,13 @@
       "area": "37-strategy-bot",
       "description": "Файл проекта: star-building-strategy.service.",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/systemd/star-building-strategy.service"
+    },
+    {
+      "path": "37-strategy-bot/test_p026_deep_probes_repro.py",
+      "name": "test_p026_deep_probes_repro.py",
+      "area": "37-strategy-bot",
+      "description": "Воспроизведение независимых deep_probes ревизии f9ae76f8 в изолированных фикстурах.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_deep_probes_repro.py"
     },
     {
       "path": "37-strategy-bot/test_p026_handler.py",

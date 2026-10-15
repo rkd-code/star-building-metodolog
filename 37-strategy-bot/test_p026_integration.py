@@ -235,5 +235,63 @@ class P026StrategyBotIntegrationTest(unittest.IsolatedAsyncioTestCase):
         normal_ctx = base.get_p026_prompt_context()
         self.assertIn("РЕАЛЬНЫЕ МАТЕРИАЛЫ", normal_ctx)
 
+    def test_generate_answer_integrity_failure_stops_before_model_and_history(self):
+        """S1 / R3: Сбой integrity gate обязан останавливать модель и историю до SDK."""
+        import asyncio, types
+        from types import SimpleNamespace as NS
+
+        calls = []
+        def model_call(**kw):
+            calls.append(kw)
+            return NS(text="SHOULD_NOT_BE_CALLED")
+
+        genai_mod = types.ModuleType("google.genai")
+        genai_mod.Client = lambda **kw: NS(models=NS(generate_content=model_call))
+        st_mod = types.ModuleType("google.genai.types")
+        st_mod.GenerateContentConfig = lambda **kw: NS(**kw)
+        st_mod.Part = NS(from_bytes=lambda **kw: NS(**kw))
+        genai_mod.types = st_mod
+        google_mod = types.ModuleType("google")
+        google_mod.genai = genai_mod
+
+        user_id = 999123
+        self.module._user_histories[user_id].clear()
+
+        with patch.dict(sys.modules, {"google": google_mod, "google.genai": genai_mod, "google.genai.types": st_mod}), \
+             patch.object(self.module, "get_api_key", return_value="OFFLINE_KEY"), \
+             patch.object(self.module, "get_strategy_context", return_value="BASE"), \
+             patch.object(P026SubjectBase, "verify_all_sources", side_effect=SubjectBaseIntegrityError("TAMPERED")):
+
+            answer = asyncio.run(self.module.generate_answer("Вопрос по P-026", "Автор", user_id, user_id))
+
+        self.assertEqual(0, len(calls), "При отказе целостности обращение к модели категорически запрещено (0 calls)")
+        self.assertEqual(0, len(self.module._user_histories[user_id]), "При отказе целостности история пользователя не должна обновляться")
+        self.assertIn("целостность", answer.lower(), "Пользователю должно возвращаться безопасное сообщение об отказе целостности")
+
+    async def test_process_and_reply_integrity_failure_stops_before_model(self):
+        """S1 / R3: process_and_reply при сбое целостности возвращает отказ без обращения к модели."""
+        user_id = 999124
+        update = MagicMock()
+        update.effective_user.id = user_id
+        update.effective_user.full_name = "Корж И.С."
+        update.effective_chat.id = user_id
+        update.effective_chat.type = "private"
+        update.effective_message.reply_chat_action = AsyncMock()
+        update.effective_message.reply_text = AsyncMock()
+
+        with patch.dict(os.environ, {"STAR_BUILDING_STRATEGY_ALLOWED_USER_IDS": str(user_id)}), \
+             patch.object(self.module, "get_api_key", return_value="OFFLINE_KEY"), \
+             patch.object(self.module, "get_strategy_context", return_value="BASE"), \
+             patch.object(P026SubjectBase, "verify_all_sources", side_effect=SubjectBaseIntegrityError("TAMPERED")), \
+             patch("google.genai.Client") as mock_client:
+
+            await self.module.process_and_reply(update, supplied_text="Любой вопрос по P-026")
+
+        mock_client.assert_not_called()
+        update.effective_message.reply_text.assert_called()
+        call_args_str = str(update.effective_message.reply_text.call_args_list)
+        self.assertIn("целостност", call_args_str.lower())
+        self.assertEqual(0, len(self.module._user_histories[user_id]))
+
 if __name__ == "__main__":
     unittest.main()

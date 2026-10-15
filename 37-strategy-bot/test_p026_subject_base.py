@@ -139,5 +139,59 @@ class P026SubjectBaseTest(unittest.TestCase):
         self.assertEqual(30, res["verified_count"])
 
 
+    def test_get_p026_prompt_context_connects_all_30_sources_and_specific_norms(self):
+        """S2 / R3: Все 30 источников предметной базы должны быть содержательно подключены."""
+        ctx = self.base.get_p026_prompt_context()
+        self.assertGreater(len(ctx), 100_000, "Контекст обязан содержать полный подключённый корпус (>100K символов)")
+
+        # Проверка точной нормы МОП -> РОП -> ПТО
+        self.assertIn("передаёт запрос в ПТО через РОП", ctx)
+
+        # Проверка наличия утверждённых регламентов РЕГ-001..009
+        for reg_num in range(1, 10):
+            self.assertIn(f"REG-00{reg_num}", ctx)
+
+        # Проверка оргорегламента 102
+        self.assertIn("REG_COMMERCIAL_ORG_V0.1.md", ctx)
+
+        # Безопасность извлечения: отсутствие сырых скриптов, стилей и base64
+        self.assertNotIn("<script", ctx.lower())
+        self.assertNotIn("<style", ctx.lower())
+        self.assertNotIn("data:image/", ctx.lower())
+        self.assertNotIn(";base64", ctx.lower())
+
+        # Приоритет решений 107/109
+        idx_107 = ctx.find("107-commercial-role-functions-cd-limits-04/OWNER_DECISIONS.md")
+        self.assertGreaterEqual(idx_107, 0)
+
+    def test_corpus_reads_all_sources_multiple_times_and_all_norms_present(self):
+        """S2 / R3: Проверка фактического чтения содержимого всех 30 источников и отсутствия пропусков норм."""
+        from unittest.mock import patch
+        original_read = Path.read_bytes
+        reads = []
+        def trace(p):
+            reads.append(str(p))
+            return original_read(p)
+
+        with patch.object(Path, "read_bytes", trace):
+            ctx = self.base.get_p026_prompt_context()
+
+        manifest_rel = [x["relative_path"] for x in self.base.CANONICAL_SOURCE_MANIFEST]
+        counts = {p: reads.count("/home/roman/" + p) for p in manifest_rel}
+        validation_only = [p for p, n in counts.items() if n <= 1]
+        content_read = [p for p, n in counts.items() if n > 1]
+
+        self.assertEqual([], validation_only, f"Источники, прочитанные только для хеша: {validation_only}")
+        self.assertEqual(30, len(content_read), "Все 30 источников должны быть прочитаны более 1 раза (верификация + контент)")
+
+        evidence = []
+        for entry in self.base.CANONICAL_SOURCE_MANIFEST:
+            p = Path("/home/roman") / entry["relative_path"]
+            if "02_УТВЕРЖДЕНО" in str(p) or "101-commercial" in str(p):
+                lines = [l.strip() for l in p.read_text().splitlines() if len(l.strip()) > 110 and l.strip() not in ctx and not l.startswith(("#", "|", "<"))]
+                evidence.append({"source": entry["relative_path"], "sample_absent": lines[0] if lines else None})
+        absent = [e for e in evidence if e["sample_absent"] is not None]
+        self.assertEqual([], absent, f"Пропущенные нормы в утверждённых файлах и 101: {absent}")
+
 if __name__ == "__main__":
     unittest.main()

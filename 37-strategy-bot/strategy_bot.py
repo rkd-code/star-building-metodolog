@@ -18,7 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from p026_handler import P026Handler
-from p026_storage import P026Storage
+from p026_storage import JournalCorruptionError, P026Storage
 from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 
 PROJECT_ROOT = ROOT.parent
@@ -111,7 +111,11 @@ def build_system_prompt(
 
     # Динамическая подгрузка сохранённых решений из persistent-хранилища
     handler = get_p026_handler()
-    decisions = handler.storage.list_decisions(user_id=user_id, chat_id=chat_id, status="active")
+    try:
+        decisions = handler.storage.list_decisions(user_id=user_id, chat_id=chat_id, status="active")
+    except JournalCorruptionError as err:
+        logger.error("Отказ формирования промпта: повреждение журнала решений: %s", err)
+        return ""
 
     decisions_section = ""
     if decisions:
@@ -191,7 +195,11 @@ def build_user_prompt(
     history_text = "\n".join(history[-8:]) if history else "История отсутствует."
 
     handler = get_p026_handler()
-    decisions = handler.storage.list_decisions(user_id=user_id, chat_id=chat_id, status="active")
+    try:
+        decisions = handler.storage.list_decisions(user_id=user_id, chat_id=chat_id, status="active")
+    except JournalCorruptionError as err:
+        logger.error("Отказ получения решений для пользовательского промпта: %s", err)
+        decisions = []
     decisions_text = ""
     if decisions:
         dec_list = [f"• ({d['question_context']}): {d['exact_text']}" for d in decisions[-5:]]
@@ -238,7 +246,15 @@ async def generate_answer(
     from google import genai
     from google.genai import types
 
-    system_prompt = build_system_prompt(get_strategy_context(), user_id=user_id, chat_id=chat_id)
+    try:
+        P026SubjectBase().verify_all_sources()
+        system_prompt = build_system_prompt(get_strategy_context(), user_id=user_id, chat_id=chat_id)
+        if not system_prompt:
+            raise SubjectBaseIntegrityError("Пустой системный промпт (сбой базы P-026)")
+    except (SubjectBaseIntegrityError, JournalCorruptionError) as err:
+        logger.error("Отказ целостности нормативной базы при формировании ответа: %s", err)
+        return "⛔ Нарушена целостность нормативной базы P-026. Запрос заблокирован."
+
     user_prompt = build_user_prompt(user_text, author_name, user_id=user_id, chat_id=chat_id)
 
     def call_model() -> str:
@@ -513,6 +529,9 @@ async def process_and_reply(update, context=None, supplied_text: str | None = No
                 await message.reply_text(chunk, parse_mode="Markdown")
             except Exception:
                 await message.reply_text(chunk)
+    except (SubjectBaseIntegrityError, JournalCorruptionError) as err:
+        logger.error("Отказ целостности нормативной базы в process_and_reply: %s", err)
+        await message.reply_text("⛔ Нарушена целостность нормативной базы P-026. Запрос заблокирован.")
     except ValueError as error:
         await message.reply_text(f"⚠ {error}")
     except Exception:
