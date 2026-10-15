@@ -1,10 +1,13 @@
 import importlib.util
 import os
+import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 BOT = ROOT / "strategy_bot.py"
 SERVICE = ROOT / "systemd" / "star-building-strategy.service"
 SOURCES = {
@@ -85,6 +88,9 @@ class StrategyBotTest(unittest.TestCase):
         self.assertIn("Restart=always", text)
         self.assertIn("NoNewPrivileges=true", text)
         self.assertIn("PrivateTmp=true", text)
+        self.assertIn("ReadWritePaths=/home/roman/.local/share/star-building/dramknote-p026", text)
+        self.assertIn("StateDirectory=star-building/dramknote-p026", text)
+        self.assertIn("DRAMKNOTE_P026_STORAGE_DIR", text)
 
     def test_repository_contains_no_token_value(self):
         for path in ROOT.rglob("*"):

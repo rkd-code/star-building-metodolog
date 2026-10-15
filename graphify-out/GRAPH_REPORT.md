@@ -1,16 +1,16 @@
-# Graph Report - t_7b954f30  (2026-10-14)
+# Graph Report - t_7b954f30  (2026-10-15)
 
 ## Corpus Check
-- 173 files · ~151,925 words
+- 173 files · ~156,968 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1000 nodes · 1283 edges · 151 communities (80 shown, 71 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 37 edges (avg confidence: 0.88)
+- 1053 nodes · 1395 edges · 155 communities (82 shown, 73 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2c992783`
+- Built from commit: `ddc5874c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -162,18 +162,22 @@
 - card_REG-007_kadrovoe_deloproizvodstvo.md
 - card_REG-008_sistema_motivacii.md
 - card_REG-009_toplivnye_karty.md
+- P026Handler
+- P026SecurityTest
+- P026StorageTest
+- P026HandlerTest
 
 ## God Nodes (most connected - your core abstractions)
-1. `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` - 40 edges
-2. `P026Storage` - 26 edges
-3. `P026SubjectBase` - 21 edges
-4. `Единая стратегия коммерческого отдела и маркетинга` - 20 edges
-5. `P-001 — Корпоративная система «Кодификатор» Star Building` - 20 edges
-6. `R-001 — rkd-code/star-building-metodolog` - 15 edges
-7. `P026Handler` - 14 edges
-8. `P-002 — Нормативная база Star Building` - 14 edges
-9. `29-employee-testing-service: «Экзаменатор Star Building»` - 13 edges
-10. `P026HandlerTest` - 12 edges
+1. `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` - 43 edges
+2. `P026Storage` - 35 edges
+3. `P026SubjectBase` - 25 edges
+4. `P026Handler` - 20 edges
+5. `Единая стратегия коммерческого отдела и маркетинга` - 20 edges
+6. `P-001 — Корпоративная система «Кодификатор» Star Building` - 20 edges
+7. `P026SubjectBaseTest` - 18 edges
+8. `P026StorageTest` - 17 edges
+9. `R-001 — rkd-code/star-building-metodolog` - 15 edges
+10. `P-002 — Нормативная база Star Building` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `@ReglamentSB_bot (Watchman)` --calls--> `REG-004: How to Write a Regulation`  [INFERRED]
@@ -206,7 +210,7 @@
 - **Процесс управления персоналом** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_007_kadrovoe_deloproizvodstvo, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_008_sistema_motivacii, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura [INFERRED 0.85]
 - **Кадровые и мотивационные процессы** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_007_kadrovoe_deloproizvodstvo_reglament, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_008_sistema_motivacii_reglament [INFERRED 0.90]
 
-## Communities (151 total, 71 thin omitted)
+## Communities (155 total, 73 thin omitted)
 
 ### Community 0 - "@ReglamentSB_bot (Watchman)"
 Cohesion: 0.17
@@ -217,24 +221,24 @@ Cohesion: 0.22
 Nodes (11): TC-01: Happy Path Test, Prompt: Sverchik (Auditor), Основной агент «Кодификатор», Промпт «Карточник», Промпт «Сверщик», 5-Section Regulation Schema, Bot: Om (Consultant), REG-001: Code of Conduct (+3 more)
 
 ### Community 2 - "P026SubjectBase"
-Cohesion: 0.05
-Nodes (16): P026Handler, Any, Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота., Формирует сводный статус проекта P-026 с учётом зафиксированных решений., Экспортирует версионный рабочий черновик документа КД без изменения оригиналов., Проверяет валидность формулировки решения. Неоднозначные короткие ответы («да»,…, Файлы и вложенные документы расцениваются только как данные. Инструкции внутри…, Фиксирует подтверждённое решение владельца. (+8 more)
+Cohesion: 0.06
+Nodes (13): P026SubjectBase, Any, RuntimeError, Предметная база знаний P-026 («Коммерческий департамент») в режиме read-only с…, Исключение при нарушении целостности, отсутствии или подмене нормативного…, Нормативные константы, правила, версии документов и статус проекта P-026., Возвращает нормативный манифест 30 предметных источников P-026., Проверяет целостность всех 30 канонических источников (fail-closed). (+5 more)
 
 ### Community 3 - "P026Storage"
-Cohesion: 0.07
-Nodes (18): P026Storage, PathTraversalError, Any, Path, Изолированное защищённое файловое хранилище решений владельца и черновиков…, Возвращает список зафиксированных решений с опциональной фильтрацией., Сохраняет версионный рабочий черновик без перезаписи оригиналов., Возвращает список сохранённых версионных черновиков (от новых к старым). (+10 more)
+Cohesion: 0.17
+Nodes (16): P026Storage, PathTraversalError, Any, Path, Строгая fail-closed валидация без доверия симлинкованным родителям., Атомарная запись с fsync временного файла и родительского каталога., Читает журнал решений; при повреждении отправляет в карантин и возвращает отказ., Исключение при попытке обхода каталога или использования некорректного пути. (+8 more)
 
 ### Community 4 - "Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)"
 Cohesion: 0.05
-Nodes (40): 01-report, 02-tests, 03-data-model, 04-environment, 05-integrations, 06-tools, 07-concept, 08-refinement (+32 more)
+Nodes (43): 01-report, 02-tests, 03-data-model, 04-environment, 05-integrations, 06-tools, 07-concept, 08-refinement (+35 more)
 
 ### Community 5 - "@ReglamentSB_bot (Смотритель)"
 Cohesion: 0.29
 Nodes (7): Dual-Circuit Architecture, Voice Input Support, Consultant Scenario Flow, Bitrix24 Integration, @ReglamentSB_bot (Смотритель), @star_building_help_bot (Ом), Cross-Check Engine
 
 ### Community 6 - "strategy_bot.py"
-Cohesion: 0.17
-Nodes (26): allowed_user_ids(), build_system_prompt(), build_user_prompt(), deny(), extract_message(), generate_answer(), get_p026_handler(), get_strategy_context() (+18 more)
+Cohesion: 0.16
+Nodes (29): allowed_user_ids(), build_system_prompt(), build_user_prompt(), deny(), extract_message(), generate_answer(), get_p026_handler(), get_strategy_context() (+21 more)
 
 ### Community 7 - "Битрикс24"
 Cohesion: 0.33
@@ -297,8 +301,8 @@ Cohesion: 0.27
 Nodes (17): build_graph(), build_inventory(), classify_project(), describe_content(), extract_content(), extract_docx(), extract_xlsx(), main() (+9 more)
 
 ### Community 54 - "Модель данных сервиса «Экзаменатор Star Building»"
-Cohesion: 0.12
-Nodes (15): 10. Ограничения целостности, 1. Вопрос, 2. Вариант ответа, 3. Программа тестирования, 4. Назначение, 5. Попытка, 6. Вопрос попытки, 7. Ответ сотрудника (+7 more)
+Cohesion: 0.09
+Nodes (20): 10. Ограничения целостности, 1. Вопрос, 2. Вариант ответа, 3. Программа тестирования, 4. Назначение, 5. Попытка, 6. Вопрос попытки, 7. Ответ сотрудника (+12 more)
 
 ### Community 55 - "РЕГЛАМЕНТ: Входной контроль и приемка строительных материалов и конструкций на объекте"
 Cohesion: 0.13
@@ -382,7 +386,7 @@ Nodes (7): 1. Вывод по исходному файлу, 2. Рекоменд
 
 ### Community 78 - "37 — «Драмкнот»: стратегический бот Star Building"
 Cohesion: 0.25
-Nodes (7): 37 — «Драмкнот»: стратегический бот Star Building, Возможности, Глоссарий, Границы, Источники, Проверка, Развёртывание
+Nodes (7): 37 — «Драмкнот»: стратегический бот Star Building, Возможности, Глоссарий, Границы, Нормативные источники и контроль целостности, Проверка и тестирование, Эксплуатация и границы среды исполнения
 
 ### Community 79 - "strategy_healthcheck.py"
 Cohesion: 0.43
@@ -512,25 +516,33 @@ Nodes (3): 2.1. Главный принцип, 2.2. Стоп-факторы, 2. 
 Cohesion: 0.67
 Nodes (3): 3.1. Цель до конца 2026 года, 3.2. Цель 2027 года, 3. Цели и ключевые результаты
 
+### Community 151 - "P026Handler"
+Cohesion: 0.11
+Nodes (14): P026Handler, Any, Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота., Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией., Формирует сводный статус проекта P-026 со строгой actor/chat изоляцией решений., Экспортирует версионный рабочий черновик документа КД со строгой проверкой…, Проверяет валидность формулировки решения. Неоднозначные короткие и…, Файлы и вложенные документы расцениваются только как данные. (+6 more)
+
+### Community 152 - "P026SecurityTest"
+Cohesion: 0.11
+Nodes (9): get_default_storage_dir(), Определяет базовый путь хранилища с поддержкой systemd STATE_DIRECTORY., P026SecurityTest, Проверяет отсутствие токенов Telegram и паролей в компоненте 37-strategy-bot., Хранилище по умолчанию расположено изолированно вне репозитория и вне prod., Проверяет неизменность SHA-256 файлов во всех исходных каталогах., Проверяет блокировку всех векторов обхода каталогов., Проверяет невозможность чтения или создания через символические ссылки. (+1 more)
+
 ## Knowledge Gaps
-- **402 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `Контекст Hermes`, `Текст черновика:`, `1.1. Назначение` (+397 more)
+- **409 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `Контекст Hermes`, `Текст черновика:`, `1.1. Назначение` (+404 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **71 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **73 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `P026Storage` connect `P026Storage` to `P026SubjectBase`?**
+- **Why does `P026SubjectBase` connect `P026SubjectBase` to `P026HandlerTest`, `strategy_bot.py`, `P026Handler`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `P026Storage` connect `P026Storage` to `P026StrategyBotIntegrationTest`, `strategy_bot.py`, `P026Handler`, `P026SecurityTest`, `P026StorageTest`, `P026HandlerTest`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **Why does `P026Handler` connect `P026Handler` to `P026StrategyBotIntegrationTest`, `P026SubjectBase`, `P026Storage`, `strategy_bot.py`, `P026HandlerTest`?**
   _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Why does `P026SubjectBase` connect `P026SubjectBase` to `strategy_bot.py`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **Why does `P026Handler` connect `P026SubjectBase` to `P026Storage`, `strategy_bot.py`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Are the 4 inferred relationships involving `P026Storage` (e.g. with `P026Handler` and `P026HandlerTest`) actually correct?**
-  _`P026Storage` has 4 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 5 inferred relationships involving `P026Storage` (e.g. with `P026Handler` and `P026HandlerTest`) actually correct?**
+  _`P026Storage` has 5 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 3 inferred relationships involving `P026SubjectBase` (e.g. with `P026Handler` and `P026HandlerTest`) actually correct?**
   _`P026SubjectBase` has 3 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 6 inferred relationships involving `P026Handler` (e.g. with `JournalCorruptionError` and `P026Storage`) actually correct?**
+  _`P026Handler` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `register_project.sh script`, `setup_profiles.sh script`, `Контекст Hermes` to the rest of the system?**
-  _402 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `P026SubjectBase` be split into smaller, more focused modules?**
-  _Cohesion score 0.054901960784313725 - nodes in this community are weakly interconnected._
+  _409 weakly-connected nodes found - possible documentation gaps or missing edges._

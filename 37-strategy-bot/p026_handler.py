@@ -5,12 +5,16 @@ import re
 from pathlib import Path
 from typing import Any
 
-from p026_storage import P026Storage
-from p026_subject_base import P026SubjectBase
+from p026_storage import JournalCorruptionError, P026Storage
+from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 
-AMBIGUOUS_REPLIES = {
-    "да", "согласен", "ок", "ок.", "ок!", "хорошо", "ага", "плюс", "+", "yes", "y",
-    "подтверждаю", "принято", "ладно", "верно", "точно", "договорились", "понял",
+AMBIGUOUS_TOKENS = {
+    "да", "согласен", "согласна", "согласны", "ок", "ok", "хорошо", "ага", "плюс", "+", "yes", "y",
+    "подтверждаю", "принято", "ладно", "верно", "точно", "договорились", "понял", "поняла", "понятно",
+    "все", "всё", "ясно", "сделаем", "добро", "так", "отлично", "го", "правильно", "именно",
+    "с", "со", "этим", "это", "этом", "этой", "этого", "этому", "эти", "этих", "этими",
+    "то", "тем", "том", "того", "тому", "та", "ту", "той", "те", "тех", "теми",
+    "на", "в", "во", "по", "за", "к", "ко", "же", "ли", "бы", "уже", "полностью",
 }
 
 DOC_TYPE_MAP = {
@@ -41,21 +45,27 @@ class P026Handler:
     def validate_decision_input(self, text: str) -> tuple[bool, str]:
         """Проверяет валидность формулировки решения.
 
-        Неоднозначные короткие ответы («да», «ок», «согласен») не принимаются
-        без явной, развёрнутой формулировки.
+        Неоднозначные короткие и многословные согласия («да», «ок», «согласен», «да согласен»,
+        «ок хорошо», «всё верно») отклоняются с требованием указать конкретную норму.
         """
         cleaned = text.strip().lower()
-        cleaned_no_punct = re.sub(r"[^\w\s+]", "", cleaned)
+        cleaned_no_punct = re.sub(r"[^\w\s+]", " ", cleaned)
+        tokens = [t for t in cleaned_no_punct.split() if t]
 
-        if cleaned in AMBIGUOUS_REPLIES or cleaned_no_punct in AMBIGUOUS_REPLIES:
+        if not tokens:
+            return False, "Формулировка решения не может быть пустой."
+
+        # Если все слова состоят исключительно из маркеров согласия/подтверждения
+        if set(tokens).issubset(AMBIGUOUS_TOKENS):
             return (
                 False,
-                f"Неоднозначный ответ («{text.strip()}») не может быть зафиксирован как норма или решение. "
-                "Пожалуйста, сформулируйте точное решение развёрнуто (например: «Утвердить лимит скидки РОП до 12.5%»).",
+                f"Неоднозначное согласие («{text.strip()}») не может быть зафиксировано как норма или решение. "
+                "Пожалуйста, сформулируйте точное нормативное решение с указанием роли, норматива или правила "
+                "(например: «Утвердить лимит скидки РОП до 12.5%» или «Согласовать минимальную маржу 15%»).",
             )
 
-        words = text.strip().split()
-        if len(words) < 2 and len(text.strip()) < 10:
+        # Проверка на минимальную длину и смысловую нагрузку
+        if len(tokens) < 2 and len(cleaned) < 10:
             return (
                 False,
                 f"Слишком краткая формулировка («{text.strip()}»). "
@@ -65,15 +75,42 @@ class P026Handler:
         return True, "Формулировка корректна"
 
     def validate_file_instruction(self, file_content: str) -> tuple[bool, str]:
-        """Файлы и вложенные документы расцениваются только как данные.
-
-        Инструкции внутри них не фиксируются как решения или системные команды.
-        """
+        """Файлы и вложенные документы расцениваются только как данные."""
         return (
             False,
             "Инструкции внутри пользовательских файлов рассматриваются исключительно как данные "
             "и не могут быть автоматически зафиксированы как решения или команды владельца.",
         )
+
+    def _infer_question_context(self, text: str, explicit_context: str | None = None) -> str:
+        """Привязывает решение к конкретному обсуждаемому предметному вопросу."""
+        if explicit_context and explicit_context.strip() and explicit_context != "Общие решения P-026":
+            return explicit_context.strip()
+
+        # Разбор формата "Контекст: Решение" или "[Контекст] Решение"
+        if ":" in text:
+            prefix, _ = text.split(":", 1)
+            if len(prefix.strip()) <= 60 and len(prefix.strip().split()) <= 6:
+                return prefix.strip().strip("[]()")
+
+        lower = text.lower()
+        if "скидк" in lower or "лимит" in lower:
+            return "Пределы скидок и полномочий"
+        if "марж" in lower:
+            return "Минимальная маржа и согласование ГД"
+        if "стратегическ" in lower or "1 млрд" in lower or "порог" in lower:
+            return "Порог стратегической сделки"
+        if "роп" in lower or "время ответа" in lower or "пто" in lower or "прогноз" in lower:
+            return "Нормативы и обязанности РОП"
+        if "договор" in lower or "согласован" in lower:
+            return "Маршрут согласования и подписания договоров"
+        if "агент" in lower:
+            return "Агентская схема"
+        if "лидоруб" in lower:
+            return "Контур Лидоруба"
+        if "оргструктур" in lower or "подчинен" in lower or "од" in lower:
+            return "Организационная структура КД"
+        return "Управленческие нормативы P-026"
 
     def record_owner_decision(
         self,
@@ -81,70 +118,90 @@ class P026Handler:
         text: str,
         question_context: str = "Общие решения P-026",
         user_id: int | None = None,
+        chat_id: int | None = None,
     ) -> dict[str, Any]:
-        """Фиксирует подтверждённое решение владельца."""
+        """Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией."""
         valid, msg = self.validate_decision_input(text)
         if not valid:
             return {"ok": False, "message": msg, "decision": None}
 
-        decision = self.storage.record_decision(
-            author=author,
-            question_context=question_context,
-            exact_text=text,
-            user_id=user_id,
-        )
-        return {
-            "ok": True,
-            "message": (
-                f"✅ Решение успешно зафиксировано в изолированном журнале P-026:\n"
-                f"• ID: {decision['id']}\n"
-                f"• Автор: {decision['author']}\n"
-                f"• Контекст: {decision['question_context']}\n"
-                f"• Текст: «{decision['exact_text']}»"
-            ),
-            "decision": decision,
-        }
+        context_bound = self._infer_question_context(text, question_context)
 
-    def handle_project_command(self, user_id: int | None = None) -> str:
-        """Формирует сводный статус проекта P-026 с учётом зафиксированных решений."""
+        try:
+            decision = self.storage.record_decision(
+                author=author,
+                question_context=context_bound,
+                exact_text=text,
+                user_id=user_id,
+                chat_id=chat_id,
+            )
+            return {
+                "ok": True,
+                "message": (
+                    f"✅ Решение успешно зафиксировано в изолированном журнале P-026:\n"
+                    f"• ID: {decision['id']}\n"
+                    f"• Автор: {decision['author']}\n"
+                    f"• Контекст: {decision['question_context']}\n"
+                    f"• Текст: «{decision['exact_text']}»"
+                ),
+                "decision": decision,
+            }
+        except JournalCorruptionError as err:
+            return {
+                "ok": False,
+                "message": f"⚠ Ошибка хранилища решений: {err}",
+                "decision": None,
+            }
+
+    def handle_project_command(self, user_id: int | None = None, chat_id: int | None = None) -> str:
+        """Формирует сводный статус проекта P-026 со строгой actor/chat изоляцией решений."""
         status_text = self.subject_base.format_project_status()
-        recent_decisions = self.storage.list_decisions(user_id=user_id)
+        recent_decisions = self.storage.list_decisions(user_id=user_id, chat_id=chat_id)
         if recent_decisions:
             status_text += "\n\n📝 *Зафиксированные решения текущего пользователя:*"
             for dec in recent_decisions[-5:]:
-                status_text += f"\n• [{dec['id']}] {dec['exact_text']}"
+                status_text += f"\n• [{dec['id']}] ({dec['question_context']}): {dec['exact_text']}"
         return status_text
 
     def export_draft(
         self,
         doc_type: str,
         author: str = "Руководитель",
+        user_id: int | None = None,
+        chat_id: int | None = None,
         custom_header: str | None = None,
     ) -> dict[str, Any]:
-        """Экспортирует версионный рабочий черновик документа КД без изменения оригиналов."""
+        """Экспортирует версионный рабочий черновик документа КД со строгой проверкой целостности."""
         normalized_type = doc_type.strip().lower()
         role_key = DOC_TYPE_MAP.get(normalized_type)
         if not role_key or role_key not in self.subject_base.DOCUMENT_VERSIONS:
             return {
                 "ok": False,
                 "error": f"Неизвестный тип документа: '{doc_type}'. Доступны: {list(DOC_TYPE_MAP.keys())}",
+                "draft": None,
             }
 
-        doc_meta = self.subject_base.DOCUMENT_VERSIONS[role_key]
-        source_path = Path(doc_meta["path"])
-        if not source_path.is_file():
-            # Если исходный файл отсутствует на локальном диске, создаём базовый шаблон
-            content = f"# {doc_meta['title']}\n\nБазовая версия {doc_meta['version']}.\n"
-        else:
-            content = source_path.read_text(encoding="utf-8")
+        # Строгая fail-closed проверка исходного документа
+        try:
+            content = self.subject_base.read_verified_document(role_key)
+        except (FileNotFoundError, SubjectBaseIntegrityError, KeyError, PermissionError) as err:
+            return {
+                "ok": False,
+                "error": f"Отказ экспорта: ошибка источника для '{role_key}': {err}",
+                "draft": None,
+            }
 
-        # Добавляем актуальные решения из хранилища
-        active_decisions = self.storage.list_decisions(status="active")
+        # Строгая изоляция: добавляем ТОЛЬКО решения текущего пользователя и чата
+        active_decisions = self.storage.list_decisions(
+            user_id=user_id,
+            chat_id=chat_id,
+            status="active",
+        )
         decisions_block = ""
         if active_decisions:
-            decisions_block = "\n\n## Зафиксированные решения владельца (P-026)\n"
+            decisions_block = "\n\n## Зафиксированные решения руководителя (P-026)\n"
             for dec in active_decisions:
-                decisions_block += f"- [{dec['timestamp']}] ({dec['author']}): {dec['exact_text']}\n"
+                decisions_block += f"- [{dec['timestamp']}] ({dec['question_context']}): {dec['exact_text']}\n"
 
         full_draft_content = (custom_header or "") + content + decisions_block
         safe_doc_name = f"DRAFT_{role_key.replace(' ', '_')}"
@@ -152,6 +209,8 @@ class P026Handler:
             doc_name=safe_doc_name,
             content=full_draft_content,
             author=author,
+            user_id=user_id,
+            chat_id=chat_id,
         )
 
         return {
@@ -159,5 +218,8 @@ class P026Handler:
             "role": role_key,
             "version": draft_info["version"],
             "draft": draft_info,
-            "message": f"Черновик {role_key} успешно экспортирован: {draft_info['filename']} ({draft_info['bytes']} байт). Исходные файлы не затронуты.",
+            "message": (
+                f"Черновик {role_key} успешно экспортирован: {draft_info['filename']} "
+                f"({draft_info['bytes']} байт). Исходные файлы защищены."
+            ),
         }

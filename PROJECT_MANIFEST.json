@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "d7c73d860e11275ecd8af475622926fbf62f2d11ad736a082a6c2063b8123eb9",
+  "source_tree_hash": "d41148e5aa52b2e4cd70922e468f1677c72309a8689f55a34a341959cffc224b",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1046,6 +1046,13 @@
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/36-marketing-budget-2026/test_budget_model.py"
     },
     {
+      "path": "37-strategy-bot/DEPLOYMENT_PLAN.md",
+      "name": "DEPLOYMENT_PLAN.md",
+      "area": "37-strategy-bot",
+      "description": "Офлайн-план развертывания расширения P-026 для @Dramknote_bot (FN-014)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/DEPLOYMENT_PLAN.md"
+    },
+    {
       "path": "37-strategy-bot/README.md",
       "name": "README.md",
       "area": "37-strategy-bot",
@@ -1077,7 +1084,7 @@
       "path": "37-strategy-bot/p026_subject_base.py",
       "name": "p026_subject_base.py",
       "area": "37-strategy-bot",
-      "description": "Предметная база знаний P-026 («Коммерческий департамент») в режиме read-only.",
+      "description": "Предметная база знаний P-026 («Коммерческий департамент») в режиме read-only с контролем целостности.",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_subject_base.py"
     },
     {
@@ -1112,35 +1119,35 @@
       "path": "37-strategy-bot/test_p026_integration.py",
       "name": "test_p026_integration.py",
       "area": "37-strategy-bot",
-      "description": "import importlib.util import os import sys import unittest from pathlib import Path from unittest.mock import AsyncMock, MagicMock, patch ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) BOT = ROOT / \"strategy_bot.py\" de",
+      "description": "import importlib.util import os import sys import tempfile import unittest from pathlib import Path from unittest.mock import AsyncMock, MagicMock, patch ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) BOT = ROOT / \"str",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_integration.py"
     },
     {
       "path": "37-strategy-bot/test_p026_security.py",
       "name": "test_p026_security.py",
       "area": "37-strategy-bot",
-      "description": "import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalError class P026S",
+      "description": "import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalError, get_defaul",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_security.py"
     },
     {
       "path": "37-strategy-bot/test_p026_storage.py",
       "name": "test_p026_storage.py",
       "area": "37-strategy-bot",
-      "description": "import os import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_storage import P026Storage, PathTraversalError class P026StorageTest(unittest.TestCase): def se",
+      "description": "import os import sys import tempfile import threading import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_storage import JournalCorruptionError, P026Storage, PathTraversalError class P",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_storage.py"
     },
     {
       "path": "37-strategy-bot/test_p026_subject_base.py",
       "name": "test_p026_subject_base.py",
       "area": "37-strategy-bot",
-      "description": "import sys import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_subject_base import P026SubjectBase class P026SubjectBaseTest(unittest.TestCase): def setUp(self): self.base = P026Subjec",
+      "description": "import os import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError class P026SubjectBaseTest(unitte",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_subject_base.py"
     },
     {
       "path": "37-strategy-bot/test_strategy_bot.py",
       "name": "test_strategy_bot.py",
       "area": "37-strategy-bot",
-      "description": "import importlib.util import os import unittest from pathlib import Path from unittest.mock import patch ROOT = Path(__file__).resolve().parent BOT = ROOT / \"strategy_bot.py\" SERVICE = ROOT / \"systemd\" / \"star-building-strategy.service\" SOU",
+      "description": "import importlib.util import os import sys import unittest from pathlib import Path from unittest.mock import patch ROOT = Path(__file__).resolve().parent if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT)) BOT = ROOT / \"strategy_bo",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_strategy_bot.py"
     },
     {
@@ -1238,7 +1245,7 @@
       "path": "graphify-out/GRAPH_REPORT.md",
       "name": "GRAPH_REPORT.md",
       "area": "graphify-out",
-      "description": "Graph Report - t_7b954f30 (2026-10-14)",
+      "description": "Graph Report - t_7b954f30 (2026-10-15)",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/GRAPH_REPORT.md"
     },
     {

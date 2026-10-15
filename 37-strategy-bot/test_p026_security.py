@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from p026_storage import P026Storage, PathTraversalError
+from p026_storage import P026Storage, PathTraversalError, get_default_storage_dir
 
 
 class P026SecurityTest(unittest.TestCase):
@@ -80,6 +80,27 @@ class P026SecurityTest(unittest.TestCase):
             if symlink_target.is_symlink():
                 symlink_target.unlink()
 
+    def test_parent_directory_symlink_attack_rejected_fail_closed(self):
+        """Проверяет блокировку symlink на уровне родительских папок drafts и decisions (F1)."""
+        outside = Path(self.temp_dir.name) / "outside"
+        outside.mkdir()
+
+        # Попытка смонтировать drafts через symlink
+        spoofed_base1 = Path(self.temp_dir.name) / "spoofed1"
+        spoofed_base1.mkdir()
+        (spoofed_base1 / "drafts").symlink_to(outside, target_is_directory=True)
+
+        with self.assertRaises(PathTraversalError):
+            P026Storage(base_dir=spoofed_base1)
+
+        # Попытка смонтировать decisions через symlink
+        spoofed_base2 = Path(self.temp_dir.name) / "spoofed2"
+        spoofed_base2.mkdir()
+        (spoofed_base2 / "decisions").symlink_to(outside, target_is_directory=True)
+
+        with self.assertRaises(PathTraversalError):
+            P026Storage(base_dir=spoofed_base2)
+
     def test_no_hardcoded_secrets_or_tokens(self):
         """Проверяет отсутствие токенов Telegram и паролей в компоненте 37-strategy-bot."""
         token_pattern = re.compile(r"\d{8,12}:[A-Za-z0-9_-]{30,}")
@@ -91,8 +112,8 @@ class P026SecurityTest(unittest.TestCase):
 
     def test_storage_isolated_from_git_and_prod(self):
         """Хранилище по умолчанию расположено изолированно вне репозитория и вне prod."""
-        default_dir = P026Storage().base_dir
-        # Не должно быть внутри репозитория или в корневых системных путях
+        # Вызов с create_dirs=False не создаёт каталогов в живом окружении
+        default_dir = P026Storage(create_dirs=False).base_dir
         self.assertNotIn("/star-building-metodolog", str(default_dir))
         self.assertNotIn("/etc", str(default_dir))
         self.assertNotIn("/var", str(default_dir))

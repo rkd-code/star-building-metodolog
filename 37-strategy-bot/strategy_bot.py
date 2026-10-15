@@ -8,14 +8,19 @@ import io
 import logging
 import os
 import tempfile
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from p026_handler import P026Handler
+from p026_storage import P026Storage
 from p026_subject_base import P026SubjectBase
 
-ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
 STRATEGY_SOURCE_FILES = (
     PROJECT_ROOT / "35-commercial-marketing-strategy" / "STRATEGY.md",
@@ -87,8 +92,29 @@ def get_strategy_context() -> str:
     return _strategy_context
 
 
-def build_system_prompt(strategy_context: str) -> str:
+def build_system_prompt(
+    strategy_context: str,
+    user_id: int | None = None,
+    chat_id: int | None = None,
+) -> str:
+    """Формирует системный промпт модели с интеграцией актуальных решений владельца."""
     p026_context = P026SubjectBase().get_p026_prompt_context()
+
+    # Динамическая подгрузка сохранённых решений из persistent-хранилища
+    handler = get_p026_handler()
+    decisions = handler.storage.list_decisions(user_id=user_id, chat_id=chat_id, status="active")
+
+    decisions_section = ""
+    if decisions:
+        decisions_lines = [
+            "\n=== АКТУАЛЬНЫЕ ЗАФИКСИРОВАННЫЕ РЕШЕНИЯ РУКОВОДИТЕЛЯ (P-026) ===",
+            "(Внимание модели: это подтверждённые рабочие решения руководителя в рамках проекта P-026.",
+            "Они действуют в диалоге, но требуют финального утверждения ГД для закрепления в официальных регламентах.)",
+        ]
+        for dec in decisions:
+            decisions_lines.append(f"- [{dec['id']}] ({dec['question_context']}): {dec['exact_text']}")
+        decisions_section = "\n".join(decisions_lines) + "\n"
+
     return f"""Ты — «Драмкнот», закрытый стратегический штаб руководителя Star Building.
 
 СТАТУС МАТЕРИАЛОВ:
@@ -112,7 +138,7 @@ def build_system_prompt(strategy_context: str) -> str:
 {strategy_context}
 
 {p026_context}
-"""
+{decisions_section}"""
 
 
 def validate_input(text: str) -> str:
@@ -140,10 +166,25 @@ def split_for_telegram(text: str, limit: int = 3900) -> list[str]:
     return chunks
 
 
-def build_user_prompt(user_text: str, author_name: str, user_id: int) -> str:
+def build_user_prompt(
+    user_text: str,
+    author_name: str,
+    user_id: int,
+    chat_id: int | None = None,
+) -> str:
+    """Формирует пользовательский промпт с историей и решениями текущего актора."""
     history = _user_histories[user_id]
     history_text = "\n".join(history[-8:]) if history else "История отсутствует."
+
+    handler = get_p026_handler()
+    decisions = handler.storage.list_decisions(user_id=user_id, chat_id=chat_id, status="active")
+    decisions_text = ""
+    if decisions:
+        dec_list = [f"• ({d['question_context']}): {d['exact_text']}" for d in decisions[-5:]]
+        decisions_text = "=== ЗАКРЕПЛЁННЫЕ РЕШЕНИЯ РУКОВОДИТЕЛЯ ===\n" + "\n".join(dec_list) + "\n\n"
+
     return (
+        f"{decisions_text}"
         f"=== ИСТОРИЯ ДИАЛОГА ===\n{history_text}\n\n"
         f"=== НОВЫЙ ЗАПРОС ===\nАвтор: {author_name}\n{validate_input(user_text)}"
     )
@@ -173,12 +214,18 @@ async def transcribe_audio(file_path: str) -> str:
     return await asyncio.get_running_loop().run_in_executor(None, run)
 
 
-async def generate_answer(user_text: str, author_name: str, user_id: int, image_bytes: bytes | None = None) -> str:
+async def generate_answer(
+    user_text: str,
+    author_name: str,
+    user_id: int,
+    chat_id: int | None = None,
+    image_bytes: bytes | None = None,
+) -> str:
     from google import genai
     from google.genai import types
 
-    system_prompt = build_system_prompt(get_strategy_context())
-    user_prompt = build_user_prompt(user_text, author_name, user_id)
+    system_prompt = build_system_prompt(get_strategy_context(), user_id=user_id, chat_id=chat_id)
+    user_prompt = build_user_prompt(user_text, author_name, user_id=user_id, chat_id=chat_id)
 
     def call_model() -> str:
         client = genai.Client(api_key=get_api_key())
@@ -209,6 +256,14 @@ async def deny(update) -> None:
         await message.reply_text("⛔ Этот стратегический контур закрыт. Обратитесь к владельцу доступа.")
 
 
+def is_private_chat(update) -> bool:
+    chat = update.effective_chat
+    if not chat:
+        return True
+    chat_type = getattr(chat, "type", "private")
+    return chat_type == "private"
+
+
 async def handle_start(update, context) -> None:
     user = update.effective_user
     if not is_authorized(user.id if user else None):
@@ -236,6 +291,9 @@ async def handle_named_request(update, context) -> None:
     if not is_authorized(user.id if user else None):
         await deny(update)
         return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Стратегический контур доступен только в личном диалоге с ботом.")
+        return
     command = (update.effective_message.text or "").split()[0].lower()
     requests = {
         "/status": "Дай краткий статус реализации стратегии: цель, подтверждённые факты, открытые данные, ближайшие действия.",
@@ -247,10 +305,17 @@ async def handle_named_request(update, context) -> None:
 
 async def handle_project(update, context) -> None:
     user = update.effective_user
+    chat = update.effective_chat
     if not is_authorized(user.id if user else None):
         await deny(update)
         return
-    text = get_p026_handler().handle_project_command(user.id)
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Запрос статуса проекта доступен только в личном диалоге.")
+        return
+    text = get_p026_handler().handle_project_command(
+        user_id=user.id,
+        chat_id=chat.id if chat else None,
+    )
     for chunk in split_for_telegram(text):
         try:
             await update.effective_message.reply_text(chunk, parse_mode="Markdown")
@@ -260,9 +325,14 @@ async def handle_project(update, context) -> None:
 
 async def handle_record_decision(update, context) -> None:
     user = update.effective_user
+    chat = update.effective_chat
     if not is_authorized(user.id if user else None):
         await deny(update)
         return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Фиксация решений владельца разрешена только в личном диалоге.")
+        return
+
     message_text = update.effective_message.text or ""
     parts = message_text.split(maxsplit=1)
     if len(parts) < 2 or not parts[1].strip():
@@ -277,26 +347,63 @@ async def handle_record_decision(update, context) -> None:
         author=user.full_name or "Руководитель",
         text=decision_text,
         user_id=user.id,
+        chat_id=chat.id if chat else None,
     )
     await update.effective_message.reply_text(result["message"])
 
 
 async def handle_export_draft(update, context) -> None:
     user = update.effective_user
+    chat = update.effective_chat
     if not is_authorized(user.id if user else None):
         await deny(update)
         return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Выгрузка черновиков разрешена только в личном диалоге.")
+        return
+
     message_text = update.effective_message.text or ""
     parts = message_text.split(maxsplit=1)
     doc_type = parts[1].strip() if len(parts) > 1 else "kd"
     result = get_p026_handler().export_draft(
         doc_type=doc_type,
         author=user.full_name or "Руководитель",
+        user_id=user.id,
+        chat_id=chat.id if chat else None,
     )
-    if result.get("ok"):
-        await update.effective_message.reply_text(result["message"])
-    else:
+    if not result.get("ok"):
         await update.effective_message.reply_text(f"⚠ {result.get('error')}")
+        return
+
+    draft_info = result["draft"]
+    draft_path = Path(draft_info["path"])
+
+    if not draft_path.is_file() or draft_path.stat().st_size == 0:
+        await update.effective_message.reply_text("⚠ Файл черновика не найден или пуст.")
+        return
+
+    # Фактическая отправка файла документа в Telegram
+    draft_bytes = draft_path.read_bytes()
+    doc_io = io.BytesIO(draft_bytes)
+    doc_io.name = draft_info["filename"]
+    try:
+        await update.effective_message.reply_document(
+            document=doc_io,
+            filename=draft_info["filename"],
+            caption=result["message"],
+        )
+    except Exception:
+        # Резервный вызов через bot API при необходимости
+        if context and hasattr(context, "bot") and chat:
+            doc_io.seek(0)
+            await context.bot.send_document(
+                chat_id=chat.id,
+                document=doc_io,
+                filename=draft_info["filename"],
+                caption=result["message"],
+            )
+        else:
+            raise
 
 
 async def extract_message(update) -> tuple[str, bytes | None]:
@@ -351,6 +458,7 @@ async def extract_message(update) -> tuple[str, bytes | None]:
 
 async def process_and_reply(update, context=None, supplied_text: str | None = None) -> None:
     user = update.effective_user
+    chat = update.effective_chat
     if not is_authorized(user.id if user else None):
         await deny(update)
         return
@@ -358,12 +466,20 @@ async def process_and_reply(update, context=None, supplied_text: str | None = No
     try:
         await message.reply_chat_action("typing")
         text, image = (supplied_text, None) if supplied_text else await extract_message(update)
-        is_ambiguous, reason = get_p026_handler().validate_decision_input(text)
-        if not is_ambiguous and text.lower().strip() in {"да", "ок", "согласен", "хорошо", "+", "yes"}:
+        is_valid_decision, reason = get_p026_handler().validate_decision_input(text)
+        if not is_valid_decision and text.lower().strip() in {
+            "да", "ок", "согласен", "хорошо", "+", "yes", "да согласен", "ок хорошо", "всё верно",
+        }:
             await message.reply_text(f"ℹ {reason}")
             return
 
-        answer = await generate_answer(text, user.full_name or "Руководитель", user.id, image)
+        answer = await generate_answer(
+            user_text=text,
+            author_name=user.full_name or "Руководитель",
+            user_id=user.id,
+            chat_id=chat.id if chat else None,
+            image_bytes=image,
+        )
         for chunk in split_for_telegram(answer):
             try:
                 await message.reply_text(chunk, parse_mode="Markdown")

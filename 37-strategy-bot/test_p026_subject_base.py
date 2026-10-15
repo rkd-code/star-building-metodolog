@@ -1,10 +1,12 @@
+import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from p026_subject_base import P026SubjectBase
+from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 
 
 class P026SubjectBaseTest(unittest.TestCase):
@@ -47,16 +49,13 @@ class P026SubjectBaseTest(unittest.TestCase):
 
     def test_deferred_topics(self):
         topics = self.base.get_deferred_topics()
-        # Must include question 8 about agents
         agent_topic = next((t for t in topics if "агент" in t["title"].lower()), None)
         self.assertIsNotNone(agent_topic)
         self.assertTrue(agent_topic["do_not_reopen_in_current_cycle"])
 
-        # Must include CRM fields
         crm_topic = next((t for t in topics if "битрикс24" in t["title"].lower() or "crm" in t["title"].lower()), None)
         self.assertIsNotNone(crm_topic)
 
-        # Must include Google form
         gform_topic = next((t for t in topics if "гугл" in t["title"].lower() or "google" in t["title"].lower()), None)
         self.assertIsNotNone(gform_topic)
 
@@ -68,6 +67,45 @@ class P026SubjectBaseTest(unittest.TestCase):
         self.assertEqual("v0.1", docs["МОП"]["version"])
         self.assertEqual("v0.1", docs["Лидоруб"]["version"])
         self.assertEqual("v0.1", docs["Оргструктура КД"]["version"])
+
+    def test_read_verified_document_success_and_sha256(self):
+        content = self.base.read_verified_document("КД")
+        self.assertIn("Коммерческий директор", content)
+        self.assertGreater(len(content), 100)
+
+    def test_read_verified_document_missing_raises(self):
+        with tempfile.TemporaryDirectory() as td:
+            self.base.DOCUMENT_VERSIONS["КД"] = dict(
+                self.base.DOCUMENT_VERSIONS["КД"],
+                path=str(Path(td) / "missing.md"),
+            )
+            with self.assertRaises(FileNotFoundError):
+                self.base.read_verified_document("КД")
+
+    def test_read_verified_document_tampered_sha_raises(self):
+        with tempfile.TemporaryDirectory() as td:
+            tampered = Path(td) / "tampered.md"
+            tampered.write_text("Поддельный текст", encoding="utf-8")
+            self.base.DOCUMENT_VERSIONS["КД"] = dict(
+                self.base.DOCUMENT_VERSIONS["КД"],
+                path=str(tampered),
+                expected_sha256="0" * 64,
+            )
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base.read_verified_document("КД")
+
+    def test_read_verified_document_symlink_raises(self):
+        with tempfile.TemporaryDirectory() as td:
+            real_file = Path(td) / "real.md"
+            real_file.write_text("Реальный файл", encoding="utf-8")
+            link_file = Path(td) / "link.md"
+            link_file.symlink_to(real_file)
+            self.base.DOCUMENT_VERSIONS["КД"] = dict(
+                self.base.DOCUMENT_VERSIONS["КД"],
+                path=str(link_file),
+            )
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base.read_verified_document("КД")
 
     def test_format_project_status(self):
         status_text = self.base.format_project_status()
@@ -85,7 +123,20 @@ class P026SubjectBaseTest(unittest.TestCase):
         self.assertIn("1 млрд", ctx)
         self.assertIn("НЕ минимальный чек", ctx)
         self.assertIn("15%", ctx)
+        self.assertIn("каталог 76", ctx.lower())
+        self.assertIn("рег-001", ctx.lower())
+        self.assertIn("договоров №88/89", ctx)
         self.assertIn("не переоткрывать навязчиво", ctx.lower())
+
+    def test_sources_manifest_contains_30_sources(self):
+        manifest = self.base.get_source_manifest()
+        self.assertEqual(30, len(manifest))
+        self.assertTrue(all(s.get("sha256") and s.get("status") and (s.get("bytes") or 0) > 0 for s in manifest))
+
+    def test_verify_all_sources_integrity(self):
+        res = self.base.verify_all_sources()
+        self.assertTrue(res["ok"])
+        self.assertEqual(30, res["verified_count"])
 
 
 if __name__ == "__main__":

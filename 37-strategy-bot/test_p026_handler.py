@@ -21,11 +21,14 @@ class P026HandlerTest(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_ambiguous_replies_are_rejected(self):
-        ambiguous_cases = ["да", "Да", "ок", "ОК", "ок.", "согласен", "хорошо", "+", "yes", "ага", "подтверждаю"]
+        ambiguous_cases = [
+            "да", "Да", "ок", "ОК", "ок.", "согласен", "хорошо", "+", "yes", "ага", "подтверждаю",
+            "да согласен", "ок хорошо", "всё верно", "согласен с этим", "ок принято", "подтверждаю всё",
+        ]
         for reply in ambiguous_cases:
             with self.subTest(reply=reply):
                 valid, msg = self.handler.validate_decision_input(reply)
-                self.assertFalse(valid)
+                self.assertFalse(valid, f"Ответ '{reply}' должен быть отклонён")
                 self.assertIn("неоднозначн", msg.lower())
 
     def test_file_instructions_are_not_decisions(self):
@@ -39,29 +42,42 @@ class P026HandlerTest(unittest.TestCase):
         res = self.handler.record_owner_decision(
             author="Корж И.С.",
             text=decision_text,
-            question_context="Лимиты скидки",
             user_id=123,
+            chat_id=456,
         )
         self.assertTrue(res["ok"])
         self.assertIn("зафиксировано", res["message"].lower())
         self.assertEqual(decision_text, res["decision"]["exact_text"])
+        self.assertEqual("Пределы скидок и полномочий", res["decision"]["question_context"])
 
-        # Check storage
-        saved = self.storage.list_decisions(user_id=123)
+        # Проверка изоляции в хранилище
+        saved = self.storage.list_decisions(user_id=123, chat_id=456)
         self.assertEqual(1, len(saved))
         self.assertEqual(decision_text, saved[0]["exact_text"])
 
     def test_project_status_output(self):
-        status_text = self.handler.handle_project_command(user_id=123)
+        self.handler.record_owner_decision(
+            author="Корж И.С.",
+            text="Утвердить лимит скидки РОП до 12.5%",
+            user_id=123,
+            chat_id=456,
+        )
+        status_text = self.handler.handle_project_command(user_id=123, chat_id=456)
         self.assertIn("P-026", status_text)
         self.assertIn("Коммерческий департамент", status_text)
         self.assertIn("v0.6", status_text)
         self.assertIn("v0.3", status_text)
         self.assertIn("15%", status_text)
         self.assertIn("1 млрд тенге", status_text)
+        self.assertIn("Зафиксированные решения текущего пользователя", status_text)
+        self.assertIn("12.5%", status_text)
+
+        # Другой пользователь не видит эти решения
+        other_status = self.handler.handle_project_command(user_id=999, chat_id=456)
+        self.assertNotIn("Зафиксированные решения текущего пользователя", other_status)
 
     def test_export_draft_kd(self):
-        export_res = self.handler.export_draft(doc_type="kd", author="Корж И.С.")
+        export_res = self.handler.export_draft(doc_type="kd", author="Корж И.С.", user_id=123)
         self.assertTrue(export_res["ok"])
         draft = export_res["draft"]
         self.assertTrue(Path(draft["path"]).is_file())
@@ -72,17 +88,34 @@ class P026HandlerTest(unittest.TestCase):
         self.assertIn("DRAFT ARTIFACT", content)
         self.assertIn("Коммерческий директор", content)
 
-    def test_export_draft_protects_canonical_sources(self):
-        kd_source = Path(self.subject_base.DOCUMENT_VERSIONS["КД"]["path"])
-        if kd_source.exists():
-            orig_mtime = kd_source.stat().st_mtime
-            orig_bytes = kd_source.read_bytes()
+    def test_export_draft_missing_source_fails_closed(self):
+        self.subject_base.DOCUMENT_VERSIONS["КД"] = dict(
+            self.subject_base.DOCUMENT_VERSIONS["КД"],
+            path=str(Path(self.temp_dir.name) / "nonexistent.md"),
+        )
+        res = self.handler.export_draft("kd", user_id=123)
+        self.assertFalse(res["ok"], "При отсутствующем источнике экспорт обязан завершиться отказом")
+        self.assertIsNone(res.get("draft"))
+        self.assertIn("отказ", res["error"].lower())
 
-            self.handler.export_draft(doc_type="kd", author="Корж И.С.")
+    def test_export_draft_isolates_user_decisions(self):
+        # Пользователь 1 фиксирует приватное решение
+        self.handler.record_owner_decision(
+            author="User 1",
+            text="СЕКРЕТНОЕ_РЕШЕНИЕ_ПОЛЬЗОВАТЕЛЯ_1: скидка 7%",
+            user_id=1,
+        )
 
-            # Ensure source file is untouched
-            self.assertEqual(orig_bytes, kd_source.read_bytes())
-            self.assertEqual(orig_mtime, kd_source.stat().st_mtime)
+        # Пользователь 2 экспортирует черновик
+        export_res = self.handler.export_draft(doc_type="kd", author="User 2", user_id=2)
+        self.assertTrue(export_res["ok"])
+
+        draft_content = Path(export_res["draft"]["path"]).read_text(encoding="utf-8")
+        self.assertNotIn(
+            "СЕКРЕТНОЕ_РЕШЕНИЕ_ПОЛЬЗОВАТЕЛЯ_1",
+            draft_content,
+            "Чужое решение не должно попадать в черновик другого пользователя!",
+        )
 
 
 if __name__ == "__main__":
