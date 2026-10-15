@@ -198,6 +198,45 @@ class P026StorageTest(unittest.TestCase):
         self.assertGreater(len(baks), 0, "Карантинная копия поврежденного журнала должна быть создана")
         self.assertIn("{broken", baks[0].read_text(encoding="utf-8"))
 
+    def test_empty_journal_rejected_fail_closed_and_quarantined(self):
+        """R4 / F7: Пустой существующий файл журнала (0 байт) вызывает JournalCorruptionError и карантин."""
+        self.storage.decisions_file.write_text("", encoding="utf-8")
+        with self.assertRaises(JournalCorruptionError):
+            self.storage.record_decision("A", "Q", "AFTER_EMPTY", 123, 123)
+        baks = list(self.storage.decisions_dir.glob("decisions_corrupted_*.json.bak"))
+        self.assertGreater(len(baks), 0, "Карантинная копия пустого журнала должна быть создана")
+
+    def test_structural_corruption_rejected_fail_closed_and_quarantined(self):
+        """R4 / F7: Журнал со списком пустых словарей [{}] вызывает JournalCorruptionError и карантин."""
+        self.storage.decisions_file.write_text("[{}]", encoding="utf-8")
+        with self.assertRaises(JournalCorruptionError):
+            self.storage.record_decision("A", "Q", "AFTER_MALFORMED", 123, 123)
+        baks = list(self.storage.decisions_dir.glob("decisions_corrupted_*.json.bak"))
+        self.assertGreater(len(baks), 0, "Карантинная копия невалидного журнала должна быть создана")
+
+    def test_cross_chat_read_rejected_fail_closed(self):
+        """R2 / F2: Чтение черновика из другого chat_id отклоняется с PermissionError."""
+        d = self.storage.save_draft("CHAT_TEST", "CHAT_111_ONLY", user_id=123, chat_id=111)
+        with self.assertRaises(PermissionError):
+            self.storage.read_draft(d["filename"], user_id=123, chat_id=222)
+
+        # Чтение в правильном чате разрешено
+        content = self.storage.read_draft(d["filename"], user_id=123, chat_id=111)
+        self.assertIn("CHAT_111_ONLY", content)
+
+    def test_negative_chat_id_listing_and_isolation(self):
+        """R2 / F2: Поддержка отрицательных идентификаторов чатов Telegram (группы/супергруппы)."""
+        neg = self.storage.save_draft("NEG", "NEG_CHAT_ONLY", user_id=123, chat_id=-111)
+        self.assertEqual(0, len(self.storage.list_drafts("NEG", user_id=123, chat_id=-222)))
+        self.assertEqual(1, len(self.storage.list_drafts("NEG", user_id=123, chat_id=-111)))
+
+    def test_unowned_draft_access_rejected_fail_closed(self):
+        """R2 / F2: Черновики без явного владельца имеют статус fail-closed."""
+        legacy = self.storage.save_draft("LEGACY", "LEGACY_PRIVATE")
+        self.assertEqual(0, len(self.storage.list_drafts("LEGACY", user_id=999, chat_id=999)))
+        with self.assertRaises(PermissionError):
+            self.storage.read_draft(legacy["filename"], user_id=999, chat_id=999)
+
 
 if __name__ == "__main__":
     unittest.main()

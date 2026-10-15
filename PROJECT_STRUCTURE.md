@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `d41148e5aa52b2e4cd70922e468f1677c72309a8689f55a34a341959cffc224b`
+Отпечаток исходной структуры: `d0dbddfe1bb726ba24bf6f158af62d132103f9a05266ac577094f3dd60d873d2`
 
 ## .git-templates
 
@@ -349,7 +349,7 @@
 | [`37-strategy-bot/test_p026_security.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_security.py) | import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalError, get_defaul |
 | [`37-strategy-bot/test_p026_storage.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_storage.py) | import os import sys import tempfile import threading import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_storage import JournalCorruptionError, P026Storage, PathTraversalError class P |
 | [`37-strategy-bot/test_p026_subject_base.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_subject_base.py) | import os import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError class P026SubjectBaseTest(unitte |
-| [`37-strategy-bot/test_strategy_bot.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_strategy_bot.py) | import importlib.util import os import sys import unittest from pathlib import Path from unittest.mock import patch ROOT = Path(__file__).resolve().parent if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT)) BOT = ROOT / "strategy_bo |
+| [`37-strategy-bot/test_strategy_bot.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_strategy_bot.py) | import importlib.util import os import sys import tempfile import unittest from pathlib import Path from unittest.mock import patch ROOT = Path(__file__).resolve().parent if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT)) BOT = ROO |
 | [`37-strategy-bot/test_strategy_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_strategy_healthcheck.py) | import importlib.util import unittest from pathlib import Path MODULE_PATH = Path(__file__).with_name("strategy_healthcheck.py") def load_module(): spec = importlib.util.spec_from_file_location("strategy_healthcheck", MODULE_PATH) module =  |
 
 ## graphify-out

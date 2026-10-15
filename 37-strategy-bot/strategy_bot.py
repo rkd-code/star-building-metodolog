@@ -19,7 +19,7 @@ if str(ROOT) not in sys.path:
 
 from p026_handler import P026Handler
 from p026_storage import P026Storage
-from p026_subject_base import P026SubjectBase
+from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 
 PROJECT_ROOT = ROOT.parent
 STRATEGY_SOURCE_FILES = (
@@ -35,7 +35,7 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("star_building_strategy_bot")
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-_user_histories: dict[int, list[str]] = defaultdict(list)
+_user_histories: dict[int | tuple[int, int], list[str]] = defaultdict(list)
 _strategy_context: str | None = None
 _source_manifest: list[dict[str, Any]] | None = None
 _stt_model = None
@@ -98,7 +98,16 @@ def build_system_prompt(
     chat_id: int | None = None,
 ) -> str:
     """Формирует системный промпт модели с интеграцией актуальных решений владельца."""
-    p026_context = P026SubjectBase().get_p026_prompt_context()
+    subject_base = P026SubjectBase()
+    try:
+        subject_base.verify_all_sources()
+    except SubjectBaseIntegrityError as err:
+        logger.error("Отказ формирования промпта: нарушение манифеста источников: %s", err)
+        return ""
+
+    p026_context = subject_base.get_p026_prompt_context()
+    if not p026_context:
+        return ""
 
     # Динамическая подгрузка сохранённых решений из persistent-хранилища
     handler = get_p026_handler()
@@ -173,7 +182,12 @@ def build_user_prompt(
     chat_id: int | None = None,
 ) -> str:
     """Формирует пользовательский промпт с историей и решениями текущего актора."""
-    history = _user_histories[user_id]
+    if chat_id is not None and (user_id, chat_id) in _user_histories:
+        history = _user_histories[(user_id, chat_id)]
+    elif chat_id is None or chat_id == user_id:
+        history = _user_histories.get(user_id, [])
+    else:
+        history = []
     history_text = "\n".join(history[-8:]) if history else "История отсутствует."
 
     handler = get_p026_handler()
@@ -247,6 +261,11 @@ async def generate_answer(
     history.extend([f"Руководитель: {user_text[:4000]}", f"Драмкнот: {answer[:8000]}"])
     if len(history) > MAX_HISTORY_ITEMS:
         _user_histories[user_id] = history[-MAX_HISTORY_ITEMS:]
+    if chat_id is not None:
+        chat_hist = _user_histories[(user_id, chat_id)]
+        chat_hist.extend([f"Руководитель: {user_text[:4000]}", f"Драмкнот: {answer[:8000]}"])
+        if len(chat_hist) > MAX_HISTORY_ITEMS:
+            _user_histories[(user_id, chat_id)] = chat_hist[-MAX_HISTORY_ITEMS:]
     return answer
 
 
@@ -268,6 +287,9 @@ async def handle_start(update, context) -> None:
     user = update.effective_user
     if not is_authorized(user.id if user else None):
         await deny(update)
+        return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Бот доступен только в личном диалоге.")
         return
     _user_histories[user.id].clear()
     await update.effective_message.reply_text(
@@ -316,6 +338,9 @@ async def handle_project(update, context) -> None:
         user_id=user.id,
         chat_id=chat.id if chat else None,
     )
+    if not text:
+        await update.effective_message.reply_text("⛔ Нарушена целостность нормативной базы P-026. Запрос заблокирован.")
+        return
     for chunk in split_for_telegram(text):
         try:
             await update.effective_message.reply_text(chunk, parse_mode="Markdown")
@@ -462,6 +487,9 @@ async def process_and_reply(update, context=None, supplied_text: str | None = No
     if not is_authorized(user.id if user else None):
         await deny(update)
         return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Стратегический контур доступен только в личном диалоге с ботом.")
+        return
     message = update.effective_message
     try:
         await message.reply_chat_action("typing")
@@ -494,10 +522,16 @@ async def process_and_reply(update, context=None, supplied_text: str | None = No
 
 async def handle_clear(update, context) -> None:
     user = update.effective_user
+    chat = update.effective_chat
     if not is_authorized(user.id if user else None):
         await deny(update)
         return
+    if not is_private_chat(update):
+        await update.effective_message.reply_text("⛔ Очистка истории доступна только в личном диалоге.")
+        return
     _user_histories[user.id].clear()
+    if chat:
+        _user_histories[(user.id, chat.id)].clear()
     await update.effective_message.reply_text("История текущего стратегического диалога очищена.")
 
 

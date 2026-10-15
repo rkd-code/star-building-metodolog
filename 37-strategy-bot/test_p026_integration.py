@@ -12,6 +12,7 @@ BOT = ROOT / "strategy_bot.py"
 
 from p026_handler import P026Handler
 from p026_storage import P026Storage
+from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
 
 
 def load_bot():
@@ -195,6 +196,44 @@ class P026StrategyBotIntegrationTest(unittest.IsolatedAsyncioTestCase):
         call_text = update.effective_message.reply_text.call_args[0][0]
         self.assertIn("личном диалоге", call_text.lower())
 
+    async def test_process_and_reply_group_chat_rejected_before_model_and_history(self):
+        """R2 / F2: Обычные сообщения в групповых чатах отклоняются до модели, исключая утечку приватной истории."""
+        self.module._user_histories[123] = ["PRIVATE_DIALOG_SECRET_MARKER"]
+        update = MagicMock()
+        update.effective_user.id = 123
+        update.effective_user.full_name = "Корж И.С."
+        update.effective_chat.id = -777
+        update.effective_chat.type = "group"
+        update.effective_message.reply_chat_action = AsyncMock()
+        update.effective_message.reply_text = AsyncMock()
+
+        with patch.object(self.module, "generate_answer", new_callable=AsyncMock) as mock_gen, \
+             patch.dict(os.environ, {"STAR_BUILDING_STRATEGY_ALLOWED_USER_IDS": "123"}):
+            await self.module.process_and_reply(update, supplied_text="Покажи историю")
+
+        mock_gen.assert_not_called()
+        update.effective_message.reply_text.assert_called()
+        call_args_str = str(update.effective_message.reply_text.call_args_list)
+        self.assertNotIn("PRIVATE_DIALOG_SECRET_MARKER", call_args_str)
+        self.assertIn("личном", call_args_str.lower())
+
+    def test_build_system_prompt_manifest_failure_fails_closed(self):
+        """R3 / F6: Отказ генерации системного промпта при нарушении манифеста источников."""
+        with patch.object(P026SubjectBase, "verify_all_sources", side_effect=SubjectBaseIntegrityError("TAMPERED")):
+            prompt = self.module.build_system_prompt("БАЗОВЫЙ КОНТЕКСТ", user_id=123, chat_id=123)
+            self.assertEqual("", prompt, "При нарушении манифеста источников системный промпт обязан быть пустым (fail-closed)")
+
+    def test_get_p026_prompt_context_performs_source_reads(self):
+        """R3 / F6: Генерация контекста P-026 фактически считывает канонические источники с диска."""
+        base = P026SubjectBase()
+        with patch.object(Path, "read_bytes", side_effect=AssertionError("SOURCE_READ")) as mock_read:
+            ctx = base.get_p026_prompt_context()
+            self.assertGreater(mock_read.call_count, 0, "Генерация контекста P-026 обязана обращаться к чтению источников")
+            self.assertEqual("", ctx, "При исключении чтения контекст должен возвращать пустую строку fail-closed")
+
+        # В нормальном режиме возвращается полный реальный контекст
+        normal_ctx = base.get_p026_prompt_context()
+        self.assertIn("РЕАЛЬНЫЕ МАТЕРИАЛЫ", normal_ctx)
 
 if __name__ == "__main__":
     unittest.main()

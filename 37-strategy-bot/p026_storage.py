@@ -50,34 +50,62 @@ class P026Storage:
         else:
             self.base_dir = Path(base_dir)
 
+        # Fail-closed предвалидация базового пути до любых файловых операций
+        self._assert_no_symlinks(self.base_dir)
+
         self.decisions_dir = self.base_dir / "decisions"
         self.drafts_dir = self.base_dir / "drafts"
         self.decisions_file = self.decisions_dir / "decisions.json"
         self.decisions_lock_file = self.decisions_dir / ".decisions.lock"
         self.drafts_lock_file = self.drafts_dir / ".drafts.lock"
 
+        # Предвалидация всех целевых путей до создания каталогов
+        for target in (
+            self.decisions_dir,
+            self.drafts_dir,
+            self.decisions_file,
+            self.decisions_lock_file,
+            self.drafts_lock_file,
+        ):
+            self._assert_no_symlinks(target)
+
         if create_dirs:
             self._ensure_dirs()
 
-    def _assert_no_symlinks(self, path: Path) -> None:
-        """Строгая fail-closed проверка на отсутствие символических ссылок на всех уровнях."""
-        curr = path
+    def _assert_no_symlinks(self, path: Path | str) -> None:
+        """Строгая fail-closed проверка на отсутствие символических ссылок на всех уровнях предков."""
+        p = Path(path)
+        # 1. Проверяем все компоненты пути в прямом представлении
+        curr = p
         while True:
-            if curr.is_symlink() or os.path.islink(curr):
+            if curr.is_symlink() or os.path.islink(str(curr)):
                 raise PathTraversalError(f"Символические ссылки строго запрещены: {curr}")
             if curr == curr.parent:
                 break
-            # Прекращаем проверку за пределами корня хранилища или файловой системы
-            if curr == self.base_dir.parent:
+            curr = curr.parent
+
+        # 2. Проверяем абсолютное представление без следования по symlink
+        abs_p = Path(os.path.abspath(str(p)))
+        curr = abs_p
+        while True:
+            if curr.is_symlink() or os.path.islink(str(curr)):
+                raise PathTraversalError(f"Символические ссылки строго запрещены: {curr}")
+            if curr == curr.parent:
                 break
             curr = curr.parent
 
     def _ensure_dirs(self) -> None:
         """Создает изолированные каталоги с защитой от symlink-атак."""
-        # Проверяем base_dir и ключевые подкаталоги на symlink до создания
-        for p in (self.base_dir, self.decisions_dir, self.drafts_dir):
-            if p.is_symlink() or os.path.islink(p):
-                raise PathTraversalError(f"Символическая ссылка в пути хранилища запрещена: {p}")
+        # Предвалидация ВСЕХ путей и их предков ДО любых вызовов mkdir
+        for p in (
+            self.base_dir,
+            self.decisions_dir,
+            self.drafts_dir,
+            self.decisions_file,
+            self.decisions_lock_file,
+            self.drafts_lock_file,
+        ):
+            self._assert_no_symlinks(p)
 
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self._assert_no_symlinks(self.base_dir)
@@ -96,9 +124,10 @@ class P026Storage:
     @contextlib.contextmanager
     def _exclusive_lock(self, lock_file: Path, timeout: float = 10.0):
         """Межпроцессная сериализация через flock с поддержкой реентерабельности и таймаута."""
+        self._assert_no_symlinks(lock_file)
         self._assert_no_symlinks(lock_file.parent)
         lock_file.parent.mkdir(parents=True, exist_ok=True)
-        key = str(lock_file.resolve())
+        key = os.path.abspath(str(lock_file))
         if key not in P026Storage._thread_locks:
             P026Storage._thread_locks[key] = threading.RLock()
         rlock = P026Storage._thread_locks[key]
@@ -112,7 +141,16 @@ class P026Storage:
         fd = None
         try:
             if depth == 0:
-                fd = os.open(str(lock_file), os.O_CREAT | os.O_RDWR)
+                self._assert_no_symlinks(lock_file)
+                open_flags = os.O_CREAT | os.O_RDWR
+                if hasattr(os, "O_NOFOLLOW"):
+                    open_flags |= os.O_NOFOLLOW
+                try:
+                    fd = os.open(str(lock_file), open_flags, 0o600)
+                except OSError as err:
+                    if lock_file.is_symlink() or os.path.islink(str(lock_file)):
+                        raise PathTraversalError(f"Символические ссылки строго запрещены для lock-файла: {lock_file}") from err
+                    raise
                 while True:
                     try:
                         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -200,12 +238,34 @@ class P026Storage:
             return []
         raw_text = self.decisions_file.read_text(encoding="utf-8")
         if not raw_text.strip():
-            return []
+            # Пустой существующий файл журнала (0 байт) является признаком повреждения
+            now_ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            corrupt_backup = self.decisions_dir / f"decisions_corrupted_{now_ts}.json.bak"
+            shutil.copy2(self.decisions_file, corrupt_backup)
+            raise JournalCorruptionError(
+                f"Журнал решений пуст (0 байт): {self.decisions_file.name}. "
+                f"Сохранён в карантин: {corrupt_backup.name}. Операция заблокирована."
+            )
 
         try:
             data = json.loads(raw_text)
             if not isinstance(data, list):
                 raise ValueError("Корневой элемент журнала решений должен быть списком")
+            for idx, item in enumerate(data):
+                if not isinstance(item, dict):
+                    raise ValueError(f"Запись #{idx} не является объектом словаря")
+                item_id = item.get("id") or item.get("decision_id")
+                if not item_id or not isinstance(item_id, str):
+                    raise ValueError(f"Запись #{idx} не содержит строкового идентификатора решения ('id')")
+                ts = item.get("timestamp")
+                if not ts or not isinstance(ts, str):
+                    raise ValueError(f"Запись #{idx} не содержит корректного timestamp")
+                ctx = item.get("question_context") or item.get("context")
+                if ctx is None or not isinstance(ctx, str):
+                    raise ValueError(f"Запись #{idx} не содержит строкового поля контекста")
+                txt = item.get("exact_text") or item.get("text")
+                if txt is None or not isinstance(txt, str) or not txt.strip():
+                    raise ValueError(f"Запись #{idx} не содержит содержательного текста решения")
             return data
         except Exception as err:
             # Повреждённый журнал: fail-closed карантин, запрет немой перезаписи
@@ -231,7 +291,7 @@ class P026Storage:
         with self._exclusive_lock(self.decisions_lock_file):
             current = self._read_decisions_raw()
             now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-            ts_micro = int(datetime.datetime.now().timestamp() * 1000)
+            ts_micro = int(datetime.datetime.now().timestamp() * 1_000_000)
             next_num = len(current) + 1
             decision_id = f"dec_{next_num}_{ts_micro}"
 
@@ -362,18 +422,20 @@ class P026Storage:
                         # Читаем первую строку заголовка для actor isolation
                         with path.open("r", encoding="utf-8") as f:
                             first_line = f.readline()
-                        u_match = re.search(r"USER_ID:\s*(\w+)", first_line)
+                        u_match = re.search(r"USER_ID:\s*(-?\d+|None)", first_line)
                         if u_match and u_match.group(1) != "None":
                             draft_user_id = int(u_match.group(1))
-                        c_match = re.search(r"CHAT_ID:\s*(\w+)", first_line)
+                        c_match = re.search(r"CHAT_ID:\s*(-?\d+|None)", first_line)
                         if c_match and c_match.group(1) != "None":
                             draft_chat_id = int(c_match.group(1))
                     except Exception:
                         pass
 
-                    if user_id is not None and draft_user_id is not None and draft_user_id != user_id:
+                    # Строгая fail-closed фильтрация: черновики без подтверждённого владельца
+                    # не выдаются при запросе конкретного актора/чата
+                    if user_id is not None and (draft_user_id is None or draft_user_id != user_id):
                         continue
-                    if chat_id is not None and draft_chat_id is not None and draft_chat_id != chat_id:
+                    if chat_id is not None and (draft_chat_id is None or draft_chat_id != chat_id):
                         continue
 
                     results.append({
@@ -424,9 +486,23 @@ class P026Storage:
             raise FileNotFoundError(f"Файл не найден: {filename}")
 
         content = target.read_text(encoding="utf-8")
+        first_line = content.split("\n", 1)[0]
+        u_match = re.search(r"USER_ID:\s*(-?\d+|None)", first_line)
+        c_match = re.search(r"CHAT_ID:\s*(-?\d+|None)", first_line)
+
+        draft_user_id = int(u_match.group(1)) if (u_match and u_match.group(1) != "None") else None
+        draft_chat_id = int(c_match.group(1)) if (c_match and c_match.group(1) != "None") else None
+
         if user_id is not None:
-            first_line = content.split("\n", 1)[0]
-            u_match = re.search(r"USER_ID:\s*(\w+)", first_line)
-            if u_match and u_match.group(1) != "None" and int(u_match.group(1)) != user_id:
-                raise PermissionError("Доступ к чужому черновику запрещён")
+            if draft_user_id is None:
+                raise PermissionError("Доступ к черновику без подтверждённого владельца запрещён (fail-closed)")
+            if draft_user_id != user_id:
+                raise PermissionError(f"Доступ к чужому черновику запрещён: {draft_user_id} != {user_id}")
+
+        if chat_id is not None:
+            if draft_chat_id is None:
+                raise PermissionError("Доступ к черновику без подтверждённого чата запрещён (fail-closed)")
+            if draft_chat_id != chat_id:
+                raise PermissionError(f"Доступ к черновику из другого чата запрещён: {draft_chat_id} != {chat_id}")
+
         return content

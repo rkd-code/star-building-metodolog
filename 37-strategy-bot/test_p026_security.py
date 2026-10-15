@@ -101,6 +101,48 @@ class P026SecurityTest(unittest.TestCase):
         with self.assertRaises(PathTraversalError):
             P026Storage(base_dir=spoofed_base2)
 
+    def test_ancestor_symlink_attack_rejected_fail_closed(self):
+        """R1 / F1: Проверяет блокировку symlink на любом уровне предков (выше base.parent)."""
+        p = Path(self.temp_dir.name)
+        real = p / "real"
+        real.mkdir()
+        link = p / "link"
+        link.symlink_to(real, target_is_directory=True)
+
+        with self.assertRaises(PathTraversalError):
+            s = P026Storage(link / "a" / "b" / "store")
+            s.record_decision("A", "Q", "EXTERNAL_WRITE", 123, 123)
+
+        escaped = (real / "a/b/store/decisions/decisions.json").exists()
+        self.assertFalse(escaped, "Файл не должен создаваться за пределами symlink-границы предков")
+
+    def test_side_effects_before_refusal_prevented(self):
+        """R1 / F1: Проверяет отсутствие побочных каталогов/файлов при отказе."""
+        p = Path(self.temp_dir.name)
+        real = p / "real_side_effects"
+        real.mkdir()
+        link2 = p / "link2"
+        link2.symlink_to(real, target_is_directory=True)
+
+        with self.assertRaises(PathTraversalError):
+            P026Storage(link2 / "created_before_refusal")
+
+        self.assertFalse((real / "created_before_refusal").exists(), "Каталог не должен создаваться до проверки symlink")
+
+    def test_lock_symlink_attack_rejected_fail_closed(self):
+        """R1 / F1: Проверяет блокировку symlink на lock-файле (.decisions.lock) с сохранением жертвы."""
+        p = Path(self.temp_dir.name)
+        s = P026Storage(p / "store_lock_test")
+        victim = p / "outside_lock"
+        victim.write_text("UNTOUCHED", encoding="utf-8")
+
+        s.decisions_lock_file.unlink()
+        s.decisions_lock_file.symlink_to(victim)
+
+        with self.assertRaises(PathTraversalError):
+            s.record_decision("A", "Q", "LOCK_FOLLOWED", 123, 123)
+        self.assertEqual("UNTOUCHED", victim.read_text(encoding="utf-8"), "Жертва lock-атаки должна остаться нетронутой")
+
     def test_no_hardcoded_secrets_or_tokens(self):
         """Проверяет отсутствие токенов Telegram и паролей в компоненте 37-strategy-bot."""
         token_pattern = re.compile(r"\d{8,12}:[A-Za-z0-9_-]{30,}")

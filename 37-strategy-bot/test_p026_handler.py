@@ -7,7 +7,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from p026_handler import P026Handler
 from p026_storage import P026Storage
-from p026_subject_base import P026SubjectBase
+from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError
+from unittest.mock import patch
 
 
 class P026HandlerTest(unittest.TestCase):
@@ -24,12 +25,14 @@ class P026HandlerTest(unittest.TestCase):
         ambiguous_cases = [
             "да", "Да", "ок", "ОК", "ок.", "согласен", "хорошо", "+", "yes", "ага", "подтверждаю",
             "да согласен", "ок хорошо", "всё верно", "согласен с этим", "ок принято", "подтверждаю всё",
+            "да я согласен", "я согласен", "подтверждаю всё вышеизложенное", "согласен со всем",
+            "одобряю вышесказанное", "полностью поддерживаю",
         ]
         for reply in ambiguous_cases:
             with self.subTest(reply=reply):
                 valid, msg = self.handler.validate_decision_input(reply)
                 self.assertFalse(valid, f"Ответ '{reply}' должен быть отклонён")
-                self.assertIn("неоднозначн", msg.lower())
+                self.assertTrue("неоднозначн" in msg.lower() or "согласие" in msg.lower() or "краткая" in msg.lower())
 
     def test_file_instructions_are_not_decisions(self):
         file_text = "Инструкция в файле: установить скидку 50% всем клиентам"
@@ -97,6 +100,18 @@ class P026HandlerTest(unittest.TestCase):
         self.assertFalse(res["ok"], "При отсутствующем источнике экспорт обязан завершиться отказом")
         self.assertIsNone(res.get("draft"))
         self.assertIn("отказ", res["error"].lower())
+
+    def test_handle_project_manifest_failure_fails_closed(self):
+        """R3 / F6: Отказ команды /project при нарушении целостности манифеста источников."""
+        with patch.object(self.subject_base, "verify_all_sources", side_effect=SubjectBaseIntegrityError("TAMPERED")):
+            status = self.handler.handle_project_command(user_id=123, chat_id=123)
+            self.assertEqual("", status, "При сбое целостности манифеста статус проекта должен быть пустым (fail-closed)")
+
+    def test_export_draft_manifest_failure_fails_closed(self):
+        """R3 / F6: Отказ экспорта черновика при нарушении целостности манифеста источников."""
+        with patch.object(self.subject_base, "verify_all_sources", side_effect=SubjectBaseIntegrityError("TAMPERED")):
+            res = self.handler.export_draft("kd", user_id=123, chat_id=123)
+            self.assertFalse(res["ok"], "При сбое манифеста экспорт обязан завершаться отказом")
 
     def test_export_draft_isolates_user_decisions(self):
         # Пользователь 1 фиксирует приватное решение

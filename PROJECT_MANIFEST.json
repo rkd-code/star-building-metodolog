@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "d41148e5aa52b2e4cd70922e468f1677c72309a8689f55a34a341959cffc224b",
+  "source_tree_hash": "d0dbddfe1bb726ba24bf6f158af62d132103f9a05266ac577094f3dd60d873d2",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1147,7 +1147,7 @@
       "path": "37-strategy-bot/test_strategy_bot.py",
       "name": "test_strategy_bot.py",
       "area": "37-strategy-bot",
-      "description": "import importlib.util import os import sys import unittest from pathlib import Path from unittest.mock import patch ROOT = Path(__file__).resolve().parent if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT)) BOT = ROOT / \"strategy_bo",
+      "description": "import importlib.util import os import sys import tempfile import unittest from pathlib import Path from unittest.mock import patch ROOT = Path(__file__).resolve().parent if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT)) BOT = ROO",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_strategy_bot.py"
     },
     {

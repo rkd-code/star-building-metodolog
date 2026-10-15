@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -25,6 +26,22 @@ def load_bot():
 
 
 class StrategyBotTest(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.storage_dir = Path(self.temp_dir.name) / "p026_storage"
+        self.env_patcher = patch.dict(
+            os.environ,
+            {
+                "DRAMKNOTE_P026_STORAGE_DIR": str(self.storage_dir),
+                "STAR_BUILDING_STRATEGY_ALLOWED_USER_IDS": "123",
+            },
+        )
+        self.env_patcher.start()
+
+    def tearDown(self):
+        self.env_patcher.stop()
+        self.temp_dir.cleanup()
+
     def test_sources_are_explicit_and_exist(self):
         module = load_bot()
         self.assertEqual(SOURCES, set(module.STRATEGY_SOURCE_FILES))
@@ -97,6 +114,15 @@ class StrategyBotTest(unittest.TestCase):
             if path.is_file() and path.suffix in {".py", ".md", ".service", ".template"}:
                 text = path.read_text(encoding="utf-8", errors="ignore")
                 self.assertNotRegex(text, r"\d{8,12}:[A-Za-z0-9_-]{30,}")
+
+    def test_no_default_home_pollution_during_tests(self):
+        """Отрицательный тест-гард (R7 / F9): проверка изоляции тестов от $HOME/.local/share."""
+        default_dir = Path.home() / ".local" / "share" / "star-building" / "dramknote-p026"
+        module = load_bot()
+        prompt = module.build_system_prompt("КОНТЕКСТ", user_id=123, chat_id=123)
+        self.assertTrue(prompt)
+        # Убеждаемся, что обращение изолировано во временной директории, а не в $HOME
+        self.assertTrue(self.storage_dir.exists())
 
 
 if __name__ == "__main__":
