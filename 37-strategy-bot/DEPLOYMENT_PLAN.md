@@ -168,12 +168,70 @@ if [ ! -s "$PINNED_BACKUP_DIR/star-building-strategy.service" ]; then
 fi
 
 # 3. Сохранение кода службы СТРОГО по положительному allowlist (без секретов/токенов)
-mkdir -p "$PINNED_BACKUP_DIR/code"
 python3 -c "
-import hashlib, json, os, pathlib, shutil, sys
+import ast, hashlib, json, os, pathlib, shutil, sys
 
-src_dir = pathlib.Path('$LIVE_WORK_DIR')
-dst_code = pathlib.Path('$PINNED_BACKUP_DIR/code')
+src_dir_raw = '$LIVE_WORK_DIR'
+dst_dir_raw = '$PINNED_BACKUP_DIR'
+
+if not src_dir_raw or not dst_dir_raw:
+    print('КРИТИЧЕСКАЯ ОШИБКА: LIVE_WORK_DIR или PINNED_BACKUP_DIR не задан!', file=sys.stderr)
+    sys.exit(1)
+
+src_dir = pathlib.Path(src_dir_raw)
+backup_dir = pathlib.Path(dst_dir_raw)
+dst_code = backup_dir / 'code'
+
+# X3: Проверка каноничности и symlink для src_dir и всех предков до /
+if not src_dir.is_absolute() or '..' in src_dir.parts or '.' in src_dir.parts or os.path.normpath(src_dir_raw) != src_dir_raw:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Исходный каталог {src_dir_raw} не каноничен или содержит ..!', file=sys.stderr)
+    sys.exit(1)
+
+if not src_dir.exists() or not src_dir.is_dir():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Исходный каталог {src_dir} не существует или не является каталогом!', file=sys.stderr)
+    sys.exit(1)
+
+cur = src_dir
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент исходного каталога {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+# X3: Проверка каноничности и symlink для backup_dir и всех предков до /
+if not backup_dir.is_absolute() or '..' in backup_dir.parts or '.' in backup_dir.parts or os.path.normpath(dst_dir_raw) != dst_dir_raw:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог бэкапа {dst_dir_raw} не каноничен или содержит ..!', file=sys.stderr)
+    sys.exit(1)
+
+if not backup_dir.exists() or not backup_dir.is_dir():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог бэкапа {backup_dir} не существует или не является каталогом!', file=sys.stderr)
+    sys.exit(1)
+
+cur = backup_dir
+while True:
+    if cur.is_symlink() or os.path.islink(str(cur)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент каталога бэкапа {cur} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if cur == cur.parent:
+        break
+    cur = cur.parent
+
+# X3: Проверка dst_code: если существует, обязан быть реальным каталогом и не symlink
+if dst_code.is_symlink() or os.path.islink(str(dst_code)):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог назначения бэкапа code {dst_code} является symlink!', file=sys.stderr)
+    sys.exit(1)
+
+if dst_code.exists():
+    if not dst_code.is_dir():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Узел {dst_code} существует и не является каталогом!', file=sys.stderr)
+        sys.exit(1)
+    if not dst_code.resolve().is_relative_to(backup_dir.resolve()):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог назначения {dst_code} выходит за пределы бэкапа!', file=sys.stderr)
+        sys.exit(1)
+else:
+    os.mkdir(str(dst_code))
 
 # Доверенный неизменяемый перечень путей релиза
 CANONICAL_RELEASE_PATHS = {
@@ -224,7 +282,50 @@ if not entrypoint_src.exists() or not entrypoint_src.is_file():
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Обязательная точка входа {required_entrypoint} отсутствует или не является файлом!', file=sys.stderr)
     sys.exit(1)
 
-# W3: Произвольный live release_manifest.json не должен расширять утверждённый inventory
+# X4: Статический офлайн-анализ обязательных локальных зависимостей entrypoint через AST
+def find_local_imports(script_path: pathlib.Path, root_dir: pathlib.Path) -> set[str]:
+    needed = set()
+    visited = set()
+    queue = [script_path]
+    while queue:
+        curr = queue.pop(0)
+        if curr in visited:
+            continue
+        visited.add(curr)
+        try:
+            tree = ast.parse(curr.read_text(encoding='utf-8'), filename=str(curr))
+        except Exception:
+            continue
+        for node in ast.walk(tree):
+            mod_names = []
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    mod_names.append(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    mod_names.append(node.module)
+            for mod in mod_names:
+                lead = mod.split('.')[0]
+                cand = root_dir / (lead + '.py')
+                if cand.exists() and cand.is_file() and not cand.is_symlink():
+                    rel = str(cand.relative_to(root_dir))
+                    if rel not in needed:
+                        needed.add(rel)
+                        queue.append(cand)
+    return needed
+
+imported_local_deps = find_local_imports(entrypoint_src, src_dir)
+
+# Определение обязательного полного инвентаря исходного релиза
+existing_canonical_files = set()
+for rel_str in sorted(CANONICAL_RELEASE_PATHS):
+    p_cand = src_dir / rel_str
+    if p_cand.exists() or p_cand.is_symlink() or os.path.islink(str(p_cand)):
+        existing_canonical_files.add(rel_str)
+
+mandatory_files = existing_canonical_files | imported_local_deps | {str(required_entrypoint)}
+
+# X4: Валидация release_manifest.json — live manifest не вправе отсекать обязательный состав
 manifest_file = src_dir / 'release_manifest.json'
 if manifest_file.exists():
     if manifest_file.is_symlink() or os.path.islink(str(manifest_file)) or not manifest_file.is_file():
@@ -253,9 +354,15 @@ if manifest_file.exists():
             print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {item} отсутствует в утверждённом доверенном инвентаре релиза!', file=sys.stderr)
             sys.exit(1)
 
-    allowed_paths = [pathlib.Path(p) for p in raw_files]
+    manifest_set = set(raw_files)
+    missing_from_manifest = mandatory_files - manifest_set
+    if missing_from_manifest:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: release_manifest.json неполон: отсутствуют обязательные файлы {sorted(missing_from_manifest)}!', file=sys.stderr)
+        sys.exit(1)
+
+    allowed_paths = [pathlib.Path(p) for p in sorted(manifest_set)]
 else:
-    allowed_paths = [pathlib.Path(p) for p in sorted(CANONICAL_RELEASE_PATHS)]
+    allowed_paths = [pathlib.Path(p) for p in sorted(mandatory_files)]
 
 if required_entrypoint not in allowed_paths:
     allowed_paths.append(required_entrypoint)
@@ -277,6 +384,9 @@ for rel_path in allowed_paths:
 
     p = src_dir / rel_path
     if not p.exists() and not p.is_symlink():
+        if rel_str in mandatory_files:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Обязательный файл {rel_str} отсутствует на диске!', file=sys.stderr)
+            sys.exit(1)
         continue
     if p.is_symlink() or os.path.islink(str(p)):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {rel_path} в исходном каталоге является symlink!', file=sys.stderr)
@@ -296,14 +406,31 @@ for rel_path in allowed_paths:
     if any(bad in name_lower for bad in FORBIDDEN_PATTERNS):
         continue
 
+    # X3: Безопасная проверка и пошаговое создание директорий назначения
+    parts_rel = rel_path.parent.parts
+    curr_dir = dst_code
+    for part in parts_rel:
+        curr_dir = curr_dir / part
+        if curr_dir.is_symlink() or os.path.islink(str(curr_dir)):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Промежуточный каталог бэкапа {curr_dir} является symlink!', file=sys.stderr)
+            sys.exit(1)
+        if curr_dir.exists():
+            if not curr_dir.is_dir():
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Промежуточный узел {curr_dir} не является каталогом!', file=sys.stderr)
+                sys.exit(1)
+        else:
+            os.mkdir(str(curr_dir))
+
     target = dst_code / rel_path
-    target_abs = os.path.abspath(str(target))
-    dst_code_abs = os.path.abspath(str(dst_code))
-    if not target_abs.startswith(dst_code_abs + os.sep):
+    if target.is_symlink() or os.path.islink(str(target)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой файл {target} является symlink!', file=sys.stderr)
+        sys.exit(1)
+
+    target_res = target.resolve()
+    if not target_res.is_relative_to(dst_code.resolve()):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой путь {target} выходит за пределы каталога бэкапа code!', file=sys.stderr)
         sys.exit(1)
 
-    target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(p, target)
     copied_files[str(rel_path)] = hashlib.sha256(target.read_bytes()).hexdigest()
 
@@ -315,12 +442,18 @@ if str(required_entrypoint) not in copied_files:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Обязательная точка входа {required_entrypoint} не включена в бэкап!', file=sys.stderr)
     sys.exit(1)
 
+missing_copied_mandatory = mandatory_files - set(copied_files.keys())
+if missing_copied_mandatory:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Не все обязательные файлы были сохранены в бэкап: {sorted(missing_copied_mandatory)}!', file=sys.stderr)
+    sys.exit(1)
+
 unit_bytes = (pathlib.Path('$PINNED_BACKUP_DIR') / 'star-building-strategy.service').read_bytes()
 meta = {
     'timestamp': '$BACKUP_TIMESTAMP',
     'live_unit_path': '$LIVE_UNIT_PATH',
     'live_exec_start': '$LIVE_EXEC_START',
     'live_work_dir': '$LIVE_WORK_DIR',
+    'entrypoint': str(required_entrypoint),
     'unit_sha256': hashlib.sha256(unit_bytes).hexdigest(),
     'code_files_count': int(len(copied_files)),
     'files': copied_files,
@@ -454,7 +587,7 @@ fi
 # 2. Полный preflight и верификация бэкапа ДО ОСТАНОВКИ СЛУЖБЫ (fail-closed, 0 мутаций)
 # Остановка службы при повреждённом/невалидном бэкапе категорически запрещена (U3).
 python3 -c "
-import hashlib, json, os, pathlib, stat, subprocess, sys
+import ast, hashlib, json, os, pathlib, re, shlex, stat, subprocess, sys
 
 backup_dir_raw = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ.get('PINNED_BACKUP_DIR', '')
 if not backup_dir_raw:
@@ -540,22 +673,40 @@ if pinned_work_dir != unit_work_dir:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: live_work_dir из манифеста ({pinned_work_dir}) не совпадает с WorkingDirectory сохранённого unit ({unit_work_dir})!', file=sys.stderr)
     sys.exit(1)
 
-dest_path = pathlib.Path(unit_work_dir)
-if not dest_path.is_absolute():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: WorkingDirectory назначения ({unit_work_dir}) не является абсолютным путём!', file=sys.stderr)
-    sys.exit(1)
-
 home_dir = pathlib.Path(os.environ.get('HOME', '/home/roman'))
 approved_roots = [
     home_dir,
     pathlib.Path('/srv/star-building-strategy'),
 ]
 
-def check_approved_root(target: pathlib.Path, label: str) -> None:
+# X1: Каноническая проверка approved roots (без .. и неканонических сегментов)
+def check_approved_root(target_raw: str, label: str) -> pathlib.Path:
+    if not isinstance(target_raw, str) or not target_raw.strip():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} пуст!', file=sys.stderr)
+        sys.exit(1)
+    target_str = target_raw.strip()
+    target = pathlib.Path(target_str)
+    if not target.is_absolute():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target_str}) не является абсолютным!', file=sys.stderr)
+        sys.exit(1)
+    if '..' in target.parts or '.' in target.parts or os.path.normpath(target_str) != target_str:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target_str}) содержит .. или неканонические сегменты!', file=sys.stderr)
+        sys.exit(1)
+    if not target.exists() or not target.is_dir():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог {label} ({target}) не существует или не является каталогом!', file=sys.stderr)
+        sys.exit(1)
+    cur = target
+    while True:
+        if cur.is_symlink() or os.path.islink(str(cur)):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути {label} {cur} является symlink!', file=sys.stderr)
+            sys.exit(1)
+        if cur == cur.parent:
+            break
+        cur = cur.parent
     in_approved = False
     for r in approved_roots:
         try:
-            if target.is_relative_to(r):
+            if target.resolve().is_relative_to(r.resolve()):
                 in_approved = True
                 break
         except Exception:
@@ -563,50 +714,96 @@ def check_approved_root(target: pathlib.Path, label: str) -> None:
     if not in_approved:
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target}) не входит в список разрешённых корней релиза!', file=sys.stderr)
         sys.exit(1)
+    return target
 
-cur = dest_path
-while True:
-    if cur.is_symlink() or os.path.islink(str(cur)):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути назначения {cur} является symlink!', file=sys.stderr)
-        sys.exit(1)
-    if cur == cur.parent:
-        break
-    cur = cur.parent
+dest_path = check_approved_root(unit_work_dir, 'назначения (старого релиза)')
 
-check_approved_root(dest_path, 'назначения (старого релиза)')
-
-proc = subprocess.run(
+proc_wd = subprocess.run(
     ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
     capture_output=True, text=True, check=False
 )
-if proc.returncode != 0:
+if proc_wd.returncode != 0:
     print('КРИТИЧЕСКАЯ ОШИБКА: Запрос состояния службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
     sys.exit(1)
 
-current_handle = proc.stdout.strip()
+current_handle = proc_wd.stdout.strip()
 if not current_handle:
     print('КРИТИЧЕСКАЯ ОШИБКА: systemctl show вернул пустой текущий WorkingDirectory службы!', file=sys.stderr)
     sys.exit(1)
 
-current_path = pathlib.Path(current_handle)
-if not current_path.is_absolute():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не является абсолютным путём!', file=sys.stderr)
+current_path = check_approved_root(current_handle, 'текущей службы')
+
+# X2: Запрос и строгая проверка текущего и сохранённого ExecStart identity
+proc_exec = subprocess.run(
+    ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'ExecStart', '--value'],
+    capture_output=True, text=True, check=False
+)
+if proc_exec.returncode != 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Запрос ExecStart службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
     sys.exit(1)
 
-if not current_path.exists() or not current_path.is_dir():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не существует или не является каталогом!', file=sys.stderr)
+current_exec_handle = proc_exec.stdout.strip()
+if not current_exec_handle:
+    print('КРИТИЧЕСКАЯ ОШИБКА: systemctl show вернул пустой текущий ExecStart службы!', file=sys.stderr)
     sys.exit(1)
 
-cur = current_path
-while True:
-    if cur.is_symlink() or os.path.islink(str(cur)):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути текущей службы {cur} является symlink!', file=sys.stderr)
+def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str) -> tuple[pathlib.Path, str]:
+    if not isinstance(exec_str, str) or not exec_str.strip():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: ExecStart для {label} пуст!', file=sys.stderr)
         sys.exit(1)
-    if cur == cur.parent:
-        break
-    cur = cur.parent
+    cmdline = exec_str.strip()
+    if cmdline.startswith('{') and 'argv[]=' in cmdline:
+        m = re.search(r'argv\[\]=([^;]+)', cmdline)
+        if not m:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
+            sys.exit(1)
+        cmdline = m.group(1).strip()
+    try:
+        tokens = shlex.split(cmdline)
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка разбора ExecStart для {label}: {err}', file=sys.stderr)
+        sys.exit(1)
+    if not tokens:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Токены ExecStart для {label} пусты!', file=sys.stderr)
+        sys.exit(1)
+    for tok in tokens:
+        if any(c in tok for c in [';', '&', '|', chr(96), chr(36), '\n']):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружены запрещённые метасимволы в ExecStart для {label}: {tok}', file=sys.stderr)
+            sys.exit(1)
+    script_tok = None
+    for tok in tokens:
+        if tok.endswith('.py') or tok.endswith('.sh'):
+            script_tok = tok
+            break
+    if not script_tok:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Не найден скрипт entrypoint (.py/.sh) в ExecStart для {label}!', file=sys.stderr)
+        sys.exit(1)
+    p_tok = pathlib.Path(script_tok)
+    p_abs = p_tok if p_tok.is_absolute() else work_dir / p_tok
+    if '..' in p_abs.parts or '.' in p_abs.parts or os.path.normpath(str(p_abs)) != str(p_abs):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Entry point {script_tok} для {label} содержит .. или не каноничен!', file=sys.stderr)
+        sys.exit(1)
+    try:
+        if not p_abs.resolve().is_relative_to(work_dir.resolve()):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Entry point {script_tok} для {label} не принадлежит каталогу релиза {work_dir}!', file=sys.stderr)
+            sys.exit(1)
+    except Exception:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка сопоставления entry point {script_tok} с каталогом {work_dir}!', file=sys.stderr)
+        sys.exit(1)
+    if p_abs.is_symlink() or os.path.islink(str(p_abs)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Entry point {p_abs} для {label} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    cur = p_abs.parent
+    while cur != work_dir and cur != cur.parent:
+        if cur.is_symlink() or os.path.islink(str(cur)):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Промежуточный узел entry point {cur} является symlink!', file=sys.stderr)
+            sys.exit(1)
+        cur = cur.parent
+    rel_entry = str(p_abs.relative_to(work_dir))
+    return p_abs, rel_entry
 
-check_approved_root(current_path, 'текущей службы')
+current_exec_entry, current_exec_rel = parse_and_validate_exec(current_exec_handle, current_path, 'текущей службы')
+saved_exec_entry, saved_exec_rel = parse_and_validate_exec(unit_exec_start, dest_path, 'сохранённого unit')
 
 code_dir = backup_dir / 'code'
 if code_dir.is_symlink() or os.path.islink(str(code_dir)) or not code_dir.is_dir():
@@ -669,14 +866,49 @@ for rel_str, exp_hash in manifest_files.items():
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} не совпадает с манифестом!', file=sys.stderr)
         sys.exit(1)
 
-if unit_exec_start:
-    for tok in unit_exec_start.split():
-        if tok.endswith('.py') or tok.endswith('.sh'):
-            p_name = pathlib.Path(tok).name
-            if p_name not in disk_files:
-                print(f'КРИТИЧЕСКАЯ ОШИБКА: Точка входа {p_name} из ExecStart отсутствует в восстанавливаемом коде!', file=sys.stderr)
-                sys.exit(1)
-            break
+if saved_exec_rel not in disk_files:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Точка входа {saved_exec_rel} из ExecStart отсутствует в восстанавливаемом коде!', file=sys.stderr)
+    sys.exit(1)
+
+# X4: Статический офлайн-контроль зависимостей точки входа в бэкапе
+entrypoint_disk = code_dir / saved_exec_rel
+if entrypoint_disk.suffix == '.py':
+    def find_backup_imports(script_path: pathlib.Path, root_dir: pathlib.Path) -> set[str]:
+        needed = set()
+        visited = set()
+        queue = [script_path]
+        while queue:
+            curr = queue.pop(0)
+            if curr in visited:
+                continue
+            visited.add(curr)
+            try:
+                tree = ast.parse(curr.read_text(encoding='utf-8'), filename=str(curr))
+            except Exception:
+                continue
+            for node in ast.walk(tree):
+                mod_names = []
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        mod_names.append(alias.name)
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        mod_names.append(node.module)
+                for mod in mod_names:
+                    lead = mod.split('.')[0]
+                    cand = root_dir / (lead + '.py')
+                    if cand.exists() and cand.is_file():
+                        rel = str(cand.relative_to(root_dir))
+                        if rel not in needed:
+                            needed.add(rel)
+                            queue.append(cand)
+        return needed
+
+    needed_deps = find_backup_imports(entrypoint_disk, code_dir)
+    missing_deps = needed_deps - set(disk_files.keys())
+    if missing_deps:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: В инвентаре бэкапа отсутствуют обязательные локальные зависимости {sorted(missing_deps)}!', file=sys.stderr)
+        sys.exit(1)
 
 FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
 for p in backup_dir.rglob('*'):
@@ -711,13 +943,19 @@ if [ -z "$PINNED_BACKUP_DIR" ] || [ ! -d "$PINNED_BACKUP_DIR" ]; then
 fi
 
 # 2. Комплексная верификация бэкапа ДО ПЕРВОЙ МУТАЦИИ (fail-closed)
-# Сверяются: обязательный манифест, хэши unit-файла, непустое отображение files,
-# строгая биекция disk <-> manifest, проверка типов (regular file, not symlink/fifo/device),
-# strict count (int, не bool), containment, запрет symlink и секретов/токенов в бэкапе,
-# успешный запрос systemctl show (exit 0) и структурная привязка к сохранённому unit.
-# Любое несоответствие приводит к немедленному fail-closed отказу (exit 1) с 0 мутаций.
+# Сверяются в границах поддержанной модели unit службы:
+# - обязательный манифест pinned_metadata.json и хэш unit-файла (unit_sha256);
+# - непустое отображение files, strict count (int, не bool), отсутствие секретов;
+# - строгая биекция disk <-> manifest, проверка регулярных файлов (запрет symlink/fifo/device);
+# - каноничность путей назначения и текущей службы (проверка отсутствия .. и неканонических сегментов,
+#   принадлежность разрешённым корням HOME или /srv/star-building-strategy, отсутствие symlink всех предков до /);
+# - существование целевого каталога назначения;
+# - валидация WorkingDirectory и ExecStart identity текущей службы через systemctl show и сохранённого unit
+#   (привязка исполняемой точки входа к рабочему каталогу, запрет symlink и метасимволов);
+# - статическая проверка наличия локальных модулей-зависимостей точки входа в инвентаре бэкапа.
+# Проверенные несоответствия вызывают отказ (exit 1) с 0 системных мутаций.
 python3 -c "
-import hashlib, json, os, pathlib, stat, subprocess, sys
+import ast, hashlib, json, os, pathlib, re, shlex, stat, subprocess, sys
 
 backup_dir_raw = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ.get('PINNED_BACKUP_DIR', '')
 if not backup_dir_raw:
@@ -803,22 +1041,40 @@ if pinned_work_dir != unit_work_dir:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: live_work_dir из манифеста ({pinned_work_dir}) не совпадает с WorkingDirectory сохранённого unit ({unit_work_dir})!', file=sys.stderr)
     sys.exit(1)
 
-dest_path = pathlib.Path(unit_work_dir)
-if not dest_path.is_absolute():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: WorkingDirectory назначения ({unit_work_dir}) не является абсолютным путём!', file=sys.stderr)
-    sys.exit(1)
-
 home_dir = pathlib.Path(os.environ.get('HOME', '/home/roman'))
 approved_roots = [
     home_dir,
     pathlib.Path('/srv/star-building-strategy'),
 ]
 
-def check_approved_root(target: pathlib.Path, label: str) -> None:
+# X1: Каноническая проверка approved roots (без .. и неканонических сегментов)
+def check_approved_root(target_raw: str, label: str) -> pathlib.Path:
+    if not isinstance(target_raw, str) or not target_raw.strip():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} пуст!', file=sys.stderr)
+        sys.exit(1)
+    target_str = target_raw.strip()
+    target = pathlib.Path(target_str)
+    if not target.is_absolute():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target_str}) не является абсолютным!', file=sys.stderr)
+        sys.exit(1)
+    if '..' in target.parts or '.' in target.parts or os.path.normpath(target_str) != target_str:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target_str}) содержит .. или неканонические сегменты!', file=sys.stderr)
+        sys.exit(1)
+    if not target.exists() or not target.is_dir():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог {label} ({target}) не существует или не является каталогом!', file=sys.stderr)
+        sys.exit(1)
+    cur = target
+    while True:
+        if cur.is_symlink() or os.path.islink(str(cur)):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути {label} {cur} является symlink!', file=sys.stderr)
+            sys.exit(1)
+        if cur == cur.parent:
+            break
+        cur = cur.parent
     in_approved = False
     for r in approved_roots:
         try:
-            if target.is_relative_to(r):
+            if target.resolve().is_relative_to(r.resolve()):
                 in_approved = True
                 break
         except Exception:
@@ -826,50 +1082,96 @@ def check_approved_root(target: pathlib.Path, label: str) -> None:
     if not in_approved:
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь {label} ({target}) не входит в список разрешённых корней релиза!', file=sys.stderr)
         sys.exit(1)
+    return target
 
-cur = dest_path
-while True:
-    if cur.is_symlink() or os.path.islink(str(cur)):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути назначения {cur} является symlink!', file=sys.stderr)
-        sys.exit(1)
-    if cur == cur.parent:
-        break
-    cur = cur.parent
+dest_path = check_approved_root(unit_work_dir, 'назначения (старого релиза)')
 
-check_approved_root(dest_path, 'назначения (старого релиза)')
-
-proc = subprocess.run(
+proc_wd = subprocess.run(
     ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
     capture_output=True, text=True, check=False
 )
-if proc.returncode != 0:
+if proc_wd.returncode != 0:
     print('КРИТИЧЕСКАЯ ОШИБКА: Запрос состояния службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
     sys.exit(1)
 
-current_handle = proc.stdout.strip()
+current_handle = proc_wd.stdout.strip()
 if not current_handle:
     print('КРИТИЧЕСКАЯ ОШИБКА: systemctl show вернул пустой текущий WorkingDirectory службы!', file=sys.stderr)
     sys.exit(1)
 
-current_path = pathlib.Path(current_handle)
-if not current_path.is_absolute():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не является абсолютным путём!', file=sys.stderr)
+current_path = check_approved_root(current_handle, 'текущей службы')
+
+# X2: Запрос и строгая проверка текущего и сохранённого ExecStart identity
+proc_exec = subprocess.run(
+    ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'ExecStart', '--value'],
+    capture_output=True, text=True, check=False
+)
+if proc_exec.returncode != 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Запрос ExecStart службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
     sys.exit(1)
 
-if not current_path.exists() or not current_path.is_dir():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Текущий WorkingDirectory ({current_handle}) не существует или не является каталогом!', file=sys.stderr)
+current_exec_handle = proc_exec.stdout.strip()
+if not current_exec_handle:
+    print('КРИТИЧЕСКАЯ ОШИБКА: systemctl show вернул пустой текущий ExecStart службы!', file=sys.stderr)
     sys.exit(1)
 
-cur = current_path
-while True:
-    if cur.is_symlink() or os.path.islink(str(cur)):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути текущей службы {cur} является symlink!', file=sys.stderr)
+def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str) -> tuple[pathlib.Path, str]:
+    if not isinstance(exec_str, str) or not exec_str.strip():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: ExecStart для {label} пуст!', file=sys.stderr)
         sys.exit(1)
-    if cur == cur.parent:
-        break
-    cur = cur.parent
+    cmdline = exec_str.strip()
+    if cmdline.startswith('{') and 'argv[]=' in cmdline:
+        m = re.search(r'argv\[\]=([^;]+)', cmdline)
+        if not m:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
+            sys.exit(1)
+        cmdline = m.group(1).strip()
+    try:
+        tokens = shlex.split(cmdline)
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка разбора ExecStart для {label}: {err}', file=sys.stderr)
+        sys.exit(1)
+    if not tokens:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Токены ExecStart для {label} пусты!', file=sys.stderr)
+        sys.exit(1)
+    for tok in tokens:
+        if any(c in tok for c in [';', '&', '|', chr(96), chr(36), '\n']):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружены запрещённые метасимволы в ExecStart для {label}: {tok}', file=sys.stderr)
+            sys.exit(1)
+    script_tok = None
+    for tok in tokens:
+        if tok.endswith('.py') or tok.endswith('.sh'):
+            script_tok = tok
+            break
+    if not script_tok:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Не найден скрипт entrypoint (.py/.sh) в ExecStart для {label}!', file=sys.stderr)
+        sys.exit(1)
+    p_tok = pathlib.Path(script_tok)
+    p_abs = p_tok if p_tok.is_absolute() else work_dir / p_tok
+    if '..' in p_abs.parts or '.' in p_abs.parts or os.path.normpath(str(p_abs)) != str(p_abs):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Entry point {script_tok} для {label} содержит .. или не каноничен!', file=sys.stderr)
+        sys.exit(1)
+    try:
+        if not p_abs.resolve().is_relative_to(work_dir.resolve()):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Entry point {script_tok} для {label} не принадлежит каталогу релиза {work_dir}!', file=sys.stderr)
+            sys.exit(1)
+    except Exception:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка сопоставления entry point {script_tok} с каталогом {work_dir}!', file=sys.stderr)
+        sys.exit(1)
+    if p_abs.is_symlink() or os.path.islink(str(p_abs)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Entry point {p_abs} для {label} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    cur = p_abs.parent
+    while cur != work_dir and cur != cur.parent:
+        if cur.is_symlink() or os.path.islink(str(cur)):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Промежуточный узел entry point {cur} является symlink!', file=sys.stderr)
+            sys.exit(1)
+        cur = cur.parent
+    rel_entry = str(p_abs.relative_to(work_dir))
+    return p_abs, rel_entry
 
-check_approved_root(current_path, 'текущей службы')
+current_exec_entry, current_exec_rel = parse_and_validate_exec(current_exec_handle, current_path, 'текущей службы')
+saved_exec_entry, saved_exec_rel = parse_and_validate_exec(unit_exec_start, dest_path, 'сохранённого unit')
 
 code_dir = backup_dir / 'code'
 if code_dir.is_symlink() or os.path.islink(str(code_dir)) or not code_dir.is_dir():
@@ -932,14 +1234,49 @@ for rel_str, exp_hash in manifest_files.items():
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} не совпадает с манифестом!', file=sys.stderr)
         sys.exit(1)
 
-if unit_exec_start:
-    for tok in unit_exec_start.split():
-        if tok.endswith('.py') or tok.endswith('.sh'):
-            p_name = pathlib.Path(tok).name
-            if p_name not in disk_files:
-                print(f'КРИТИЧЕСКАЯ ОШИБКА: Точка входа {p_name} из ExecStart отсутствует в восстанавливаемом коде!', file=sys.stderr)
-                sys.exit(1)
-            break
+if saved_exec_rel not in disk_files:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Точка входа {saved_exec_rel} из ExecStart отсутствует в восстанавливаемом коде!', file=sys.stderr)
+    sys.exit(1)
+
+# X4: Статический офлайн-контроль зависимостей точки входа в бэкапе
+entrypoint_disk = code_dir / saved_exec_rel
+if entrypoint_disk.suffix == '.py':
+    def find_backup_imports(script_path: pathlib.Path, root_dir: pathlib.Path) -> set[str]:
+        needed = set()
+        visited = set()
+        queue = [script_path]
+        while queue:
+            curr = queue.pop(0)
+            if curr in visited:
+                continue
+            visited.add(curr)
+            try:
+                tree = ast.parse(curr.read_text(encoding='utf-8'), filename=str(curr))
+            except Exception:
+                continue
+            for node in ast.walk(tree):
+                mod_names = []
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        mod_names.append(alias.name)
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        mod_names.append(node.module)
+                for mod in mod_names:
+                    lead = mod.split('.')[0]
+                    cand = root_dir / (lead + '.py')
+                    if cand.exists() and cand.is_file():
+                        rel = str(cand.relative_to(root_dir))
+                        if rel not in needed:
+                            needed.add(rel)
+                            queue.append(cand)
+        return needed
+
+    needed_deps = find_backup_imports(entrypoint_disk, code_dir)
+    missing_deps = needed_deps - set(disk_files.keys())
+    if missing_deps:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: В инвентаре бэкапа отсутствуют обязательные локальные зависимости {sorted(missing_deps)}!', file=sys.stderr)
+        sys.exit(1)
 
 FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
 for p in backup_dir.rglob('*'):
