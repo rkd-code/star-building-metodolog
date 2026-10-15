@@ -175,21 +175,38 @@ import hashlib, json, os, pathlib, shutil, sys
 src_dir = pathlib.Path('$LIVE_WORK_DIR')
 dst_code = pathlib.Path('$PINNED_BACKUP_DIR/code')
 
-ALLOWED_EXTENSIONS = {'.py', '.md', '.txt', '.json', '.service'}
-FORBIDDEN_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
+# U5: Положительный allowlist расширений кода (СТРОГО без .json, конфигураций и секретов)
+ALLOWED_EXTENSIONS = {'.py', '.md', '.txt', '.service'}
+FORBIDDEN_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key', 'settings', 'config'}
 
 copied_files = {}
 for p in src_dir.rglob('*'):
-    if p.is_file():
-        name_lower = p.name.lower()
-        if any(bad in name_lower for bad in FORBIDDEN_PATTERNS):
+    # U5: Категорический запрет символических ссылок и копирования внешних целей
+    if p.is_symlink() or os.path.islink(p):
+        rel = p.relative_to(src_dir)
+        target = dst_code / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('# SYMLINK_BLOCKED_FAIL_CLOSED\n')
+        copied_files[str(rel)] = hashlib.sha256(target.read_bytes()).hexdigest()
+        continue
+    if not p.is_file():
+        continue
+    try:
+        resolved = p.resolve()
+        if not resolved.is_relative_to(src_dir.resolve()):
             continue
-        if p.suffix.lower() in ALLOWED_EXTENSIONS:
-            rel = p.relative_to(src_dir)
-            target = dst_code / rel
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(p, target)
-            copied_files[str(rel)] = hashlib.sha256(target.read_bytes()).hexdigest()
+    except (ValueError, RuntimeError):
+        continue
+
+    name_lower = p.name.lower()
+    if any(bad in name_lower for bad in FORBIDDEN_PATTERNS):
+        continue
+    if p.suffix.lower() in ALLOWED_EXTENSIONS:
+        rel = p.relative_to(src_dir)
+        target = dst_code / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(p, target)
+        copied_files[str(rel)] = hashlib.sha256(target.read_bytes()).hexdigest()
 
 unit_bytes = (pathlib.Path('$PINNED_BACKUP_DIR') / 'star-building-strategy.service').read_bytes()
 meta = {
@@ -313,6 +330,117 @@ journalctl --user -u star-building-strategy.service -n 50 --no-pager
 
 ### Шаг 1. Остановка службы
 ```bash
+set -euo pipefail
+
+# 1. Строгая проверка наличия явно переданного идентификатора бэкапа
+if [ -z "${PINNED_BACKUP_DIR:-}" ]; then
+    echo "КРИТИЧЕСКАЯ ОШИБКА: Идентификатор бэкапа PINNED_BACKUP_DIR не задан! Молчаливый fallback на latest запрещён." >&2
+    exit 1
+fi
+
+if [ -z "$PINNED_BACKUP_DIR" ] || [ ! -d "$PINNED_BACKUP_DIR" ]; then
+    echo "КРИТИЧЕСКАЯ ОШИБКА: Каталог pinned-бэкапа не найден! Откат заблокирован fail-closed." >&2
+    exit 1
+fi
+
+# 2. Полный preflight и верификация бэкапа ДО ОСТАНОВКИ СЛУЖБЫ (fail-closed, 0 мутаций)
+# Остановка службы при повреждённом/невалидном бэкапе категорически запрещена (U3).
+python3 -c "
+import hashlib, json, os, pathlib, subprocess, sys
+
+backup_dir = pathlib.Path(os.environ['PINNED_BACKUP_DIR'])
+meta_path = backup_dir / 'pinned_metadata.json'
+
+if not meta_path.is_file():
+    print('КРИТИЧЕСКАЯ ОШИБКА: Обязательный манифест pinned_metadata.json отсутствует в бэкапе!', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    meta = json.loads(meta_path.read_text(encoding='utf-8'))
+except Exception as err:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Манифест pinned_metadata.json повреждён: {err}', file=sys.stderr)
+    sys.exit(1)
+
+required_fields = {'unit_sha256', 'code_files_count', 'live_work_dir', 'files'}
+missing_fields = required_fields - set(meta.keys())
+if missing_fields:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: В манифесте отсутствуют обязательные поля: {missing_fields}', file=sys.stderr)
+    sys.exit(1)
+
+if not isinstance(meta.get('files'), dict) or len(meta['files']) == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Поле files в манифесте обязано быть непустым отображением!', file=sys.stderr)
+    sys.exit(1)
+
+unit_path = backup_dir / 'star-building-strategy.service'
+if not unit_path.is_file() or unit_path.is_symlink() or unit_path.stat().st_size == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует, является symlink или пуст!', file=sys.stderr)
+    sys.exit(1)
+
+actual_unit_sha = hashlib.sha256(unit_path.read_bytes()).hexdigest()
+exp_unit_sha = str(meta.get('unit_sha256', ''))
+if actual_unit_sha != exp_unit_sha:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш unit-файла ({actual_unit_sha}) не совпадает с манифестом ({exp_unit_sha})!', file=sys.stderr)
+    sys.exit(1)
+
+code_dir = backup_dir / 'code'
+if not code_dir.is_dir():
+    print('КРИТИЧЕСКАЯ ОШИБКА: Каталог кода отсутствует в бэкапе!', file=sys.stderr)
+    sys.exit(1)
+
+disk_files = {}
+for p in code_dir.rglob('*'):
+    if p.is_symlink():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый symlink: {p.name}', file=sys.stderr)
+        sys.exit(1)
+    if p.is_file():
+        try:
+            rel = p.resolve().relative_to(code_dir.resolve())
+        except ValueError:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {p.name} выходит за пределы каталога бэкапа (path traversal)!', file=sys.stderr)
+            sys.exit(1)
+        rel_str = str(p.relative_to(code_dir))
+        disk_files[rel_str] = hashlib.sha256(p.read_bytes()).hexdigest()
+
+manifest_files = meta['files']
+if set(disk_files.keys()) != set(manifest_files.keys()):
+    extra = set(disk_files.keys()) - set(manifest_files.keys())
+    missing = set(manifest_files.keys()) - set(disk_files.keys())
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Нарушена биекция disk <-> manifest! Лишние: {extra}, отсутствующие: {missing}', file=sys.stderr)
+    sys.exit(1)
+
+if len(disk_files) != meta.get('code_files_count', -1):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Число файлов ({len(disk_files)}) не совпадает со значением манифеста ({meta.get(\"code_files_count\")})!', file=sys.stderr)
+    sys.exit(1)
+
+for rel_str, exp_hash in manifest_files.items():
+    if disk_files.get(rel_str) != exp_hash:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} не совпадает с манифестом!', file=sys.stderr)
+        sys.exit(1)
+
+FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
+for p in backup_dir.rglob('*'):
+    if p.is_file():
+        name_lower = p.name.lower()
+        if any(pat in name_lower for pat in FORBIDDEN_SECRET_PATTERNS):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый секретный файл: {p.name}', file=sys.stderr)
+            sys.exit(1)
+
+# U2: Запрос состояния службы через systemctl обязан завершаться успешно (exit 0)
+proc = subprocess.run(
+    ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
+    capture_output=True, text=True, check=False
+)
+if proc.returncode != 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Запрос состояния службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
+    sys.exit(1)
+
+pinned_work_dir = meta.get('live_work_dir', '').strip()
+if not pinned_work_dir:
+    print('КРИТИЧЕСКАЯ ОШИБКА: В манифесте бэкапа отсутствует валидный live_work_dir!', file=sys.stderr)
+    sys.exit(1)
+"
+
+# 3. Остановка службы ТОЛЬКО ПОСЛЕ ПОДТВЕРЖДЁННОЙ ВАЛИДАЦИИ БЭКАПА
 systemctl --user stop star-building-strategy.service
 ```
 
@@ -333,9 +461,10 @@ if [ -z "$PINNED_BACKUP_DIR" ] || [ ! -d "$PINNED_BACKUP_DIR" ]; then
 fi
 
 # 2. Комплексная верификация бэкапа ДО ПЕРВОЙ МУТАЦИИ (fail-closed)
-# Сверяются: обязательный манифест, хэши unit-файла, инвентарь файлов кода,
-# хэши каждого разрешённого файла кода, pinned WorkingDirectory,
-# запрет секретов/токенов в бэкапе.
+# Сверяются: обязательный манифест, хэши unit-файла, непустое отображение files,
+# строгая биекция disk <-> manifest, хэши каждого разрешённого файла кода,
+# containment (отсутствие path traversal), запрет symlink и секретов/токенов в бэкапе,
+# успешный запрос systemctl show (exit 0) и раздельная валидация старого и текущего релизов.
 # Любое несоответствие приводит к немедленному fail-closed отказу (exit 1) с 0 мутаций.
 python3 -c "
 import hashlib, json, os, pathlib, subprocess, sys
@@ -353,15 +482,20 @@ except Exception as err:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Манифест pinned_metadata.json повреждён: {err}', file=sys.stderr)
     sys.exit(1)
 
-required_fields = {'unit_sha256', 'code_files_count', 'live_work_dir'}
+# U2: Поле files обязательно и должно быть непустым отображением
+required_fields = {'unit_sha256', 'code_files_count', 'live_work_dir', 'files'}
 missing_fields = required_fields - set(meta.keys())
 if missing_fields:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: В манифесте отсутствуют обязательные поля: {missing_fields}', file=sys.stderr)
     sys.exit(1)
 
+if not isinstance(meta.get('files'), dict) or len(meta['files']) == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Поле files в манифесте обязано быть непустым отображением!', file=sys.stderr)
+    sys.exit(1)
+
 unit_path = backup_dir / 'star-building-strategy.service'
-if not unit_path.is_file() or unit_path.stat().st_size == 0:
-    print('КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует или пуст!', file=sys.stderr)
+if not unit_path.is_file() or unit_path.is_symlink() or unit_path.stat().st_size == 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Unit-файл в бэкапе отсутствует, является symlink или пуст!', file=sys.stderr)
     sys.exit(1)
 
 actual_unit_sha = hashlib.sha256(unit_path.read_bytes()).hexdigest()
@@ -375,21 +509,36 @@ if not code_dir.is_dir():
     print('КРИТИЧЕСКАЯ ОШИБКА: Каталог кода отсутствует в бэкапе!', file=sys.stderr)
     sys.exit(1)
 
-code_files = [p for p in code_dir.rglob('*') if p.is_file()]
-exp_count = meta.get('code_files_count', -1)
-if len(code_files) != exp_count:
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Число файлов кода ({len(code_files)}) не совпадает с манифестом ({exp_count})!', file=sys.stderr)
+# U2 / U5: Строгая биекция disk <-> manifest, проверка типов (regular file, not symlink), containment и SHA-256
+disk_files = {}
+for p in code_dir.rglob('*'):
+    if p.is_symlink():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый symlink: {p.name}', file=sys.stderr)
+        sys.exit(1)
+    if p.is_file():
+        try:
+            rel = p.resolve().relative_to(code_dir.resolve())
+        except ValueError:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {p.name} выходит за пределы каталога бэкапа (path traversal)!', file=sys.stderr)
+            sys.exit(1)
+        rel_str = str(p.relative_to(code_dir))
+        disk_files[rel_str] = hashlib.sha256(p.read_bytes()).hexdigest()
+
+manifest_files = meta['files']
+if set(disk_files.keys()) != set(manifest_files.keys()):
+    extra = set(disk_files.keys()) - set(manifest_files.keys())
+    missing = set(manifest_files.keys()) - set(disk_files.keys())
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Нарушена биекция disk <-> manifest! Лишние: {extra}, отсутствующие: {missing}', file=sys.stderr)
     sys.exit(1)
 
-if 'files' in meta and isinstance(meta['files'], dict):
-    for rel_str, exp_hash in meta['files'].items():
-        fp = code_dir / rel_str
-        if not fp.is_file():
-            print(f'КРИТИЧЕСКАЯ ОШИБКА: Файл {rel_str} из манифеста отсутствует в бэкапе!', file=sys.stderr)
-            sys.exit(1)
-        if hashlib.sha256(fp.read_bytes()).hexdigest() != exp_hash:
-            print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} повреждён!', file=sys.stderr)
-            sys.exit(1)
+if len(disk_files) != meta.get('code_files_count', -1):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Число файлов кода ({len(disk_files)}) не совпадает с манифестом ({meta.get(\"code_files_count\")})!', file=sys.stderr)
+    sys.exit(1)
+
+for rel_str, exp_hash in manifest_files.items():
+    if disk_files.get(rel_str) != exp_hash:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Хэш файла {rel_str} не совпадает с манифестом!', file=sys.stderr)
+        sys.exit(1)
 
 FORBIDDEN_SECRET_PATTERNS = {'.env', 'token', 'secret', 'credential', '.pem', '.key'}
 for p in backup_dir.rglob('*'):
@@ -399,18 +548,20 @@ for p in backup_dir.rglob('*'):
             print(f'КРИТИЧЕСКАЯ ОШИБКА: В бэкапе обнаружен недопустимый секретный файл: {p.name}', file=sys.stderr)
             sys.exit(1)
 
-pinned_work_dir = meta['live_work_dir']
-try:
-    proc = subprocess.run(
-        ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
-        capture_output=True, text=True, check=False
-    )
-    current_work_dir = proc.stdout.strip()
-    if current_work_dir and current_work_dir != pinned_work_dir:
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Pinned WorkingDirectory ({pinned_work_dir}) не совпадает со значением службы ({current_work_dir})!', file=sys.stderr)
-        sys.exit(1)
-except Exception:
-    pass
+# U2: Запрос состояния службы через systemctl обязан завершаться успешно (exit 0)
+proc = subprocess.run(
+    ['systemctl', '--user', 'show', 'star-building-strategy.service', '-p', 'WorkingDirectory', '--value'],
+    capture_output=True, text=True, check=False
+)
+if proc.returncode != 0:
+    print('КРИТИЧЕСКАЯ ОШИБКА: Запрос состояния службы через systemctl завершился сбоем (exit != 0)!', file=sys.stderr)
+    sys.exit(1)
+
+# U4: Раздельная валидация старого релиза (live_work_dir в манифесте) и текущего релиза службы
+pinned_work_dir = meta.get('live_work_dir', '').strip()
+if not pinned_work_dir:
+    print('КРИТИЧЕСКАЯ ОШИБКА: В манифесте бэкапа отсутствует валидный live_work_dir!', file=sys.stderr)
+    sys.exit(1)
 
 print('Верификация бэкапа успешно пройдена: все хэши и инвентарь подтверждены fail-closed.')
 "
@@ -422,10 +573,11 @@ cp -p "$PINNED_BACKUP_DIR/star-building-strategy.service" "$TARGET_UNIT_PATH"
 systemctl --user daemon-reload
 
 # 4. Восстановление рабочего каталога кода строго в подтверждённый pinned каталог
+# U5: Без опасного флага --delete, исключая удаление несинхронизированных runtime/state файлов
 TARGET_WORK_DIR=$(python3 -c "import json, pathlib, os; print(json.loads((pathlib.Path(os.environ['PINNED_BACKUP_DIR']) / 'pinned_metadata.json').read_text())['live_work_dir'])")
 if [ -n "$TARGET_WORK_DIR" ] && [ -d "$PINNED_BACKUP_DIR/code" ]; then
     mkdir -p "$TARGET_WORK_DIR"
-    rsync -a --delete "$PINNED_BACKUP_DIR/code/" "$TARGET_WORK_DIR/"
+    rsync -a "$PINNED_BACKUP_DIR/code/" "$TARGET_WORK_DIR/"
 fi
 echo "Откат к проверенному снимку $PINNED_BACKUP_DIR успешно завершён."
 ```

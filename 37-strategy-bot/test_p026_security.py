@@ -198,5 +198,107 @@ class P026SecurityTest(unittest.TestCase):
         self.assertNotIn("INTERCEPT cp", result.stdout, "cp не должен вызываться при сбое валидации бэкапа")
         self.assertNotIn("INTERCEPT rsync", result.stdout, "rsync не должен вызываться при сбое валидации бэкапа")
 
+    def test_u2_u3_u4_rollback_comprehensive_matrix(self):
+        """U2/U3/U4: Комплексная матрица сценариев отката: U2 bijection/manifest, U3 preflight before stop, U4 changed release."""
+        import subprocess
+        import json
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        text = plan_path.read_text(encoding="utf-8")
+        m_block = re.search(r"```bash\n(.*?)```", text.split("### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа")[1], re.S)
+        assert m_block is not None
+        block = m_block.group(1)
+        m_stop = re.search(r"```bash\n(.*?)```", text.split("### Шаг 1. Остановка службы")[1], re.S)
+        assert m_stop is not None
+        stop = m_stop.group(1)
+
+        cases = ["valid", "missing_files_map", "empty_files_map_tampered_code", "changed_current_release", "corrupt_before_stop", "systemctl_query_failure"]
+        for case in cases:
+            with self.subTest(case=case):
+                p = Path(self.temp_dir.name) / f"rollback_{case}"
+                p.mkdir(parents=True, exist_ok=True)
+                bindir = p / "bin"
+                bindir.mkdir()
+                backup = p / "pinned"
+                backup.mkdir()
+                (backup / "code").mkdir()
+                work = p / "old-release"
+                work.mkdir()
+                (backup / "star-building-strategy.service").write_text(f"[Service]\nWorkingDirectory={work}\n", encoding="utf-8")
+                (backup / "code/app.py").write_text("print('safe')\n", encoding="utf-8")
+                meta = {
+                    "unit_sha256": hashlib.sha256((backup / "star-building-strategy.service").read_bytes()).hexdigest(),
+                    "code_files_count": 1,
+                    "live_work_dir": str(work),
+                    "files": {"app.py": hashlib.sha256((backup / "code/app.py").read_bytes()).hexdigest()}
+                }
+                if case == "missing_files_map":
+                    del meta["files"]
+                elif case == "empty_files_map_tampered_code":
+                    meta["files"] = {}
+                    (backup / "code/app.py").write_text("TAMPERED", encoding="utf-8")
+                elif case == "corrupt_before_stop":
+                    meta["unit_sha256"] = "0" * 64
+                (backup / "pinned_metadata.json").write_text(json.dumps(meta), encoding="utf-8")
+
+                for name in ["cp", "rsync", "systemctl"]:
+                    f = bindir / name
+                    if name == "systemctl":
+                        f.write_text('#!/bin/sh\nif [ "$2" = "show" ]; then if [ "$QUERY_FAIL" = 1 ]; then exit 1; fi; printf "%s\\n" "$SAFE_WORK_DIR"; else printf "INTERCEPT systemctl %s\\n" "$*"; fi\n', encoding="utf-8")
+                    else:
+                        f.write_text('#!/bin/sh\nprintf "INTERCEPT ' + name + ' %s\\n" "$*"\n', encoding="utf-8")
+                    f.chmod(0o700)
+
+                env = {
+                    "HOME": str(p),
+                    "PATH": str(bindir) + ":/usr/bin:/bin",
+                    "PINNED_BACKUP_DIR": str(backup),
+                    "SAFE_WORK_DIR": str(p / "new-release") if case == "changed_current_release" else str(work),
+                    "QUERY_FAIL": "1" if case == "systemctl_query_failure" else "0",
+                    "LANG": "C.UTF-8",
+                }
+                full_cmd = (stop if case == "corrupt_before_stop" else "") + "\n" + block
+                proc = subprocess.run(["/bin/bash", "-c", full_cmd], env=env, text=True, capture_output=True)
+
+                if case in {"valid", "changed_current_release"}:
+                    self.assertEqual(0, proc.returncode, f"Сценарий {case} обязан завершиться успешно (exit 0)")
+                    self.assertIn("INTERCEPT cp", proc.stdout)
+                    self.assertIn("INTERCEPT rsync", proc.stdout)
+                elif case == "corrupt_before_stop":
+                    self.assertNotEqual(0, proc.returncode)
+                    self.assertNotIn("INTERCEPT systemctl --user stop", proc.stdout, "При повреждённом бэкапе stop вызываться не должен (U3)!")
+                    self.assertNotIn("INTERCEPT cp", proc.stdout)
+                else:
+                    self.assertNotEqual(0, proc.returncode, f"Сценарий {case} обязан завершиться fail-closed")
+                    self.assertNotIn("INTERCEPT cp", proc.stdout)
+                    self.assertNotIn("INTERCEPT rsync", proc.stdout)
+
+    def test_u5_backup_allowlist_and_symlink_protection(self):
+        """U5: Бэкап кода игнорирует .json/settings и блокирует разыменование внешних symlink."""
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        text = plan_path.read_text(encoding="utf-8")
+        step = text.split("### Шаг 2. Фиксация и полный бэкап")[1].split("### Шаг 3.")[0]
+        m_code = re.search(r"python3 -c \"\n(.*?)\n\"", step, re.S)
+        assert m_code is not None
+        code = m_code.group(1)
+
+        p = Path(self.temp_dir.name) / "u5_sandbox"
+        p.mkdir(parents=True, exist_ok=True)
+        src = p / "live"
+        src.mkdir()
+        dst = p / "backup"
+        dst.mkdir()
+        (dst / "code").mkdir()
+
+        (src / "settings.json").write_text('{"fixture_only":"SYNTHETIC_SENSITIVE_SENTINEL"}', encoding="utf-8")
+        (p / "external-fixture").write_text("SYNTHETIC_EXTERNAL_SENTINEL", encoding="utf-8")
+        (src / "app.py").symlink_to(p / "external-fixture")
+        (dst / "star-building-strategy.service").write_text("SAFE FIXTURE UNIT", encoding="utf-8")
+
+        code = code.replace("$LIVE_WORK_DIR", str(src)).replace("$PINNED_BACKUP_DIR", str(dst)).replace("$BACKUP_TIMESTAMP", "FIXTURE").replace("$LIVE_UNIT_PATH", "FIXTURE_UNIT").replace("$LIVE_EXEC_START", "FIXTURE_EXEC")
+        exec(compile(code, "DEPLOYMENT_PLAN backup excerpt", "exec"), {})
+
+        self.assertFalse((dst / "code/settings.json").exists(), "settings.json не должен копироваться в бэкап кода")
+        self.assertNotEqual("SYNTHETIC_EXTERNAL_SENTINEL", (dst / "code/app.py").read_text(encoding="utf-8"), "Внешний symlink target не должен копироваться")
+
 if __name__ == "__main__":
     unittest.main()

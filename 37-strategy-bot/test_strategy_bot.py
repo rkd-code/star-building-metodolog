@@ -124,6 +124,77 @@ class StrategyBotTest(unittest.TestCase):
         # Убеждаемся, что обращение изолировано во временной директории, а не в $HOME
         self.assertTrue(self.storage_dir.exists())
 
+    def test_u6_context_budget_boundaries_and_history_growth(self):
+        """U6: Проверка суммарного бюджета контекста на границе (ниже, на границе, выше) и роста истории."""
+        import asyncio
+        import types
+        module = load_bot()
+
+        calls = []
+        genai = types.SimpleNamespace()
+        typ = types.SimpleNamespace()
+        google = types.SimpleNamespace()
+        setattr(genai, "Client", lambda **kw: types.SimpleNamespace(
+            models=types.SimpleNamespace(
+                generate_content=lambda **kw: calls.append(1) or types.SimpleNamespace(text="OFFLINE_REPLY")
+            )
+        ))
+        setattr(typ, "GenerateContentConfig", lambda **kw: types.SimpleNamespace(**kw))
+        setattr(genai, "types", typ)
+        setattr(google, "genai", genai)
+
+        with patch.dict(sys.modules, {"google": google, "google.genai": genai, "google.genai.types": typ}), patch.object(module, "get_api_key", return_value="OFFLINE_KEY"):
+            module._user_histories.clear()
+            system_prompt = module.build_system_prompt(module.get_strategy_context(), user_id=123, chat_id=123)
+            user_prompt = module.build_user_prompt("Вопрос по стратегии", "Автор", user_id=123, chat_id=123)
+            exact_demand = len(system_prompt) + len(user_prompt) + module.MODEL_ANSWER_RESERVE_CHARS
+
+            # 1. Ниже лимита (нормальный запрос)
+            with patch.object(module, "MAX_TOTAL_CONTEXT_BUDGET_CHARS", exact_demand + 1000):
+                calls.clear()
+                ans = asyncio.run(module.generate_answer("Вопрос по стратегии", "Автор", 123, 123))
+                self.assertEqual(1, len(calls), "Запрос ниже лимита обязан вызывать модель")
+                self.assertEqual("OFFLINE_REPLY", ans)
+
+            # 2. Ровно на границе бюджета
+            module._user_histories.clear()
+            with patch.object(module, "MAX_TOTAL_CONTEXT_BUDGET_CHARS", exact_demand):
+                calls.clear()
+                ans = asyncio.run(module.generate_answer("Вопрос по стратегии", "Автор", 123, 123))
+                self.assertEqual(1, len(calls), "Запрос ровно на границе обязан выполняться")
+                self.assertEqual("OFFLINE_REPLY", ans)
+
+            # 3. Выше границы бюджета на 1 символ (fail-closed до вызова модели)
+            module._user_histories.clear()
+            before_hist = list(module._user_histories[123])
+            with patch.object(module, "MAX_TOTAL_CONTEXT_BUDGET_CHARS", exact_demand - 1):
+                calls.clear()
+                ans = asyncio.run(module.generate_answer("Вопрос по стратегии", "Автор", 123, 123))
+                self.assertEqual(0, len(calls), "При превышении бюджета 0 вызовов модели (fail-closed)")
+                self.assertIn("превышает допустимый бюджет", ans)
+                self.assertEqual(before_hist, module._user_histories[123], "История диалога обязана остаться неизменной")
+
+            # 4. Имитация роста истории, приводящая к превышению бюджета
+            module._user_histories.clear()
+            u_p1 = module.build_user_prompt("Кратко", "Автор", user_id=123, chat_id=123)
+            d1 = len(system_prompt) + len(u_p1) + module.MODEL_ANSWER_RESERVE_CHARS
+            budget_tight = d1 + 10  # Запас всего 10 символов: первый вызов пройдёт, второй превысит из-за истории
+            with patch.object(module, "MAX_TOTAL_CONTEXT_BUDGET_CHARS", budget_tight):
+                calls.clear()
+                # Первый вызов проходит (в рамках бюджета)
+                ans1 = asyncio.run(module.generate_answer("Кратко", "Автор", 123, 123))
+                self.assertEqual(1, len(calls))
+                self.assertEqual("OFFLINE_REPLY", ans1)
+                hist_after_1 = list(module._user_histories[123])
+                self.assertGreater(len(hist_after_1), 0)
+
+                # Второй вызов из-за выросшей истории превышает budget_tight -> отказ
+                calls.clear()
+                ans2 = asyncio.run(module.generate_answer("Повторный вопрос", "Автор", 123, 123))
+                self.assertEqual(0, len(calls), "После роста истории при превышении бюджета модель не должна вызываться")
+                self.assertIn("превышает допустимый бюджет", ans2)
+                self.assertEqual(hist_after_1, module._user_histories[123], "История не должна меняться при отказе")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -239,6 +239,36 @@ class P026StrategyBotIntegrationTest(unittest.IsolatedAsyncioTestCase):
         repeat_reply = up_confirm.effective_message.reply_text.call_args[0][0]
         self.assertIn("уже", repeat_reply.lower())
 
+    async def test_u1_transport_rejects_refusal_and_conditional_confirmations(self):
+        """U1: Проверка на уровне транспорта: фразы с оговорками и условиями отклоняются без записи."""
+        env_dict = {"STAR_BUILDING_STRATEGY_ALLOWED_USER_IDS": "123", "DRAMKNOTE_P026_STORAGE_DIR": self.temp_dir.name}
+        test_cases = [
+            ("/record_decision подтверждаю p1 лишь после проверки", self.module.handle_record_decision),
+            ("/record_decision /confirm p1 не надо", self.module.handle_record_decision),
+            ("/record_decision утверждаю p1 при условии проверки бюджета", self.module.handle_record_decision),
+            ("/confirm p1 только после согласования юристом", self.module.handle_confirm_decision),
+        ]
+        for cmd_text, handler_func in test_cases:
+            with self.subTest(cmd_text=cmd_text):
+                # Устанавливаем предложение p1
+                self.handler.set_pending_proposal(123, 123, "Утвердить лимит скидки 12.5%", proposal_id="p1")
+                up = MagicMock()
+                up.effective_user.id = 123
+                up.effective_user.full_name = "Корж И.С."
+                up.effective_chat.id = 123
+                up.effective_chat.type = "private"
+                up.effective_message.text = cmd_text
+                up.effective_message.reply_text = AsyncMock()
+
+                with patch.dict(os.environ, env_dict, clear=True):
+                    await handler_func(up, None)
+
+                up.effective_message.reply_text.assert_called()
+                # 0 записей в хранилище
+                self.assertEqual(0, len(self.storage.list_decisions(user_id=123, chat_id=123)))
+                # Предложение остаётся в pending
+                self.assertIsNotNone(self.handler.get_pending_proposal(123, 123))
+
     async def test_handle_export_draft_sends_real_telegram_document(self):
         update = MagicMock()
         update.effective_user.id = 123

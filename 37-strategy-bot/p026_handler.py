@@ -91,46 +91,38 @@ class P026Handler:
         self._pending_proposals.pop((user_id, chat_id), None)
 
     @staticmethod
-    def is_unambiguous_confirmation(text: str) -> bool:
-        """Проверяет, является ли текст недвусмысленным безусловным подтверждением.
-        Пустые строки, многоточия, отказы, возражения и условные согласия («только после...»)
-        категорически отклоняются.
+    def is_unambiguous_confirmation(text: str, expected_proposal_id: str | None = None) -> bool:
+        """Проверяет строгое соответствие грамматике безусловного подтверждения.
+        Категорически исключены черные списки подстрок: допустимы только однозначные позитивные
+        формы подтверждения без дополнительных оговорок, условий и неразобранных хвостов.
         """
         cleaned = text.strip()
         if not cleaned:
             return False
-        if not re.search(r"[a-zA-Zа-яА-ЯёЁ0-9]", cleaned):
-            return False
 
         lower = cleaned.lower()
-        rejection_markers = (
-            "не соглас", "отклон", "против", "не подтвержд", "не утвержда",
-            "возража", "отказ", "не подходит", "нет ", "нет,",
-        )
-        if any(rm in lower for rm in rejection_markers) or lower in {"нет", "no"}:
+        tokens = [t for t in re.sub(r"[^\w\s\-/+]", " ", lower).split() if t]
+        if not tokens:
             return False
 
-        conditional_markers = (
-            "только после", "при условии", "если ", "но только",
-            "после уточнен", "с доработк", "но с услови", "но при",
-        )
-        if any(cm in lower for cm in conditional_markers):
-            return False
-
-        if lower.startswith(("/confirm", "confirm")):
-            return True
-
-        exact_confirmations = {
-            "подтверждаю", "утверждаю", "согласовано", "да подтверждаю", "да утверждаю",
-            "подтвердить", "утвердить", "принять", "да", "ок", "ok", "yes",
+        # Форма 1: Однословные или точные краткие фразы согласия
+        exact_phrases = {
+            "подтверждаю", "утверждаю", "согласовано", "принять", "да",
+            "да подтверждаю", "да утверждаю", "confirm", "ок", "ok",
         }
-        tokens = [t for t in re.sub(r"[^\w\s+]", " ", lower).split() if t]
-        if " ".join(tokens) in exact_confirmations:
+        joined = " ".join(tokens)
+        if joined in exact_phrases:
             return True
 
-        first_word = tokens[0] if tokens else ""
-        if first_word in {"подтверждаю", "утверждаю", "согласовано"} and not any(w in {"но", "если"} for w in tokens):
-            return True
+        # Форма 2: Точная форма команды/фразы с ID предложения:
+        # /confirm <id>, /confirm_decision <id>, подтверждаю <id>, утверждаю <id>
+        # Ровно 2 токена, без лишних оговорок и условий!
+        if len(tokens) == 2:
+            first, second = tokens[0], tokens[1]
+            if first in {"confirm", "/confirm", "/confirm_decision", "подтверждаю", "утверждаю"}:
+                if re.match(r"^[a-zA-Z0-9_\-]+$", second):
+                    if expected_proposal_id is None or second == expected_proposal_id.lower():
+                        return True
 
         return False
 
@@ -265,13 +257,37 @@ class P026Handler:
         target_prop_id = proposal_id
         if not target_prop_id and text:
             cleaned_text = text.strip()
-            match_cmd = re.match(r"^/(?:confirm_decision|confirm)\s+([a-zA-Z0-9_-]+)", cleaned_text, re.I)
+            # Точное соответствие команде или фразе подтверждения (строго без лишнего хвоста)
+            match_cmd = re.match(r"^/(?:confirm_decision|confirm)\s+([a-zA-Z0-9_\-]+)$", cleaned_text, re.I)
             if match_cmd:
                 target_prop_id = match_cmd.group(1).strip()
             else:
-                match_words = re.match(r"^(?:подтверждаю|утверждаю)\s+([a-zA-Z0-9_-]+)", cleaned_text, re.I)
+                match_words = re.match(r"^(?:подтверждаю|утверждаю)\s+([a-zA-Z0-9_\-]+)$", cleaned_text, re.I)
                 if match_words:
-                    target_prop_id = match_words.group(1).strip()
+                    word_target = match_words.group(1).strip()
+                    pending_here = self._pending_proposals.get(key)
+                    if (pending_here and pending_here.get("proposal_id") == word_target) or re.match(r"^(?:p\d+|prop_[a-zA-Z0-9_\-]+|probe\d+)$", word_target, re.I):
+                        target_prop_id = word_target
+
+            # Защита от попыток псевдосогласий/условных подтверждений с лишним хвостом
+            if not target_prop_id:
+                match_bad_cmd = re.match(r"^/(?:confirm_decision|confirm)\s+([a-zA-Z0-9_\-]+)\s+.+$", cleaned_text, re.I)
+                if match_bad_cmd:
+                    return {
+                        "ok": False,
+                        "message": "Подтверждение должно быть безусловным и однозначным (отказы и условные согласия отклоняются).",
+                        "decision": None,
+                    }
+                match_bad_words = re.match(r"^(?:подтверждаю|утверждаю)\s+([a-zA-Z0-9_\-]+)\s+.+$", cleaned_text, re.I)
+                if match_bad_words:
+                    cand_id = match_bad_words.group(1).strip()
+                    pending_here = self._pending_proposals.get(key)
+                    if (pending_here and pending_here.get("proposal_id") == cand_id) or re.match(r"^(?:p\d+|prop_[a-zA-Z0-9_\-]+|probe\d+)$", cand_id, re.I):
+                        return {
+                            "ok": False,
+                            "message": "Подтверждение должно быть безусловным и однозначным (отказы и условные согласия отклоняются).",
+                            "decision": None,
+                        }
 
         # 2. Если proposal_id передан или извлечён — строгая верификация и подтверждение
         if target_prop_id:
@@ -314,7 +330,7 @@ class P026Handler:
                 }
 
             # Проверка однозначности подтверждения
-            if not self.is_unambiguous_confirmation(text):
+            if not self.is_unambiguous_confirmation(text, expected_proposal_id=target_prop_id):
                 return {
                     "ok": False,
                     "message": "Подтверждение должно быть безусловным и однозначным (отказы и условные согласия отклоняются).",

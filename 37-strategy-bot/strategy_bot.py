@@ -7,6 +7,7 @@ import hashlib
 import io
 import logging
 import os
+import re
 import tempfile
 import sys
 from collections import defaultdict
@@ -30,6 +31,16 @@ STRATEGY_SOURCE_FILES = (
 MAX_INPUT_CHARS = 100_000
 MAX_HISTORY_ITEMS = 10
 MODEL_NAME = os.environ.get("STAR_BUILDING_STRATEGY_MODEL", "gemini-3.7-flash")
+
+# U6: Суммарный контекстный бюджет модели (Gemini 1.5/2.0/3.7 Flash)
+# Модельное контекстное окно составляет 1 048 576 токенов (~4 000 000 символов).
+# Для обеспечения стабильного SLA и детерминированного fail-closed отсечения переполнений
+# устанавливается строгий эксплуатационный бюджет:
+# - Суммарный лимит контекста: 1 500 000 символов (system + user + history + decisions + answer reserve);
+# - Неприкосновенный резерв на генерацию ответа модели: 32 000 символов (~8 000 токенов);
+# При превышении общего спроса на контекст генерация блокируется ДО вызова SDK/модели.
+MODEL_ANSWER_RESERVE_CHARS = 32_000
+MAX_TOTAL_CONTEXT_BUDGET_CHARS = int(os.environ.get("STAR_BUILDING_MAX_CONTEXT_BUDGET_CHARS", 1_500_000))
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger("star_building_strategy_bot")
@@ -257,6 +268,25 @@ async def generate_answer(
 
     user_prompt = build_user_prompt(user_text, author_name, user_id=user_id, chat_id=chat_id)
 
+    # U6: Суммарная проверка бюджета контекста (system + user + history + decisions + image + reserve)
+    payload_chars = len(system_prompt) + len(user_prompt) + (len(image_bytes) if image_bytes else 0)
+    total_context_demand = payload_chars + MODEL_ANSWER_RESERVE_CHARS
+
+    if total_context_demand > MAX_TOTAL_CONTEXT_BUDGET_CHARS:
+        logger.error(
+            "Превышен суммарный бюджет контекста модели: %d > %d (system: %d, user: %d, reserve: %d)",
+            total_context_demand,
+            MAX_TOTAL_CONTEXT_BUDGET_CHARS,
+            len(system_prompt),
+            len(user_prompt),
+            MODEL_ANSWER_RESERVE_CHARS,
+        )
+        return (
+            "⛔ Запрос отклонён: суммарный объём контекста превышает допустимый бюджет модели "
+            f"({total_context_demand} > {MAX_TOTAL_CONTEXT_BUDGET_CHARS} зн.). "
+            "История диалога сохранена без изменений."
+        )
+
     def call_model() -> str:
         client = genai.Client(api_key=get_api_key())
         contents: Any = user_prompt
@@ -384,23 +414,41 @@ async def handle_record_decision(update, context) -> None:
         )
         return
     decision_text = parts[1].strip()
-    if decision_text.lower().startswith(("confirm", "подтверждаю")):
+    decision_lower = decision_text.lower()
+    confirm_pfxs = ("/confirm", "/confirm_decision", "confirm", "подтверждаю", "утверждаю")
+    if any(decision_lower.startswith(pfx) for pfx in confirm_pfxs):
         subparts = decision_text.split(maxsplit=1)
-        prop_id = subparts[1].strip() if len(subparts) > 1 else None
-        result = get_p026_handler().record_owner_decision(
-            author=user.full_name or "Руководитель",
-            text="подтверждаю",
-            user_id=user.id,
-            chat_id=chat.id if chat else None,
-            proposal_id=prop_id,
-        )
-    else:
-        result = get_p026_handler().record_owner_decision(
-            author=user.full_name or "Руководитель",
-            text=decision_text,
-            user_id=user.id,
-            chat_id=chat.id if chat else None,
-        )
+        first_word = subparts[0].lower()
+        remainder = subparts[1].strip() if len(subparts) > 1 else ""
+
+        is_independent_norm = False
+        if first_word in {"утверждаю", "подтверждаю"} and remainder:
+            first_rem_token = remainder.split()[0].lower()
+            pending_prop = get_p026_handler().get_pending_proposal(user.id, chat.id if chat else None)
+            expected_pid = pending_prop.get("proposal_id") if pending_prop else None
+            is_pid = (expected_pid and first_rem_token == expected_pid.lower()) or bool(
+                re.match(r"^(?:p\d+|prop_[a-zA-Z0-9_\-]+|probe\d+)$", first_rem_token)
+            )
+            if not is_pid:
+                is_independent_norm = True
+
+        if not is_independent_norm:
+            result = get_p026_handler().record_owner_decision(
+                author=user.full_name or "Руководитель",
+                text=decision_text,
+                user_id=user.id,
+                chat_id=chat.id if chat else None,
+                proposal_id=remainder if remainder else None,
+            )
+            await update.effective_message.reply_text(result["message"])
+            return
+
+    result = get_p026_handler().record_owner_decision(
+        author=user.full_name or "Руководитель",
+        text=decision_text,
+        user_id=user.id,
+        chat_id=chat.id if chat else None,
+    )
     await update.effective_message.reply_text(result["message"])
 
 
@@ -420,7 +468,7 @@ async def handle_confirm_decision(update, context) -> None:
 
     result = get_p026_handler().record_owner_decision(
         author=user.full_name or "Руководитель",
-        text="подтверждаю",
+        text=message_text,
         user_id=user.id,
         chat_id=chat.id if chat else None,
         proposal_id=prop_id,

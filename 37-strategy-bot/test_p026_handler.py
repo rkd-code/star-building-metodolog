@@ -239,5 +239,41 @@ class P026HandlerTest(unittest.TestCase):
             self.assertFalse(res["ok"])
             self.assertIsNotNone(self.handler.get_pending_proposal(123, 123), "Pending не должен сбрасываться при ошибке записи")
 
+    def test_u1_strict_grammar_rejects_conditions_and_refusals_and_preserves_pending(self):
+        """U1: Строгая грамматика подтверждения отклоняет любые условия, оговорки и лишний хвост."""
+        phrases_to_reject = [
+            "подтверждаю лишь после проверки",
+            "подтверждаю не сейчас",
+            "/confirm p1 не надо",
+            "подтверждаю, возможно позднее",
+            "подтверждаю только после согласования юристом",
+            "утверждаю при условии проверки бюджета",
+            "подтверждаю не утверждать",
+        ]
+        for i, text in enumerate(phrases_to_reject):
+            with self.subTest(text=text):
+                pid = f"u1_probe_{i}"
+                self.handler.set_pending_proposal(
+                    user_id=123, chat_id=123,
+                    proposal_text="Утвердить лимит скидки 12.5%",
+                    proposal_id=pid,
+                )
+                res = self.handler.record_owner_decision("A", text, user_id=123, chat_id=123, proposal_id=pid)
+                self.assertFalse(res["ok"], f"Фраза '{text}' должна быть отклонена!")
+                self.assertIsNone(res["decision"])
+                self.assertEqual(0, len(self.storage.list_decisions(123, 123)))
+                # Предложение остаётся активным в pending
+                pending = self.handler.get_pending_proposal(123, 123)
+                self.assertIsNotNone(pending)
+                assert pending is not None
+                self.assertEqual(pid, pending["proposal_id"])
+
+        # Контрольное чистое подтверждение принимается
+        self.handler.set_pending_proposal(123, 123, "Утвердить лимит скидки 12.5%", proposal_id="u1_clean")
+        res_ok = self.handler.record_owner_decision("A", "подтверждаю", user_id=123, chat_id=123, proposal_id="u1_clean")
+        self.assertTrue(res_ok["ok"])
+        self.assertEqual(1, len(self.storage.list_decisions(123, 123)))
+        self.assertIsNone(self.handler.get_pending_proposal(123, 123))
+
 if __name__ == "__main__":
     unittest.main()
