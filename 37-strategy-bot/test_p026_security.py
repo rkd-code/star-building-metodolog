@@ -227,7 +227,7 @@ class P026SecurityTest(unittest.TestCase):
                 if case == "changed_current_release":
                     (p / "new-release").mkdir(exist_ok=True)
                     ((p / "new-release") / "app.py").write_text("print('current')\n", encoding="utf-8")
-                (backup / "star-building-strategy.service").write_text(f"[Service]\nWorkingDirectory={work}\nExecStart=/fixture/python {work}/app.py\n", encoding="utf-8")
+                (backup / "star-building-strategy.service").write_text(f"[Service]\nWorkingDirectory={work}\nExecStart={sys.executable} {work}/app.py\n", encoding="utf-8")
                 (backup / "code/app.py").write_text("print('safe')\n", encoding="utf-8")
                 meta = {
                     "unit_sha256": hashlib.sha256((backup / "star-building-strategy.service").read_bytes()).hexdigest(),
@@ -247,7 +247,7 @@ class P026SecurityTest(unittest.TestCase):
                 for name in ["cp", "rsync", "systemctl"]:
                     f = bindir / name
                     if name == "systemctl":
-                        f.write_text('#!/bin/sh\nif [ "$2" = "show" ]; then if [ "$QUERY_FAIL" = 1 ]; then exit 1; fi; case "$*" in *ExecStart*) printf "/fixture/python %s/app.py\\n" "$SAFE_WORK_DIR";; *) printf "%s\\n" "$SAFE_WORK_DIR";; esac; else printf "INTERCEPT systemctl %s\\n" "$*"; fi\n', encoding="utf-8")
+                        f.write_text(f'#!/bin/sh\nif [ "$2" = "show" ]; then if [ "$QUERY_FAIL" = 1 ]; then exit 1; fi; case "$*" in *ExecStart*) printf "{sys.executable} %s/app.py\\n" "$SAFE_WORK_DIR";; *) printf "%s\\n" "$SAFE_WORK_DIR";; esac; else printf "INTERCEPT systemctl %s\\n" "$*"; fi\n', encoding="utf-8")
                     else:
                         f.write_text('#!/bin/sh\nprintf "INTERCEPT ' + name + ' %s\\n" "$*"\n', encoding="utf-8")
                     f.chmod(0o700)
@@ -298,7 +298,7 @@ class P026SecurityTest(unittest.TestCase):
         (src / "app.py").symlink_to(p / "external-fixture")
         (dst / "star-building-strategy.service").write_text("SAFE FIXTURE UNIT", encoding="utf-8")
 
-        code_u5 = code.replace("$LIVE_WORK_DIR", str(src)).replace("$PINNED_BACKUP_DIR", str(dst)).replace("$BACKUP_TIMESTAMP", "FIXTURE").replace("$LIVE_UNIT_PATH", "FIXTURE_UNIT").replace("$LIVE_EXEC_START", f"/fixture/python {src}/app.py")
+        code_u5 = code.replace("$LIVE_WORK_DIR", str(src)).replace("$PINNED_BACKUP_DIR", str(dst)).replace("$BACKUP_TIMESTAMP", "FIXTURE").replace("$LIVE_UNIT_PATH", "FIXTURE_UNIT").replace("$LIVE_EXEC_START", f"{sys.executable} {src}/app.py")
         # W4: symlink entrypoint обязан вызывать немедленный fail-closed отказ (SystemExit)
         with self.assertRaises(SystemExit):
             exec(compile(code_u5, "DEPLOYMENT_PLAN backup excerpt", "exec"), {})
@@ -402,7 +402,7 @@ class P026SecurityTest(unittest.TestCase):
                     dest = str(p / "unrelated-target")
 
                 unit = backup / "star-building-strategy.service"
-                unit.write_text(f"[Service]\nWorkingDirectory={dest}\nExecStart=/fixture/python {dest}/app.py\n")
+                unit.write_text(f"[Service]\nWorkingDirectory={dest}\nExecStart={sys.executable} {dest}/app.py\n")
                 meta = {
                     "unit_sha256": hashlib.sha256(unit.read_bytes()).hexdigest(),
                     "code_files_count": 1,
@@ -426,7 +426,7 @@ class P026SecurityTest(unittest.TestCase):
                 bindir = p / "bin"; bindir.mkdir()
                 for name in ["systemctl", "cp", "rsync", "mkdir"]:
                     content = (
-                        '#!/bin/sh\nif [ "$2" = show ]; then [ "$QUERY_FAIL" != 1 ] || exit 1; case "$*" in *ExecStart*) printf "/fixture/python %s/app.py\\n" "$CURRENT_HANDLE";; *) printf "%s\\n" "$CURRENT_HANDLE";; esac; else printf "INTERCEPT systemctl %s\\n" "$*"; fi\n'
+                        f'#!/bin/sh\nif [ "$2" = show ]; then [ "$QUERY_FAIL" != 1 ] || exit 1; case "$*" in *ExecStart*) printf "{sys.executable} %s/app.py\\n" "$CURRENT_HANDLE";; *) printf "%s\\n" "$CURRENT_HANDLE";; esac; else printf "INTERCEPT systemctl %s\\n" "$*"; fi\n'
                         if name == "systemctl"
                         else '#!/bin/sh\nprintf "INTERCEPT ' + name + ' %s\\n" "$*"\n'
                     )
@@ -492,12 +492,13 @@ class P026SecurityTest(unittest.TestCase):
                 (old / "runtime-state.bin").write_text("PRESERVE_STATE")
                 unit = home / ".config/systemd/user/star-building-strategy.service"
                 unit.parent.mkdir(parents=True)
-                oldunit = f"[Service]\nWorkingDirectory={old}\nExecStart=/fixture/python {old}/app.py\n"
+                oldunit = f"[Service]\nWorkingDirectory={old}\nExecStart={sys.executable} {old}/app.py\n"
                 unit.write_text(oldunit)
 
                 release = home / "new-release"
                 (release / "37-strategy-bot/systemd").mkdir(parents=True)
                 shutil.copyfile(ROOT / "systemd/star-building-strategy.service", release / "37-strategy-bot/systemd/star-building-strategy.service")
+                (release / "37-strategy-bot/strategy_bot.py").write_text("import sys\nprint('SYNTHETIC_STRATEGY_BOT_RUNNING')\n", encoding="utf-8")
 
                 bindir = p / "bin"; bindir.mkdir()
                 log = p / "calls.log"
@@ -568,7 +569,7 @@ class P026SecurityTest(unittest.TestCase):
                     "$PINNED_BACKUP_DIR": str(dst),
                     "$BACKUP_TIMESTAMP": "FIXTURE",
                     "$LIVE_UNIT_PATH": "FIXTURE",
-                    "$LIVE_EXEC_START": f"/fixture/python {live}/app.py",
+                    "$LIVE_EXEC_START": f"{sys.executable} {live}/app.py",
                 }.items():
                     code = code.replace(a, b)
 
@@ -609,12 +610,13 @@ class P026SecurityTest(unittest.TestCase):
         (old / "runtime-state.bin").write_text("PRESERVE_STATE")
         unit = home / ".config/systemd/user/star-building-strategy.service"
         unit.parent.mkdir(parents=True)
-        oldunit = f"[Service]\nWorkingDirectory={old}\nExecStart=/fixture/python {old}/app.py\n"
+        oldunit = f"[Service]\nWorkingDirectory={old}\nExecStart={sys.executable} {old}/app.py\n"
         unit.write_text(oldunit)
 
         release = home / "new-release"
         (release / "37-strategy-bot/systemd").mkdir(parents=True)
         shutil.copyfile(ROOT / "systemd/star-building-strategy.service", release / "37-strategy-bot/systemd/star-building-strategy.service")
+        (release / "37-strategy-bot/strategy_bot.py").write_text("import sys\nprint('SYNTHETIC_STRATEGY_BOT_RUNNING')\n", encoding="utf-8")
 
         bindir = p / "bin"; bindir.mkdir()
         log = p / "calls.log"
@@ -697,26 +699,26 @@ class P026SecurityTest(unittest.TestCase):
 
                     dest = str(old)
                     handle = str(cur)
-                    execstart = f"/fixture/python {old}/app.py"
-                    current_exec = f"/fixture/python {cur}/app.py"
+                    execstart = f"{sys.executable} {old}/app.py"
+                    current_exec = f"{sys.executable} {cur}/app.py"
 
                     if case == "destination_escape":
                         dest = str(home / ".." / "outside")
                         (p / "outside").mkdir()
-                        execstart = f"/fixture/python {dest}/app.py"
+                        execstart = f"{sys.executable} {dest}/app.py"
                     elif case == "current_escape":
                         handle = str(home / ".." / "outside")
                         (p / "outside").mkdir()
-                        current_exec = f"/fixture/python {handle}/app.py"
+                        current_exec = f"{sys.executable} {handle}/app.py"
                     elif case == "missing_destination":
                         (old / "app.py").unlink()
                         old.rmdir()
                     elif case == "old_exec_mismatch":
-                        execstart = f"/fixture/python {p}/unrelated/app.py"
+                        execstart = f"{sys.executable} {p}/unrelated/app.py"
                     elif case == "old_exec_missing":
                         execstart = ""
                     elif case == "current_exec_mismatch":
-                        current_exec = f"/fixture/python {p}/unrelated/app.py"
+                        current_exec = f"{sys.executable} {p}/unrelated/app.py"
 
                     unit = f"[Service]\nWorkingDirectory={dest}\nExecStart={execstart}\n"
                     (dst / "star-building-strategy.service").write_text(unit)
@@ -812,7 +814,7 @@ if "show" in a:
                     "$PINNED_BACKUP_DIR": str(dst),
                     "$BACKUP_TIMESTAMP": "FIXTURE",
                     "$LIVE_UNIT_PATH": "FIXTURE",
-                    "$LIVE_EXEC_START": f"/fixture/python {src}/app.py",
+                    "$LIVE_EXEC_START": f"{sys.executable} {src}/app.py",
                 }.items():
                     code = code.replace(a, b)
 
@@ -865,7 +867,7 @@ if "show" in a:
             "$PINNED_BACKUP_DIR": str(dst_bad),
             "$BACKUP_TIMESTAMP": "FIXTURE",
             "$LIVE_UNIT_PATH": "FIXTURE",
-            "$LIVE_EXEC_START": f"/fixture/python {old}/app.py",
+            "$LIVE_EXEC_START": f"{sys.executable} {old}/app.py",
         }.items():
             bad_code = bad_code.replace(a, b)
 
@@ -890,6 +892,7 @@ if "show" in a:
         (release / "37-strategy-bot/systemd").mkdir(parents=True)
         import shutil
         shutil.copyfile(ROOT / "systemd/star-building-strategy.service", release / "37-strategy-bot/systemd/star-building-strategy.service")
+        (release / "37-strategy-bot/strategy_bot.py").write_text("import sys\nprint('STRATEGY_BOT_SYNTHETIC_OK')\n", encoding="utf-8")
 
         bindir = p / "bin"; bindir.mkdir()
         log = p / "calls.log"
@@ -955,6 +958,11 @@ if "show" in a:
             "python_c",
             "current_structured_bad_path",
             "current_missing_entry",
+            "fake_interpreter",
+            "missing_interpreter",
+            "structured_same_basename",
+            "python2",
+            "multi_command",
         ]
         for phase, script in [("stop", stop_block), ("restore", restore_block)]:
             for case in cases:
@@ -969,8 +977,8 @@ if "show" in a:
 
                     dest = str(old)
                     current = str(cur)
-                    oldexec = f"/fixture/python {old}/app.py"
-                    curexec = f"/fixture/python {cur}/app.py"
+                    oldexec = f"{sys.executable} {old}/app.py"
+                    curexec = f"{sys.executable} {cur}/app.py"
 
                     if case == "echo_interpreter":
                         oldexec = f"/bin/echo {old}/app.py"
@@ -979,9 +987,21 @@ if "show" in a:
                         oldexec = f"/usr/bin/python3 -c pass {old}/app.py"
                         curexec = f"/usr/bin/python3 -c pass {cur}/app.py"
                     elif case == "current_structured_bad_path":
-                        curexec = "{ path=/bin/echo ; argv[]=/fixture/python " + str(cur) + "/app.py ; ignore_errors=no ; }"
+                        curexec = "{ path=/bin/echo ; argv[]=" + sys.executable + " " + str(cur) + "/app.py ; ignore_errors=no ; }"
                     elif case == "current_missing_entry":
                         (cur / "app.py").unlink()
+                    elif case == "fake_interpreter":
+                        bad = p / "fake/python3"; bad.parent.mkdir(parents=True, exist_ok=True); bad.symlink_to("/bin/echo")
+                        curexec = f"{bad} {cur}/app.py"
+                    elif case == "missing_interpreter":
+                        curexec = f"{p}/does-not-exist/python3 {cur}/app.py"
+                    elif case == "structured_same_basename":
+                        bad = p / "fake/python3"; bad.parent.mkdir(parents=True, exist_ok=True); bad.symlink_to("/bin/echo")
+                        curexec = "{ path=" + str(bad) + " ; argv[]=" + sys.executable + " " + str(cur) + "/app.py ; ignore_errors=no ; }"
+                    elif case == "python2":
+                        curexec = f"/usr/bin/python2 {cur}/app.py"
+                    elif case == "multi_command":
+                        curexec = "{ path=" + sys.executable + " ; argv[]=" + sys.executable + " " + str(cur) + "/app.py ; } { path=/bin/echo ; argv[]=/bin/echo evil ; }"
 
                     unit = f"[Service]\nWorkingDirectory={dest}\nExecStart={oldexec}\n"
                     (backup / "star-building-strategy.service").write_text(unit, encoding="utf-8")
@@ -1059,7 +1079,7 @@ else:
             "$PINNED_BACKUP_DIR": str(dst),
             "$BACKUP_TIMESTAMP": "FIXTURE",
             "$LIVE_UNIT_PATH": "FIXTURE",
-            "$LIVE_EXEC_START": f"/fixture/python {src}/app.py",
+            "$LIVE_EXEC_START": f"{sys.executable} {src}/app.py",
         }.items():
             code = code.replace(a, b)
 
@@ -1102,7 +1122,7 @@ else:
             "$PINNED_BACKUP_DIR": str(dst),
             "$BACKUP_TIMESTAMP": "FIXTURE",
             "$LIVE_UNIT_PATH": "FIXTURE",
-            "$LIVE_EXEC_START": f"/fixture/python {src}/app.py",
+            "$LIVE_EXEC_START": f"{sys.executable} {src}/app.py",
         }.items():
             code = code.replace(a, b)
 
@@ -1111,5 +1131,85 @@ else:
         self.assertFalse((dst / "code/app.py").exists(), "app.py НЕ должен быть скопирован при позднем symlink!")
         self.assertFalse((dst / "code/p026_storage.py").exists(), "p026_storage.py НЕ должен быть скопирован при позднем symlink!")
         self.assertEqual("EXTERNAL_UNCHANGED\n", (ext / "app.py").read_text(encoding="utf-8"), "Внешний sentinel изменён!")
+
+    def test_z1_z2_z3_z4_comprehensive_matrix(self):
+        """Z1–Z4: Комплексная матрица регрессионных проверок безопасности развертывания и отката."""
+        import subprocess, json
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        def get_block(title):
+            m = re.search(r"```bash\n(.*?)```", plan.split(title)[1], re.S)
+            assert m is not None
+            return m.group(1)
+
+        # 1. Z3: Полный опубликованный shell-блок бэкапа в свежем HOME с невалидным хэндлом
+        p_z3 = Path(self.temp_dir.name) / "z3_shell_block"
+        home_z3 = p_z3 / "home"; bin_z3 = p_z3 / "bin"; bin_z3.mkdir(parents=True); home_z3.mkdir()
+        (bin_z3 / "date").write_text("#!/bin/sh\nprintf FIXTURE\n"); (bin_z3 / "date").chmod(0o700)
+        (bin_z3 / "systemctl").write_text('#!/bin/sh\nprintf "\n"\n'); (bin_z3 / "systemctl").chmod(0o700)
+        env_z3 = {"HOME": str(home_z3), "PATH": str(bin_z3) + ":/usr/bin:/bin", "LANG": "C.UTF-8"}
+        block_b = get_block("### Шаг 2. Фиксация и полный бэкап").replace("/home/roman", str(home_z3))
+        r_z3 = subprocess.run(["/bin/bash", "-c", block_b], env=env_z3, text=True, capture_output=True, timeout=15)
+        self.assertNotEqual(0, r_z3.returncode, "Блок бэкапа с пустым FragmentPath обязан завершаться fail-closed (rc!=0)")
+        created_dirs_z3 = sorted(str(d.relative_to(home_z3)) for d in home_z3.rglob("*") if d.is_dir())
+        self.assertEqual([], created_dirs_z3, f"Z3: Никакие каталоги не должны создаваться до успешного preflight: {created_dirs_z3}")
+
+        # 2. Z4: Шаг переключения (switch) при отсутствующем entrypoint завершается fail-closed
+        p_z4 = Path(self.temp_dir.name) / "z4_missing_entry"
+        home_z4 = p_z4 / "home"; rel_z4 = home_z4 / "rel"; (rel_z4 / "37-strategy-bot/systemd").mkdir(parents=True); bin_z4 = p_z4 / "bin"; bin_z4.mkdir()
+        (rel_z4 / "37-strategy-bot/systemd/star-building-strategy.service").write_text("[Service]\n")
+        (bin_z4 / "systemctl").write_text("#!/bin/sh\nexit 0\n"); (bin_z4 / "systemctl").chmod(0o700)
+        switch_b = get_block("### Шаг 4. Атомарное переключение службы").replace("/home/roman", str(home_z4))
+        env_z4 = {"HOME": str(home_z4), "PATH": str(bin_z4) + ":/usr/bin:/bin", "RELEASE_DIR": str(rel_z4), "TARGET_COMMIT": "FIXTURE"}
+        r_z4 = subprocess.run(["/bin/bash", "-c", switch_b], env=env_z4, capture_output=True, text=True, timeout=15)
+        self.assertNotEqual(0, r_z4.returncode, "Переключение при отсутствующем entrypoint обязано завершаться fail-closed (rc!=0)")
+        entry_z4 = rel_z4 / "37-strategy-bot/strategy_bot.py"
+        self.assertFalse(entry_z4.exists(), "Z4: Заглушка entrypoint НЕ должна создаваться в неизменяемом релизе!")
+        unit_z4 = home_z4 / ".config/systemd/user/star-building-strategy.service"
+        self.assertFalse(unit_z4.exists(), "Unit-файл не должен создаваться при сбое переключения")
+
+        # Позитивный switch с реальным кодом исполняется корректно
+        p_z4_pos = Path(self.temp_dir.name) / "z4_pos"
+        home_z4_p = p_z4_pos / "home"; rel_z4_p = home_z4_p / "rel"; (rel_z4_p / "37-strategy-bot/systemd").mkdir(parents=True)
+        bin_z4_p = p_z4_pos / "bin"; bin_z4_p.mkdir()
+        (rel_z4_p / "37-strategy-bot/systemd/star-building-strategy.service").write_text("[Service]\nWorkingDirectory=/old\nExecStart=/old/py /old/app.py\n")
+        (rel_z4_p / "37-strategy-bot/strategy_bot.py").write_text("print('SYNTHETIC_BOT_READY')\n")
+        (bin_z4_p / "systemctl").write_text("#!/bin/sh\nexit 0\n"); (bin_z4_p / "systemctl").chmod(0o700)
+        switch_pos = get_block("### Шаг 4. Атомарное переключение службы").replace("/home/roman", str(home_z4_p))
+        env_z4_p = {"HOME": str(home_z4_p), "PATH": str(bin_z4_p) + ":/usr/bin:/bin", "RELEASE_DIR": str(rel_z4_p), "TARGET_COMMIT": "FIXTURE"}
+        r_z4_p = subprocess.run(["/bin/bash", "-c", switch_pos], env=env_z4_p, capture_output=True, text=True, timeout=15)
+        self.assertEqual(0, r_z4_p.returncode, f"Позитивный switch обязан завершаться успешно: {r_z4_p.stderr}")
+        unit_z4_p = home_z4_p / ".config/systemd/user/star-building-strategy.service"
+        self.assertTrue(unit_z4_p.exists(), "Unit-файл службы должен быть успешно создан")
+        self.assertIn(str(rel_z4_p / "37-strategy-bot"), unit_z4_p.read_text(), "Unit должен указывать на новый релиз")
+
+        # 3. Z2: Проверка защиты временных файлов (O_CREAT | O_EXCL) с реальным PID
+        p_z2 = Path(self.temp_dir.name) / "z2_temp_symlink"
+        src_z2 = p_z2 / "src"; dst_z2 = p_z2 / "dst"; ext_z2 = p_z2 / "external"
+        for d in [src_z2, dst_z2, ext_z2]: d.mkdir(parents=True)
+        (src_z2 / "app.py").write_text("import p026_storage\n")
+        (src_z2 / "p026_storage.py").write_text("VALUE='OK'\n")
+        sentinel_z2 = ext_z2 / "sentinel"; sentinel_z2.write_text("EXTERNAL_UNCHANGED\n")
+        mtime_before = sentinel_z2.stat().st_mtime_ns
+        (dst_z2 / "star-building-strategy.service").write_text("[Service]\n")
+        (dst_z2 / "code").mkdir()
+        # Создаём предсказуемый временный symlink под реальный PID процесса
+        m_code = re.search(r"python3 -c \"\n(.*?)\n\"", get_block("### Шаг 2. Фиксация и полный бэкап"), re.S)
+        assert m_code is not None
+        bp_code = m_code.group(1)
+        for a, b in {
+            "$LIVE_WORK_DIR": str(src_z2),
+            "$PINNED_BACKUP_DIR": str(dst_z2),
+            "$BACKUP_TIMESTAMP": "FIXTURE",
+            "$LIVE_UNIT_PATH": "FIXTURE",
+            "$LIVE_EXEC_START": f"{sys.executable} {src_z2}/app.py",
+        }.items():
+            bp_code = bp_code.replace(a, b)
+        setup_z2 = f"import pathlib, os\n(pathlib.Path({repr(str(dst_z2))}) / ('.pinned_metadata.tmp_' + str(os.getpid()))).symlink_to({repr(str(sentinel_z2))})\n"
+        r_z2 = subprocess.run([sys.executable, "-c", setup_z2 + bp_code], capture_output=True, text=True, timeout=15)
+        self.assertNotEqual(0, r_z2.returncode, "Бэкап при наличии pre-existing temp symlink обязан завершаться с ошибкой")
+        self.assertEqual("EXTERNAL_UNCHANGED\n", sentinel_z2.read_text(), "Внешний sentinel был изменён через временный symlink!")
+        self.assertEqual(mtime_before, sentinel_z2.stat().st_mtime_ns, "mtime внешнего sentinel был изменён!")
+        self.assertFalse((dst_z2 / "pinned_metadata.json").is_symlink() if (dst_z2 / "pinned_metadata.json").exists() else False, "Метаданные не должны публиковаться как symlink!")
 if __name__ == "__main__":
     unittest.main()

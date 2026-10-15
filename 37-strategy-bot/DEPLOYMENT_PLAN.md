@@ -143,9 +143,8 @@ set -euo pipefail
 
 BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 export PINNED_BACKUP_DIR="/home/roman/srv/star-building-strategy/backups/pinned_live_${BACKUP_TIMESTAMP}"
-mkdir -p "$PINNED_BACKUP_DIR"
 
-# 1. Точное определение активных хэндлов работающей службы через systemd
+# 1. Точное определение активных хэндлов работающей службы через systemd (строгий preflight ДО создания любых каталогов)
 LIVE_UNIT_PATH=$(systemctl --user show star-building-strategy.service -p FragmentPath --value 2>/dev/null || echo "")
 LIVE_EXEC_START=$(systemctl --user show star-building-strategy.service -p ExecStart --value 2>/dev/null || echo "")
 LIVE_WORK_DIR=$(systemctl --user show star-building-strategy.service -p WorkingDirectory --value 2>/dev/null || echo "")
@@ -157,6 +156,11 @@ fi
 
 if [ -z "$LIVE_WORK_DIR" ] || [ ! -d "$LIVE_WORK_DIR" ]; then
     echo "ОШИБКА: Рабочий каталог активной службы ($LIVE_WORK_DIR) не найден!"
+    exit 1
+fi
+
+if [ -z "$LIVE_EXEC_START" ]; then
+    echo "ОШИБКА: Команда ExecStart активной службы не определена!"
     exit 1
 fi
 
@@ -199,20 +203,24 @@ if not backup_dir.is_absolute() or '..' in backup_dir.parts or '.' in backup_dir
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог бэкапа {dst_dir_raw} не каноничен или содержит ..!', file=sys.stderr)
     sys.exit(1)
 
-if not backup_dir.exists() or not backup_dir.is_dir():
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог бэкапа {backup_dir} не существует или не является каталогом!', file=sys.stderr)
-    sys.exit(1)
-
-cur = backup_dir
+cur = backup_dir if backup_dir.exists() else backup_dir.parent
 while True:
-    if cur.is_symlink() or os.path.islink(str(cur)):
+    if cur.exists() and (cur.is_symlink() or os.path.islink(str(cur))):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент каталога бэкапа {cur} является symlink!', file=sys.stderr)
         sys.exit(1)
     if cur == cur.parent:
         break
     cur = cur.parent
 
-# Y1: Проверка и валидация команды ExecStart активной службы
+if backup_dir.exists():
+    if not backup_dir.is_dir():
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Путь бэкапа {backup_dir} существует и не является каталогом!', file=sys.stderr)
+        sys.exit(1)
+    if backup_dir.is_symlink() or os.path.islink(str(backup_dir)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог бэкапа {backup_dir} является symlink!', file=sys.stderr)
+        sys.exit(1)
+
+# Y1 & Z1: Проверка и валидация команды ExecStart активной службы
 def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, is_current: bool = False) -> tuple[pathlib.Path, str]:
     if not isinstance(exec_str, str) or not exec_str.strip():
         print(f'КРИТИЧЕСКАЯ ОШИБКА: ExecStart для {label} пуст!', file=sys.stderr)
@@ -220,7 +228,10 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
     cmdline = exec_str.strip()
     structured_path = None
     if cmdline.startswith('{'):
-        inner = cmdline.strip('{} \\n\\t')
+        if cmdline.count('{') != 1 or cmdline.count('}') != 1 or not cmdline.rstrip().endswith('}'):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис (множественные команды) systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
+            sys.exit(1)
+        inner = cmdline.strip('{} \n\t')
         props = {}
         for part in inner.split(';'):
             part = part.strip()
@@ -236,6 +247,9 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
             print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
             sys.exit(1)
         cmdline = argv_val
+    elif '{' in cmdline or '}' in cmdline:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Запрещённые символы структурированного формата в ExecStart для {label}: {cmdline}', file=sys.stderr)
+        sys.exit(1)
 
     try:
         tokens = shlex.split(cmdline)
@@ -246,19 +260,78 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Токены ExecStart для {label} пусты!', file=sys.stderr)
         sys.exit(1)
     for tok in tokens:
-        if any(c in tok for c in [';', '&', '|', chr(96), chr(36), '\\n']):
+        if any(c in tok for c in [';', '&', '|', chr(96), chr(36), '\n']):
             print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружены запрещённые метасимволы в ExecStart для {label}: {tok}', file=sys.stderr)
+            sys.exit(1)
+        if tok in ('-c', '-m') or tok.startswith(('-c', '-m')):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Запрещённый флаг Python ({tok}) в ExecStart для {label}!', file=sys.stderr)
             sys.exit(1)
 
     argv0 = tokens[0]
+
+    # Z1: Валидация executable и доверенной модели интерпретатора Python 3
     if structured_path:
-        if structured_path != argv0 and pathlib.Path(structured_path).name != pathlib.Path(argv0).name:
-            print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение path={structured_path} и argv[0]={argv0} в ExecStart для {label}!', file=sys.stderr)
+        p_struct = pathlib.Path(structured_path)
+        if not p_struct.is_absolute() or '..' in p_struct.parts or os.path.normpath(structured_path) != structured_path:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: path={structured_path} в ExecStart для {label} не каноничен или содержит ..!', file=sys.stderr)
+            sys.exit(1)
+        if not p_struct.exists() or not p_struct.is_file() or not os.access(str(p_struct), os.X_OK):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл path={structured_path} для {label} не существует или не исполняем!', file=sys.stderr)
+            sys.exit(1)
+        p_argv0 = pathlib.Path(argv0)
+        if p_argv0.is_absolute():
+            if '..' in p_argv0.parts or os.path.normpath(argv0) != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: argv[0]={argv0} в ExecStart для {label} содержит ..!', file=sys.stderr)
+                sys.exit(1)
+            if not p_argv0.exists() or not p_argv0.is_file() or not os.access(str(p_argv0), os.X_OK):
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл argv[0]={argv0} для {label} не существует или не исполняем!', file=sys.stderr)
+                sys.exit(1)
+            try:
+                if p_struct.resolve() != p_argv0.resolve() or not os.path.samefile(str(p_struct), str(p_argv0)):
+                    print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение реальных исполнимых файлов path={structured_path} и argv[0]={argv0} для {label}!', file=sys.stderr)
+                    sys.exit(1)
+            except Exception as err:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка сопоставления path={structured_path} и argv[0]={argv0} для {label}: {err}', file=sys.stderr)
+                sys.exit(1)
+        else:
+            if p_struct.name != argv0 and p_struct.resolve().name != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение имени path={structured_path} и argv[0]={argv0} для {label}!', file=sys.stderr)
+                sys.exit(1)
+        target_exec = p_struct
+    else:
+        p_argv0 = pathlib.Path(argv0)
+        if p_argv0.is_absolute():
+            if '..' in p_argv0.parts or os.path.normpath(argv0) != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: argv[0]={argv0} в ExecStart для {label} содержит ..!', file=sys.stderr)
+                sys.exit(1)
+            target_exec = p_argv0
+        else:
+            found = shutil.which(argv0)
+            if not found:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Команда {argv0} для {label} не найдена в PATH!', file=sys.stderr)
+                sys.exit(1)
+            target_exec = pathlib.Path(found)
+        if not target_exec.exists() or not target_exec.is_file() or not os.access(str(target_exec), os.X_OK):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл {target_exec} для {label} отсутствует или не исполняем!', file=sys.stderr)
             sys.exit(1)
 
-    interp_name = pathlib.Path(structured_path if structured_path else argv0).name
-    if not re.match(r'^python(?:[23](?:\\.\\d+)?)?$', interp_name):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый интерпретатор {interp_name} в ExecStart для {label} (ожидается python)!', file=sys.stderr)
+    try:
+        canon_exec = target_exec.resolve()
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка разрешения пути {target_exec} для {label}: {err}', file=sys.stderr)
+        sys.exit(1)
+
+    if not canon_exec.exists() or not canon_exec.is_file() or not os.access(str(canon_exec), os.X_OK):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический файл интерпретатора {canon_exec} для {label} отсутствует или не исполняем!', file=sys.stderr)
+        sys.exit(1)
+
+    ref_name = target_exec.name
+    canon_name = canon_exec.name
+    if not re.match(r'^python(?:3(?:\.\d+)?)?$', ref_name):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый интерпретатор {ref_name} в ExecStart для {label} (ожидается python/python3)!', file=sys.stderr)
+        sys.exit(1)
+    if not re.match(r'^python3(?:\.\d+)?$', canon_name):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_name} для {label} не является доверенным интерпретатором Python 3!', file=sys.stderr)
         sys.exit(1)
 
     script_tok = None
@@ -459,10 +532,14 @@ if dst_code.exists():
         sys.exit(1)
 
 unit_target = backup_dir / 'star-building-strategy.service'
-if unit_target.is_symlink() or os.path.islink(str(unit_target)):
-    print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой unit {unit_target} является symlink!', file=sys.stderr)
-    sys.exit(1)
+live_unit_val = '$LIVE_UNIT_PATH'
+source_unit_path = None
+unit_bytes = None
+
 if unit_target.exists() or os.path.lexists(str(unit_target)):
+    if unit_target.is_symlink() or os.path.islink(str(unit_target)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой unit {unit_target} является symlink!', file=sys.stderr)
+        sys.exit(1)
     st_u = os.lstat(str(unit_target))
     if not stat.S_ISREG(st_u.st_mode):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой unit {unit_target} не является обычным файлом!', file=sys.stderr)
@@ -470,6 +547,34 @@ if unit_target.exists() or os.path.lexists(str(unit_target)):
     if st_u.st_nlink != 1:
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой unit {unit_target} существует с st_nlink={st_u.st_nlink} != 1 (hardlink attack)!', file=sys.stderr)
         sys.exit(1)
+    if st_u.st_size == 0:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой unit {unit_target} пуст!', file=sys.stderr)
+        sys.exit(1)
+    unit_bytes = unit_target.read_bytes()
+else:
+    if not live_unit_val or live_unit_val == 'FIXTURE':
+        print('КРИТИЧЕСКАЯ ОШИБКА: LIVE_UNIT_PATH не задан, а целевой unit отсутствует!', file=sys.stderr)
+        sys.exit(1)
+    p_lu = pathlib.Path(live_unit_val)
+    if not p_lu.is_absolute() or '..' in p_lu.parts or os.path.normpath(live_unit_val) != live_unit_val:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: LIVE_UNIT_PATH {live_unit_val} не каноничен или содержит ..!', file=sys.stderr)
+        sys.exit(1)
+    if not p_lu.exists() or not p_lu.is_file() or p_lu.stat().st_size == 0:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Исходный unit-файл службы {p_lu} отсутствует или пуст!', file=sys.stderr)
+        sys.exit(1)
+    if p_lu.is_symlink() or os.path.islink(str(p_lu)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Исходный unit-файл службы {p_lu} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    cur_u = p_lu.parent
+    while True:
+        if cur_u.is_symlink() or os.path.islink(str(cur_u)):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Компонент пути unit {cur_u} является symlink!', file=sys.stderr)
+            sys.exit(1)
+        if cur_u == cur_u.parent:
+            break
+        cur_u = cur_u.parent
+    source_unit_path = p_lu
+    unit_bytes = p_lu.read_bytes()
 
 meta_target = backup_dir / 'pinned_metadata.json'
 if meta_target.is_symlink() or os.path.islink(str(meta_target)):
@@ -483,6 +588,17 @@ if meta_target.exists() or os.path.lexists(str(meta_target)):
     if st_m.st_nlink != 1:
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой файл метаданных {meta_target} существует с st_nlink={st_m.st_nlink} != 1 (hardlink attack)!', file=sys.stderr)
         sys.exit(1)
+
+# Z2: Защита предсказуемых временных путей до мутации
+tmp_u_check = backup_dir / f'.star-building-strategy.service.tmp_{os.getpid()}'
+if tmp_u_check.exists() or tmp_u_check.is_symlink() or os.path.lexists(str(tmp_u_check)):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Временный unit-файл {tmp_u_check} уже существует или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
+
+tmp_m_check = backup_dir / f'.pinned_metadata.tmp_{os.getpid()}'
+if tmp_m_check.exists() or tmp_m_check.is_symlink() or os.path.lexists(str(tmp_m_check)):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Временный файл метаданных {tmp_m_check} уже существует или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
 
 files_to_backup = []
 for rel_path in allowed_paths:
@@ -572,17 +688,67 @@ if missing_copied_mandatory:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Не все обязательные файлы были сохранены в бэкап: {sorted(missing_copied_mandatory)}!', file=sys.stderr)
     sys.exit(1)
 
-# ФАЗА МУТАЦИИ: создание каталога и копирование файлов строго после полного preflight
+# Z2: Безопасное эксклюзивное создание временных файлов с O_CREAT | O_EXCL без следования symlinks
+def safe_write_file(target_path, data_bytes, mode=0o644):
+    target = pathlib.Path(target_path)
+    if target.is_symlink() or os.path.islink(str(target)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой файл {target} является symlink!', file=sys.stderr)
+        sys.exit(1)
+    if target.exists() or os.path.lexists(str(target)):
+        st = target.lstat()
+        if not stat.S_ISREG(st.st_mode):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой путь {target} не является обычным файлом!', file=sys.stderr)
+            sys.exit(1)
+        if st.st_nlink != 1:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой файл {target} имеет st_nlink={st.st_nlink} != 1 (hardlink attack)!', file=sys.stderr)
+            sys.exit(1)
+
+    tmp_path = target.parent / f'.{target.name}.tmp_{os.getpid()}'
+    if tmp_path.is_symlink() or os.path.islink(str(tmp_path)) or os.path.lexists(str(tmp_path)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Временный файл {tmp_path} уже существует или является ссылкой!', file=sys.stderr)
+        sys.exit(1)
+
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_NOFOLLOW', 0)
+    try:
+        fd = os.open(str(tmp_path), flags, mode)
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Не удалось эксклюзивно создать временный файл {tmp_path}: {err}', file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            f.write(data_bytes)
+            f.flush()
+            os.fsync(f.fileno())
+    except Exception as err:
+        if tmp_path.exists() or os.path.lexists(str(tmp_path)):
+            try: os.unlink(str(tmp_path))
+            except Exception: pass
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка записи во временный файл {tmp_path}: {err}', file=sys.stderr)
+        sys.exit(1)
+
+    st_tmp = os.lstat(str(tmp_path))
+    if not stat.S_ISREG(st_tmp.st_mode) or st_tmp.st_nlink != 1 or os.path.islink(str(tmp_path)):
+        try: os.unlink(str(tmp_path))
+        except Exception: pass
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Созданный временный файл {tmp_path} не валиден!', file=sys.stderr)
+        sys.exit(1)
+
+    os.replace(str(tmp_path), str(target))
+
+    st_final = os.lstat(str(target))
+    if not stat.S_ISREG(st_final.st_mode) or st_final.st_nlink != 1 or os.path.islink(str(target)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Опубликованный файл {target} не валиден или является ссылкой!', file=sys.stderr)
+        sys.exit(1)
+
+# ФАЗА МУТАЦИИ: создание каталогов и безопасная запись файлов строго после 100% PASS preflight
+if not backup_dir.exists():
+    os.makedirs(str(backup_dir), mode=0o700, exist_ok=True)
 if not dst_code.exists():
     os.mkdir(str(dst_code))
 
-live_unit_val = '$LIVE_UNIT_PATH'
-if not unit_target.exists() and live_unit_val and live_unit_val != 'FIXTURE':
-    p_lu = pathlib.Path(live_unit_val)
-    if p_lu.exists() and p_lu.is_file():
-        tmp_u = backup_dir / f'.star-building-strategy.service.tmp_{os.getpid()}'
-        shutil.copy2(p_lu, tmp_u)
-        os.replace(tmp_u, unit_target)
+if source_unit_path is not None:
+    safe_write_file(unit_target, unit_bytes, 0o644)
 
 if not unit_target.exists() or not unit_target.is_file() or unit_target.stat().st_size == 0:
     print('КРИТИЧЕСКАЯ ОШИБКА: Сохранённый в бэкап unit-файл отсутствует или пуст!', file=sys.stderr)
@@ -597,11 +763,7 @@ for rel_path, p, target in files_to_backup:
         if not curr_dir.exists():
             os.mkdir(str(curr_dir))
 
-    tmp_target = target.parent / f'.{target.name}.tmp_{os.getpid()}'
-    if tmp_target.exists() or tmp_target.is_symlink():
-        tmp_target.unlink()
-    shutil.copy2(p, tmp_target)
-    os.replace(tmp_target, target)
+    safe_write_file(target, p.read_bytes(), 0o644)
     copied_files[str(rel_path)] = hashlib.sha256(target.read_bytes()).hexdigest()
 
 meta = {
@@ -614,9 +776,7 @@ meta = {
     'code_files_count': int(len(copied_files)),
     'files': copied_files,
 }
-tmp_meta = backup_dir / f'.pinned_metadata.tmp_{os.getpid()}'
-tmp_meta.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding='utf-8')
-os.replace(tmp_meta, backup_dir / 'pinned_metadata.json')
+safe_write_file(meta_target, json.dumps(meta, indent=2, ensure_ascii=False).encode('utf-8'), 0o644)
 print(f'Pinned backup успешно сформирован ({len(copied_files)} файлов кода).')
 "
 
@@ -676,29 +836,94 @@ TARGET_UNIT="/home/roman/.config/systemd/user/star-building-strategy.service"
 mkdir -p /home/roman/.config/systemd/user
 
 python3 -c "
-import pathlib
-src_unit = pathlib.Path('$RELEASE_DIR/37-strategy-bot/systemd/star-building-strategy.service').read_text()
-# Направляем WorkingDirectory и ExecStart на изолированный версионный релиз
+import ast, os, pathlib, stat, sys
+
+rel_dir_raw = '$RELEASE_DIR'
+if not rel_dir_raw or rel_dir_raw == 'FIXTURE':
+    print('КРИТИЧЕСКАЯ ОШИБКА: RELEASE_DIR не задан!', file=sys.stderr)
+    sys.exit(1)
+
+rel_dir = pathlib.Path(rel_dir_raw).resolve()
+bot_dir = rel_dir / '37-strategy-bot'
+if not bot_dir.exists() or not bot_dir.is_dir() or bot_dir.is_symlink():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог релиза {bot_dir} отсутствует, не является каталогом или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
+
+# Z4: Строгий preflight обязательного entrypoint переключаемого релиза
+# Fail-closed ДО изменения unit, запрет генерации заглушек в проверенном релизе
+target_entry = bot_dir / 'strategy_bot.py'
+if not target_entry.exists() or not target_entry.is_file() or target_entry.is_symlink():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Обязательный entrypoint релиза {target_entry} отсутствует или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
+if target_entry.stat().st_size == 0:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Entrypoint {target_entry} пуст!', file=sys.stderr)
+    sys.exit(1)
+try:
+    ast.parse(target_entry.read_text(encoding='utf-8'), filename=str(target_entry))
+except Exception as err:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Синтаксическая ошибка в коде entrypoint {target_entry}: {err}', file=sys.stderr)
+    sys.exit(1)
+
+# Проверка шаблона unit-файла в релизе
+src_unit_path = bot_dir / 'systemd/star-building-strategy.service'
+if not src_unit_path.exists() or not src_unit_path.is_file() or src_unit_path.is_symlink():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Исходный unit-шаблон {src_unit_path} отсутствует или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
+
+src_unit = src_unit_path.read_text(encoding='utf-8')
 lines = []
 for line in src_unit.splitlines():
     if line.startswith('WorkingDirectory='):
-        lines.append('WorkingDirectory=$RELEASE_DIR/37-strategy-bot')
+        lines.append(f'WorkingDirectory={bot_dir}')
     elif line.startswith('ExecStart='):
-        lines.append('ExecStart=/srv/hermes-agent/venv/bin/python3 $RELEASE_DIR/37-strategy-bot/strategy_bot.py')
+        lines.append(f'ExecStart=/srv/hermes-agent/venv/bin/python3 {target_entry}')
     else:
         lines.append(line)
-
 new_unit = '\n'.join(lines) + '\n'
-# Атомарная запись через временный файл
-tmp_path = pathlib.Path('${TARGET_UNIT}.tmp')
-tmp_path.write_text(new_unit)
-tmp_path.replace('${TARGET_UNIT}')
 
-# Гарантия наличия исполняемого entrypoint в переключаемом релизе
-target_entry = pathlib.Path('$RELEASE_DIR/37-strategy-bot/strategy_bot.py')
-if not target_entry.exists():
-    target_entry.parent.mkdir(parents=True, exist_ok=True)
-    target_entry.write_text('#!/usr/bin/env python3\nimport sys\n', encoding='utf-8')
+target_unit = pathlib.Path('${TARGET_UNIT}')
+unit_dir = target_unit.parent
+if not unit_dir.exists() or not unit_dir.is_dir() or unit_dir.is_symlink():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Каталог для unit-файла {unit_dir} отсутствует или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
+
+# Z2: Безопасное эксклюзивное создание временного файла с флагами O_CREAT | O_EXCL
+tmp_unit = unit_dir / f'.star-building-strategy.service.tmp_{os.getpid()}'
+if tmp_unit.exists() or tmp_unit.is_symlink():
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Временный unit-файл {tmp_unit} уже существует или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
+
+flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_NOFOLLOW', 0)
+try:
+    fd = os.open(str(tmp_unit), flags, 0o644)
+except Exception as err:
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Не удалось эксклюзивно открыть временный unit-файл {tmp_unit}: {err}', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    with os.fdopen(fd, 'wb') as f:
+        f.write(new_unit.encode('utf-8'))
+        f.flush()
+        os.fsync(f.fileno())
+except Exception as err:
+    if tmp_unit.exists():
+        try: os.unlink(str(tmp_unit))
+        except Exception: pass
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка записи в {tmp_unit}: {err}', file=sys.stderr)
+    sys.exit(1)
+
+st_tmp = os.lstat(str(tmp_unit))
+if not stat.S_ISREG(st_tmp.st_mode) or st_tmp.st_nlink != 1 or os.path.islink(str(tmp_unit)):
+    try: os.unlink(str(tmp_unit))
+    except Exception: pass
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Созданный временный unit-файл {tmp_unit} не валиден!', file=sys.stderr)
+    sys.exit(1)
+
+os.replace(str(tmp_unit), str(target_unit))
+st_final = os.lstat(str(target_unit))
+if not stat.S_ISREG(st_final.st_mode) or st_final.st_nlink != 1 or os.path.islink(str(target_unit)):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Опубликованный unit-файл {target_unit} не валиден или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
 
 print('Unit-файл службы атомарно обновлён со ссылкой на релиз $TARGET_COMMIT')
 "
@@ -752,7 +977,7 @@ fi
 # 2. Полный preflight и верификация бэкапа ДО ОСТАНОВКИ СЛУЖБЫ (fail-closed, 0 мутаций)
 # Остановка службы при повреждённом/невалидном бэкапе категорически запрещена (U3).
 python3 -c "
-import ast, hashlib, json, os, pathlib, re, shlex, stat, subprocess, sys
+import ast, hashlib, json, os, pathlib, re, shlex, shutil, stat, subprocess, sys
 
 backup_dir_raw = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ.get('PINNED_BACKUP_DIR', '')
 if not backup_dir_raw:
@@ -919,6 +1144,9 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
     cmdline = exec_str.strip()
     structured_path = None
     if cmdline.startswith('{'):
+        if cmdline.count('{') != 1 or cmdline.count('}') != 1 or not cmdline.rstrip().endswith('}'):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис (множественные команды) systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
+            sys.exit(1)
         inner = cmdline.strip('{} \n\t')
         props = {}
         for part in inner.split(';'):
@@ -935,6 +1163,9 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
             print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
             sys.exit(1)
         cmdline = argv_val
+    elif '{' in cmdline or '}' in cmdline:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Запрещённые символы структурированного формата в ExecStart для {label}: {cmdline}', file=sys.stderr)
+        sys.exit(1)
 
     try:
         tokens = shlex.split(cmdline)
@@ -948,16 +1179,75 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
         if any(c in tok for c in [';', '&', '|', chr(96), chr(36), '\n']):
             print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружены запрещённые метасимволы в ExecStart для {label}: {tok}', file=sys.stderr)
             sys.exit(1)
-
-    argv0 = tokens[0]
-    if structured_path:
-        if structured_path != argv0 and pathlib.Path(structured_path).name != pathlib.Path(argv0).name:
-            print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение path={structured_path} и argv[0]={argv0} в ExecStart для {label}!', file=sys.stderr)
+        if tok in ('-c', '-m') or tok.startswith(('-c', '-m')):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Запрещённый флаг Python ({tok}) в ExecStart для {label}!', file=sys.stderr)
             sys.exit(1)
 
-    interp_name = pathlib.Path(structured_path if structured_path else argv0).name
-    if not re.match(r'^python(?:[23](?:\.\d+)?)?$', interp_name):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый интерпретатор {interp_name} в ExecStart для {label} (ожидается python)!', file=sys.stderr)
+    argv0 = tokens[0]
+
+    # Z1: Валидация executable и доверенной модели интерпретатора Python 3
+    if structured_path:
+        p_struct = pathlib.Path(structured_path)
+        if not p_struct.is_absolute() or '..' in p_struct.parts or os.path.normpath(structured_path) != structured_path:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: path={structured_path} в ExecStart для {label} не каноничен или содержит ..!', file=sys.stderr)
+            sys.exit(1)
+        if not p_struct.exists() or not p_struct.is_file() or not os.access(str(p_struct), os.X_OK):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл path={structured_path} для {label} не существует или не исполняем!', file=sys.stderr)
+            sys.exit(1)
+        p_argv0 = pathlib.Path(argv0)
+        if p_argv0.is_absolute():
+            if '..' in p_argv0.parts or os.path.normpath(argv0) != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: argv[0]={argv0} в ExecStart для {label} содержит ..!', file=sys.stderr)
+                sys.exit(1)
+            if not p_argv0.exists() or not p_argv0.is_file() or not os.access(str(p_argv0), os.X_OK):
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл argv[0]={argv0} для {label} не существует или не исполняем!', file=sys.stderr)
+                sys.exit(1)
+            try:
+                if p_struct.resolve() != p_argv0.resolve() or not os.path.samefile(str(p_struct), str(p_argv0)):
+                    print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение реальных исполнимых файлов path={structured_path} и argv[0]={argv0} для {label}!', file=sys.stderr)
+                    sys.exit(1)
+            except Exception as err:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка сопоставления path={structured_path} и argv[0]={argv0} для {label}: {err}', file=sys.stderr)
+                sys.exit(1)
+        else:
+            if p_struct.name != argv0 and p_struct.resolve().name != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение имени path={structured_path} и argv[0]={argv0} для {label}!', file=sys.stderr)
+                sys.exit(1)
+        target_exec = p_struct
+    else:
+        p_argv0 = pathlib.Path(argv0)
+        if p_argv0.is_absolute():
+            if '..' in p_argv0.parts or os.path.normpath(argv0) != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: argv[0]={argv0} в ExecStart для {label} содержит ..!', file=sys.stderr)
+                sys.exit(1)
+            target_exec = p_argv0
+        else:
+            found = shutil.which(argv0)
+            if not found:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Команда {argv0} для {label} не найдена в PATH!', file=sys.stderr)
+                sys.exit(1)
+            target_exec = pathlib.Path(found)
+        if not target_exec.exists() or not target_exec.is_file() or not os.access(str(target_exec), os.X_OK):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл {target_exec} для {label} отсутствует или не исполняем!', file=sys.stderr)
+            sys.exit(1)
+
+    try:
+        canon_exec = target_exec.resolve()
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка разрешения пути {target_exec} для {label}: {err}', file=sys.stderr)
+        sys.exit(1)
+
+    if not canon_exec.exists() or not canon_exec.is_file() or not os.access(str(canon_exec), os.X_OK):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический файл интерпретатора {canon_exec} для {label} отсутствует или не исполняем!', file=sys.stderr)
+        sys.exit(1)
+
+    ref_name = target_exec.name
+    canon_name = canon_exec.name
+    if not re.match(r'^python(?:3(?:\.\d+)?)?$', ref_name):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый интерпретатор {ref_name} в ExecStart для {label} (ожидается python/python3)!', file=sys.stderr)
+        sys.exit(1)
+    if not re.match(r'^python3(?:\.\d+)?$', canon_name):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_name} для {label} не является доверенным интерпретатором Python 3!', file=sys.stderr)
         sys.exit(1)
 
     script_tok = None
@@ -1171,7 +1461,7 @@ fi
 # - статическая проверка наличия локальных модулей-зависимостей точки входа в инвентаре бэкапа.
 # Проверенные несоответствия вызывают отказ (exit 1) с 0 системных мутаций.
 python3 -c "
-import ast, hashlib, json, os, pathlib, re, shlex, stat, subprocess, sys
+import ast, hashlib, json, os, pathlib, re, shlex, shutil, stat, subprocess, sys
 
 backup_dir_raw = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.environ.get('PINNED_BACKUP_DIR', '')
 if not backup_dir_raw:
@@ -1338,6 +1628,9 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
     cmdline = exec_str.strip()
     structured_path = None
     if cmdline.startswith('{'):
+        if cmdline.count('{') != 1 or cmdline.count('}') != 1 or not cmdline.rstrip().endswith('}'):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис (множественные команды) systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
+            sys.exit(1)
         inner = cmdline.strip('{} \n\t')
         props = {}
         for part in inner.split(';'):
@@ -1354,6 +1647,9 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
             print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый синтаксис systemctl ExecStart для {label}: {cmdline}', file=sys.stderr)
             sys.exit(1)
         cmdline = argv_val
+    elif '{' in cmdline or '}' in cmdline:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Запрещённые символы структурированного формата в ExecStart для {label}: {cmdline}', file=sys.stderr)
+        sys.exit(1)
 
     try:
         tokens = shlex.split(cmdline)
@@ -1367,16 +1663,75 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
         if any(c in tok for c in [';', '&', '|', chr(96), chr(36), '\n']):
             print(f'КРИТИЧЕСКАЯ ОШИБКА: Обнаружены запрещённые метасимволы в ExecStart для {label}: {tok}', file=sys.stderr)
             sys.exit(1)
-
-    argv0 = tokens[0]
-    if structured_path:
-        if structured_path != argv0 and pathlib.Path(structured_path).name != pathlib.Path(argv0).name:
-            print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение path={structured_path} и argv[0]={argv0} в ExecStart для {label}!', file=sys.stderr)
+        if tok in ('-c', '-m') or tok.startswith(('-c', '-m')):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Запрещённый флаг Python ({tok}) в ExecStart для {label}!', file=sys.stderr)
             sys.exit(1)
 
-    interp_name = pathlib.Path(structured_path if structured_path else argv0).name
-    if not re.match(r'^python(?:[23](?:\.\d+)?)?$', interp_name):
-        print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый интерпретатор {interp_name} в ExecStart для {label} (ожидается python)!', file=sys.stderr)
+    argv0 = tokens[0]
+
+    # Z1: Валидация executable и доверенной модели интерпретатора Python 3
+    if structured_path:
+        p_struct = pathlib.Path(structured_path)
+        if not p_struct.is_absolute() or '..' in p_struct.parts or os.path.normpath(structured_path) != structured_path:
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: path={structured_path} в ExecStart для {label} не каноничен или содержит ..!', file=sys.stderr)
+            sys.exit(1)
+        if not p_struct.exists() or not p_struct.is_file() or not os.access(str(p_struct), os.X_OK):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл path={structured_path} для {label} не существует или не исполняем!', file=sys.stderr)
+            sys.exit(1)
+        p_argv0 = pathlib.Path(argv0)
+        if p_argv0.is_absolute():
+            if '..' in p_argv0.parts or os.path.normpath(argv0) != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: argv[0]={argv0} в ExecStart для {label} содержит ..!', file=sys.stderr)
+                sys.exit(1)
+            if not p_argv0.exists() or not p_argv0.is_file() or not os.access(str(p_argv0), os.X_OK):
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл argv[0]={argv0} для {label} не существует или не исполняем!', file=sys.stderr)
+                sys.exit(1)
+            try:
+                if p_struct.resolve() != p_argv0.resolve() or not os.path.samefile(str(p_struct), str(p_argv0)):
+                    print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение реальных исполнимых файлов path={structured_path} и argv[0]={argv0} для {label}!', file=sys.stderr)
+                    sys.exit(1)
+            except Exception as err:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка сопоставления path={structured_path} и argv[0]={argv0} для {label}: {err}', file=sys.stderr)
+                sys.exit(1)
+        else:
+            if p_struct.name != argv0 and p_struct.resolve().name != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Несовпадение имени path={structured_path} и argv[0]={argv0} для {label}!', file=sys.stderr)
+                sys.exit(1)
+        target_exec = p_struct
+    else:
+        p_argv0 = pathlib.Path(argv0)
+        if p_argv0.is_absolute():
+            if '..' in p_argv0.parts or os.path.normpath(argv0) != argv0:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: argv[0]={argv0} в ExecStart для {label} содержит ..!', file=sys.stderr)
+                sys.exit(1)
+            target_exec = p_argv0
+        else:
+            found = shutil.which(argv0)
+            if not found:
+                print(f'КРИТИЧЕСКАЯ ОШИБКА: Команда {argv0} для {label} не найдена в PATH!', file=sys.stderr)
+                sys.exit(1)
+            target_exec = pathlib.Path(found)
+        if not target_exec.exists() or not target_exec.is_file() or not os.access(str(target_exec), os.X_OK):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл {target_exec} для {label} отсутствует или не исполняем!', file=sys.stderr)
+            sys.exit(1)
+
+    try:
+        canon_exec = target_exec.resolve()
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Ошибка разрешения пути {target_exec} для {label}: {err}', file=sys.stderr)
+        sys.exit(1)
+
+    if not canon_exec.exists() or not canon_exec.is_file() or not os.access(str(canon_exec), os.X_OK):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический файл интерпретатора {canon_exec} для {label} отсутствует или не исполняем!', file=sys.stderr)
+        sys.exit(1)
+
+    ref_name = target_exec.name
+    canon_name = canon_exec.name
+    if not re.match(r'^python(?:3(?:\.\d+)?)?$', ref_name):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Неподдерживаемый интерпретатор {ref_name} в ExecStart для {label} (ожидается python/python3)!', file=sys.stderr)
+        sys.exit(1)
+    if not re.match(r'^python3(?:\.\d+)?$', canon_name):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_name} для {label} не является доверенным интерпретатором Python 3!', file=sys.stderr)
         sys.exit(1)
 
     script_tok = None
