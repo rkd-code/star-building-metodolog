@@ -33091,5 +33091,8 @@
       "source_file": "knowledge_base/02_\u0423\u0422\u0412\u0415\u0420\u0416\u0414\u0415\u041d\u041e/full_REG-007_kadrovoe_deloproizvodstvo.md"
     }
   ],
-  "built_at_commit": "a8a7408aabc499c06a2ccb296e17209ea2f41b83"
+  "built_at_commit": "c22bad7f4d533a6709ab0b88d9631e616e67880c",
+  "analyzed_base_commit": "c22bad7f4d533a6709ab0b88d9631e616e67880c",
+  "analyzed_base_tree": "d12c60f5df129b0035dff35a131ffd3ddbadd177",
+  "source_manifest_digest": "6c268ed6e7f40f2c8f81feb46b73729886565b247cbdc941c8e0cb845001e59e"
 }

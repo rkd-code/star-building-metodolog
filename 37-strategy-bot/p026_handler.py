@@ -95,9 +95,14 @@ class P026Handler:
         """Проверяет строгое соответствие грамматике безусловного подтверждения.
         Категорически исключены черные списки подстрок: допустимы только однозначные позитивные
         формы подтверждения без дополнительных оговорок, условий и неразобранных хвостов.
+        Вопросительные формы («подтверждаю?», «да?») категорически отклоняются.
         """
         cleaned = text.strip()
         if not cleaned:
+            return False
+
+        # Любые вопросительные знаки или интеррогативы категорически исключают утвердительное согласие
+        if re.search(r"[\?¿\uFF1F]", cleaned):
             return False
 
         lower = cleaned.lower()
@@ -121,8 +126,9 @@ class P026Handler:
             first, second = tokens[0], tokens[1]
             if first in {"confirm", "/confirm", "/confirm_decision", "подтверждаю", "утверждаю"}:
                 if re.match(r"^[a-zA-Z0-9_\-]+$", second):
-                    if expected_proposal_id is None or second == expected_proposal_id.lower():
-                        return True
+                    if expected_proposal_id is not None:
+                        return second == expected_proposal_id.lower()
+                    return False
 
         return False
 
@@ -254,40 +260,32 @@ class P026Handler:
         key = (user_id, chat_id)
 
         # 1. Извлечение proposal_id из текста (команда /confirm ID или фраза "подтверждаю ID")
-        target_prop_id = proposal_id
-        if not target_prop_id and text:
+        text_prop_id = None
+        if text:
             cleaned_text = text.strip()
             # Точное соответствие команде или фразе подтверждения (строго без лишнего хвоста)
-            match_cmd = re.match(r"^/(?:confirm_decision|confirm)\s+([a-zA-Z0-9_\-]+)$", cleaned_text, re.I)
+            match_cmd = re.match(r"^/?(?:confirm_decision|confirm|подтверждаю|утверждаю)\s+([a-zA-Z0-9_\-]+)$", cleaned_text, re.I)
             if match_cmd:
-                target_prop_id = match_cmd.group(1).strip()
+                text_prop_id = match_cmd.group(1).strip()
             else:
-                match_words = re.match(r"^(?:подтверждаю|утверждаю)\s+([a-zA-Z0-9_\-]+)$", cleaned_text, re.I)
-                if match_words:
-                    word_target = match_words.group(1).strip()
-                    pending_here = self._pending_proposals.get(key)
-                    if (pending_here and pending_here.get("proposal_id") == word_target) or re.match(r"^(?:p\d+|prop_[a-zA-Z0-9_\-]+|probe\d+)$", word_target, re.I):
-                        target_prop_id = word_target
-
-            # Защита от попыток псевдосогласий/условных подтверждений с лишним хвостом
-            if not target_prop_id:
-                match_bad_cmd = re.match(r"^/(?:confirm_decision|confirm)\s+([a-zA-Z0-9_\-]+)\s+.+$", cleaned_text, re.I)
-                if match_bad_cmd:
+                # Защита от попыток псевдосогласий/условных подтверждений с лишним хвостом
+                match_bad = re.match(r"^/?(?:confirm_decision|confirm|подтверждаю|утверждаю)\s+([a-zA-Z0-9_\-]+)\s+.+$", cleaned_text, re.I)
+                if match_bad:
                     return {
                         "ok": False,
                         "message": "Подтверждение должно быть безусловным и однозначным (отказы и условные согласия отклоняются).",
                         "decision": None,
                     }
-                match_bad_words = re.match(r"^(?:подтверждаю|утверждаю)\s+([a-zA-Z0-9_\-]+)\s+.+$", cleaned_text, re.I)
-                if match_bad_words:
-                    cand_id = match_bad_words.group(1).strip()
-                    pending_here = self._pending_proposals.get(key)
-                    if (pending_here and pending_here.get("proposal_id") == cand_id) or re.match(r"^(?:p\d+|prop_[a-zA-Z0-9_\-]+|probe\d+)$", cand_id, re.I):
-                        return {
-                            "ok": False,
-                            "message": "Подтверждение должно быть безусловным и однозначным (отказы и условные согласия отклоняются).",
-                            "decision": None,
-                        }
+
+        # Конфликт текстового и параметрического proposal_id обязан отклоняться
+        if proposal_id and text_prop_id and proposal_id.strip().lower() != text_prop_id.lower():
+            return {
+                "ok": False,
+                "message": f"Конфликт идентификаторов предложения: в параметрах указан '{proposal_id}', а в тексте — '{text_prop_id}'.",
+                "decision": None,
+            }
+
+        target_prop_id = proposal_id.strip() if proposal_id else text_prop_id
 
         # 2. Если proposal_id передан или извлечён — строгая верификация и подтверждение
         if target_prop_id:
@@ -322,12 +320,14 @@ class P026Handler:
                         "decision": None,
                     }
 
-            if question_id and pending.get("question_id") and question_id != pending.get("question_id"):
-                return {
-                    "ok": False,
-                    "message": f"Идентификатор вопроса ('{question_id}') не соответствует ожидающему предложению ('{pending.get('question_id')}').",
-                    "decision": None,
-                }
+            if question_id is not None:
+                pending_qid = pending.get("question_id") if pending else None
+                if not pending or pending_qid != question_id:
+                    return {
+                        "ok": False,
+                        "message": f"Идентификатор вопроса ('{question_id}') не соответствует ожидающему предложению ('{pending_qid}').",
+                        "decision": None,
+                    }
 
             # Проверка однозначности подтверждения
             if not self.is_unambiguous_confirmation(text, expected_proposal_id=target_prop_id):
@@ -368,7 +368,15 @@ class P026Handler:
 
         # 3. Если proposal_id НЕ указан, но есть pending и текст является однозначным подтверждением:
         pending = self._pending_proposals.get(key)
-        if pending and self.is_unambiguous_confirmation(text):
+        if pending and self.is_unambiguous_confirmation(text, expected_proposal_id=pending.get("proposal_id")):
+            if question_id is not None:
+                pending_qid = pending.get("question_id")
+                if pending_qid != question_id:
+                    return {
+                        "ok": False,
+                        "message": f"Идентификатор вопроса ('{question_id}') не соответствует ожидающему предложению ('{pending_qid}').",
+                        "decision": None,
+                    }
             if question_context and question_context != "Общие решения P-026" and question_context != pending.get("question_context"):
                 return {
                     "ok": False,

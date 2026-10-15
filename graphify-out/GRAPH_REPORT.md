@@ -9,10 +9,11 @@
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 58 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
-## Graph Freshness
-- Built from commit: cc18d4cd8c2a12652ed29d49bd546cfe860735f7 (base tree 5168ef2fce6a86ac06fa4c6f032e507942ab0949, manifest verified)
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
+## Graph Freshness & Source Provenance
+- Source Manifest Digest (Source Tree Hash): 6c268ed6e7f40f2c8f81feb46b73729886565b247cbdc941c8e0cb845001e59e (verified base snapshot input)
+- Analyzed Base Snapshot: commit c22bad7f4d533a6709ab0b88d9631e616e67880c (tree d12c60f5df129b0035dff35a131ffd3ddbadd177)
+- Scope & Boundaries: Граф знаний охватывает 175 файлов, 1185 узлов, 1614 рёбер. Привязка происхождения (provenance) зафиксирована к точному проверенному отпечатку исходных нормативных и кодовых файлов ревизии c22bad7 (source manifest 6c268ed6e7f40f2c8f81feb46b73729886565b247cbdc941c8e0cb845001e59e) без рекурсивной самоссылки на commit hash формируемого релиза.
+- Verification: для проверки актуальности документации репозитория выполняется `python3 tools/ensure_repo_docs.py --repo . --check`.
 
 ## Community Hubs (Navigation)
 - @ReglamentSB_bot (Watchman)

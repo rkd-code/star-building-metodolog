@@ -298,7 +298,186 @@ class P026SecurityTest(unittest.TestCase):
         exec(compile(code, "DEPLOYMENT_PLAN backup excerpt", "exec"), {})
 
         self.assertFalse((dst / "code/settings.json").exists(), "settings.json не должен копироваться в бэкап кода")
-        self.assertNotEqual("SYNTHETIC_EXTERNAL_SENTINEL", (dst / "code/app.py").read_text(encoding="utf-8"), "Внешний symlink target не должен копироваться")
+        if (dst / "code/app.py").exists():
+            self.assertNotEqual("SYNTHETIC_EXTERNAL_SENTINEL", (dst / "code/app.py").read_text(encoding="utf-8"), "Внешний symlink target не должен копироваться")
+
+    def test_v2_v3_v4_v5_deployment_plan_probes(self):
+        """V2, V3, V4, V5: Независимая верификация preflight, инвентаря, корней, whitelist и roundtrip."""
+        import subprocess
+        import json
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        def get_block(title):
+            m = re.search(r"```bash\n(.*?)```", plan.split(title)[1], re.S)
+            assert m is not None
+            return m.group(1)
+
+        stop = get_block("### Шаг 1. Остановка службы")
+        restore = get_block("### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа")
+        backup_block = get_block("### Шаг 2. Фиксация и полный бэкап")
+
+        # Проверка V4 (положительный whitelist путей релиза без заглушек symlink)
+        p_v4 = Path(self.temp_dir.name) / "v4_sandbox"
+        p_v4.mkdir(parents=True, exist_ok=True)
+        live_v4 = p_v4 / "live"; live_v4.mkdir()
+        dst_v4 = p_v4 / "pinned"; dst_v4.mkdir(); (dst_v4 / "code").mkdir()
+        (dst_v4 / "star-building-strategy.service").write_text("[Service]\n")
+        (live_v4 / "private").mkdir()
+        (live_v4 / "private/notes.txt").write_text("SYNTHETIC_SENSITIVE_SENTINEL")
+        (live_v4 / "app.py").write_text('print("fixture")')
+        (live_v4 / "linked.py").symlink_to(live_v4 / "app.py")
+
+        m_v4 = re.search(r"python3 -c \"\n(.*?)\n\"", backup_block, re.S)
+        assert m_v4 is not None
+        code_v4 = m_v4.group(1)
+        for a, b in {
+            "$LIVE_WORK_DIR": str(live_v4),
+            "$PINNED_BACKUP_DIR": str(dst_v4),
+            "$BACKUP_TIMESTAMP": "FIXTURE",
+            "$LIVE_UNIT_PATH": "FIXTURE",
+            "$LIVE_EXEC_START": "FIXTURE",
+        }.items():
+            code_v4 = code_v4.replace(a, b)
+        exec(compile(code_v4, "v4 backup excerpt", "exec"), {})
+
+        self.assertFalse((dst_v4 / "code/private/notes.txt").exists(), "V4: private/notes.txt не должен копироваться в бэкап!")
+        self.assertTrue((dst_v4 / "code/app.py").exists(), "V4: app.py обязан быть скопирован в бэкап")
+        self.assertFalse((dst_v4 / "code/linked.py").exists(), "V4: symlink linked.py не должен заменяться заглушкой!")
+
+        # Проверка V2, V3, V5 на rollback
+        test_cases = [
+            "valid_changed_release",
+            "code_root_symlink",
+            "extra_fifo",
+            "boolean_count",
+            "redirect_destination",
+            "empty_current_handle",
+            "unexported_backup",
+        ]
+        for case in test_cases:
+            with self.subTest(case=case):
+                p = Path(self.temp_dir.name) / f"v_probe_{case}"
+                p.mkdir(parents=True, exist_ok=True)
+                backup = p / "backup"; backup.mkdir(); (backup / "code").mkdir()
+                (backup / "code/app.py").write_text('print("fixture")\n')
+                unit = backup / "star-building-strategy.service"
+                unit.write_text(f"[Service]\nWorkingDirectory={p}/old-release\nExecStart=/fixture/python {p}/old-release/app.py\n")
+                meta = {
+                    "unit_sha256": hashlib.sha256(unit.read_bytes()).hexdigest(),
+                    "code_files_count": 1,
+                    "live_work_dir": str(p / "old-release"),
+                    "files": {"app.py": hashlib.sha256((backup / "code/app.py").read_bytes()).hexdigest()},
+                }
+                if case == "redirect_destination":
+                    meta["live_work_dir"] = str(p / "unrelated-target")
+                if case == "code_root_symlink":
+                    (backup / "code").rename(p / "outside")
+                    (backup / "code").symlink_to(p / "outside", target_is_directory=True)
+                if case == "extra_fifo":
+                    os.mkfifo(backup / "code/untracked.pipe")
+                if case == "boolean_count":
+                    meta["code_files_count"] = True
+                (backup / "pinned_metadata.json").write_text(json.dumps(meta))
+
+                bindir = p / "bin"; bindir.mkdir()
+                for name in ["systemctl", "cp", "rsync", "mkdir"]:
+                    content = (
+                        '#!/bin/sh\nif [ "$2" = show ]; then [ "$QUERY_FAIL" != 1 ] || exit 1; printf "%s\\n" "$CURRENT_HANDLE"; else printf "INTERCEPT systemctl %s\\n" "$*"; fi\n'
+                        if name == "systemctl"
+                        else '#!/bin/sh\nprintf "INTERCEPT ' + name + ' %s\\n" "$*"\n'
+                    )
+                    f = bindir / name; f.write_text(content); f.chmod(0o700)
+
+                env = {
+                    "HOME": str(p),
+                    "PATH": str(bindir) + ":/usr/bin:/bin",
+                    "LANG": "C.UTF-8",
+                    "QUERY_FAIL": "0",
+                    "CURRENT_HANDLE": "" if case == "empty_current_handle" else str(p / "new-release"),
+                }
+                prefix = ""
+                if case == "unexported_backup":
+                    prefix = f"PINNED_BACKUP_DIR={backup}\n"
+                else:
+                    env["PINNED_BACKUP_DIR"] = str(backup)
+
+                proc = subprocess.run(
+                    ["/bin/bash", "-c", prefix + stop + "\n" + restore],
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
+
+                if case in {"valid_changed_release", "unexported_backup"}:
+                    self.assertEqual(0, proc.returncode, f"Сценарий {case} обязан завершаться успешно (exit 0): {proc.stderr}")
+                    self.assertIn("INTERCEPT cp", proc.stdout)
+                    self.assertIn("INTERCEPT rsync", proc.stdout)
+                else:
+                    # Отрицательные сценарии V2, V3 обязаны давать отказ ДО вызова stop и любых мутаций!
+                    self.assertNotEqual(0, proc.returncode, f"Отрицательный сценарий {case} обязан завершаться с ненулевым кодом: {proc.stdout}")
+                    self.assertNotIn("INTERCEPT systemctl --user stop", proc.stdout, f"Служба не должна останавливаться в сценарии {case}!")
+                    self.assertNotIn("INTERCEPT cp", proc.stdout, f"cp не должен вызываться в сценарии {case}!")
+                    self.assertNotIn("INTERCEPT rsync", proc.stdout, f"rsync не должен вызываться в сценарии {case}!")
+                    self.assertNotIn("INTERCEPT mkdir", proc.stdout, f"mkdir не должен вызываться в сценарии {case}!")
+
+    def test_v5_consecutive_backup_switch_rollback_roundtrip(self):
+        """V5 (MEDIUM): Сквозной тест consecutive round-trip (backup -> switch -> rollback) без внешнего export."""
+        import subprocess
+        import shutil
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        def get_block(title):
+            m = re.search(r"```bash\n(.*?)```", plan.split(title)[1], re.S)
+            assert m is not None
+            return m.group(1)
+
+        backup = get_block("### Шаг 2. Фиксация и полный бэкап")
+        switch = get_block("### Шаг 4. Атомарное переключение службы")
+        stop = get_block("### Шаг 1. Остановка службы")
+        restore = get_block("### Шаг 2. Восстановление конфигурации и кода из pinned-бэкапа")
+        start = get_block("### Шаг 4. Запуск восстановленной службы")
+
+        for manual_export in [False, True]:
+            with self.subTest(manual_export=manual_export):
+                p = Path(self.temp_dir.name) / f"roundtrip_export_{manual_export}"
+                p.mkdir(parents=True, exist_ok=True)
+                home = p / "home"; home.mkdir()
+                old = home / "old-release"; old.mkdir()
+                (old / "app.py").write_text("OLD_FIXTURE_CODE\n")
+                (old / "runtime-state.bin").write_text("PRESERVE_STATE")
+                unit = home / ".config/systemd/user/star-building-strategy.service"
+                unit.parent.mkdir(parents=True)
+                oldunit = f"[Service]\nWorkingDirectory={old}\nExecStart=/fixture/python {old}/app.py\n"
+                unit.write_text(oldunit)
+
+                release = home / "new-release"
+                (release / "37-strategy-bot/systemd").mkdir(parents=True)
+                shutil.copyfile(ROOT / "systemd/star-building-strategy.service", release / "37-strategy-bot/systemd/star-building-strategy.service")
+
+                bindir = p / "bin"; bindir.mkdir()
+                log = p / "calls.log"
+                systemctl = bindir / "systemctl"
+                systemctl.write_text('#!/usr/bin/python3\nimport os,sys,pathlib\na=sys.argv[1:]\nu=pathlib.Path(os.environ["FIXTURE_UNIT"])\nif a[1]=="show":\n key=a[a.index("-p")+1]\n if key=="FragmentPath": print(u)\n else:\n  lines=u.read_text().splitlines()\n  print(next((l.split("=",1)[1] for l in lines if l.startswith(key+"=")),""))\nelse:\n with open(os.environ["FIXTURE_LOG"],"a") as f:\n  f.write("systemctl "+" ".join(a)+"\\n")\n')
+                systemctl.chmod(0o700)
+
+                rsync = bindir / "rsync"
+                rsync.write_text('#!/usr/bin/python3\nimport os,pathlib,shutil,sys\ns=pathlib.Path(sys.argv[-2]); d=pathlib.Path(sys.argv[-1]); root=pathlib.Path(os.environ["FIXTURE_ROOT"])\nassert s.resolve().is_relative_to(root) and d.resolve().is_relative_to(root)\nshutil.copytree(s,d,dirs_exist_ok=True)\nwith open(os.environ["FIXTURE_LOG"],"a") as f:\n  f.write("rsync sandbox-copy\\n")\n')
+                rsync.chmod(0o700)
+
+                journal = bindir / "journalctl"
+                journal.write_text("#!/bin/sh\nexit 0\n")
+                journal.chmod(0o700)
+
+                script = (backup + "\n" + switch + "\n" + ("export PINNED_BACKUP_DIR\n" if manual_export else "") + stop + "\n" + restore + "\n" + start).replace("/home/roman", str(home))
+                script = "set -euo pipefail\nTARGET_COMMIT=FIXTURE\nRELEASE_DIR=" + str(release) + "\n" + script
+                env = {"HOME": str(home), "PATH": str(bindir) + ":/usr/bin:/bin", "LANG": "C.UTF-8", "FIXTURE_UNIT": str(unit), "FIXTURE_LOG": str(log), "FIXTURE_ROOT": str(p)}
+
+                proc = subprocess.run(["/bin/bash", "-c", script], env=env, capture_output=True, text=True, timeout=20)
+                self.assertEqual(0, proc.returncode, f"Roundtrip (manual_export={manual_export}) завершился с ошибкой: {proc.stderr}\nSTDOUT:\n{proc.stdout}")
+                self.assertTrue(unit.read_text() == oldunit, "Unit-файл службы должен быть точно восстановлен к старому релизу")
+                self.assertEqual("PRESERVE_STATE", (old / "runtime-state.bin").read_text(), "Runtime-state не должен повреждаться/удаляться")
+                self.assertEqual("OLD_FIXTURE_CODE\n", (old / "app.py").read_text(), "Код приложения должен быть точно восстановлен")
 
 if __name__ == "__main__":
     unittest.main()

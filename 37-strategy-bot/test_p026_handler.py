@@ -275,5 +275,66 @@ class P026HandlerTest(unittest.TestCase):
         self.assertEqual(1, len(self.storage.list_decisions(123, 123)))
         self.assertIsNone(self.handler.get_pending_proposal(123, 123))
 
+    def test_v1_strict_proposal_question_binding_and_interrogative_rejection(self):
+        """V1 (HIGH): Прямой API обязан строго привязывать proposal_id и question_id и отклонять interrogatives."""
+        # 1. Попытка подтвердить p2 при активном p1 через текст "confirm p2"
+        self.handler.set_pending_proposal(123, 123, "Норма p1", proposal_id="p1", question_id="q1")
+        res1 = self.handler.record_owner_decision("Fixture", "confirm p2", user_id=123, chat_id=123)
+        self.assertFalse(res1["ok"], "Вызов 'confirm p2' обязан отклоняться при активном pending p1")
+        self.assertIsNone(res1["decision"])
+        self.assertEqual(0, len(self.storage.list_decisions(123, 123)))
+        self.assertIsNotNone(self.handler.get_pending_proposal(123, 123))
+
+        # 2. Несовпадающий question_id при отсутствии proposal_id в kwargs ("да" + question_id="wrong-question")
+        res2 = self.handler.record_owner_decision(
+            "Fixture", "да", user_id=123, chat_id=123, question_id="wrong-question"
+        )
+        self.assertFalse(res2["ok"], "Несовпадающий question_id обязан вызывать отказ даже для фразы 'да'")
+        self.assertIsNone(res2["decision"])
+        self.assertEqual(0, len(self.storage.list_decisions(123, 123)))
+        self.assertIsNotNone(self.handler.get_pending_proposal(123, 123))
+
+        # 3. Вопросительная форма "подтверждаю?" с proposal_id="p1"
+        res3 = self.handler.record_owner_decision(
+            "Fixture", "подтверждаю?", user_id=123, chat_id=123, proposal_id="p1"
+        )
+        self.assertFalse(res3["ok"], "Вопросительная форма 'подтверждаю?' не является утвердительным согласием")
+        self.assertIsNone(res3["decision"])
+        self.assertEqual(0, len(self.storage.list_decisions(123, 123)))
+        self.assertIsNotNone(self.handler.get_pending_proposal(123, 123))
+
+        # 4. Конфликт текстового и параметрического proposal_id
+        res4 = self.handler.record_owner_decision(
+            "Fixture", "confirm p1", user_id=123, chat_id=123, proposal_id="p2"
+        )
+        self.assertFalse(res4["ok"], "Конфликт параметров proposal_id='p2' и текста 'confirm p1' обязан отклоняться")
+        self.assertIsNone(res4["decision"])
+        self.assertEqual(0, len(self.storage.list_decisions(123, 123)))
+        self.assertIsNotNone(self.handler.get_pending_proposal(123, 123))
+
+        # 5. Проверка confirm_pending_proposal с неверным question_id или вопросительным текстом
+        res5a = self.handler.confirm_pending_proposal(
+            "Fixture", "p1", user_id=123, chat_id=123, question_id="wrong-q"
+        )
+        self.assertFalse(res5a["ok"])
+        res5b = self.handler.confirm_pending_proposal(
+            "Fixture", "p1", user_id=123, chat_id=123, confirmation_text="подтверждаю?"
+        )
+        self.assertFalse(res5b["ok"])
+        self.assertEqual(0, len(self.storage.list_decisions(123, 123)))
+        self.assertIsNotNone(self.handler.get_pending_proposal(123, 123))
+
+        # 6. Контрольное точное подтверждение через /confirm p1
+        res6 = self.handler.record_owner_decision(
+            "Fixture", "/confirm p1", user_id=123, chat_id=123, question_id="q1"
+        )
+        self.assertTrue(res6["ok"], f"Точное подтверждение должно пройти: {res6.get('message')}")
+        self.assertIsNotNone(res6["decision"])
+        self.assertEqual(1, len(self.storage.list_decisions(123, 123)))
+        # Pending очищается только после подтверждённой записи
+        self.assertIsNone(self.handler.get_pending_proposal(123, 123))
+        # Хэш решения и текст совпадают с pending
+        self.assertEqual("Норма p1", res6["decision"]["exact_text"])
+
 if __name__ == "__main__":
     unittest.main()

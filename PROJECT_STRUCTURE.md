@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `6c268ed6e7f40f2c8f81feb46b73729886565b247cbdc941c8e0cb845001e59e`
+Отпечаток исходной структуры: `1c9eb9a3daeb8398a5a55dbc31efaf1991d8e1369c25a67691fd3eaab36cb1fe`
 
 ## .git-templates
 
