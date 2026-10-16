@@ -488,6 +488,206 @@ class P026SubjectBase:
         },
     )
 
+    # Архитектурный манифест покрытия бинарных документов P-026 (Coverage Manifest v1.0).
+    # Инвариант Integrity: привязка к исходному SHA-256 + поддерживаемый extraction + проверяемая содержательная полнота фрагментов.
+    # Служебные заголовки листов и номеров страниц не считаются содержанием.
+    CANONICAL_COVERAGE_MANIFEST: dict[str, dict[str, Any]] = {
+        # SRC-35: 114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.xlsx
+        "9150ff7d01f7d2e67b1917301606dad9c1b978580afc4a77ea5aac01f6a4a564": {
+            "source_id": "SRC-35",
+            "relative_path": "114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.xlsx",
+            "source_sha256": "9150ff7d01f7d2e67b1917301606dad9c1b978580afc4a77ea5aac01f6a4a564",
+            "source_bytes": 74094,
+            "format": "xlsx",
+            "total_fragments": 7,
+            "fragments": [
+                {
+                    "index": 0,
+                    "name": "Руководству",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "70f0e6a3350baa4fb1dfc5a5886b52e0ee2f963677cd07fb136d03498e70af38",
+                },
+                {
+                    "index": 1,
+                    "name": "Сравнение",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "4bebe82a6b16f47c111e46af990de59126c3af7ef4ba17863f0d40e9e6bf00fa",
+                },
+                {
+                    "index": 2,
+                    "name": "Карточка",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "dabf78e6533182192eb7448e316f43fbe8d1148a201c89136cd5164d2900042d",
+                },
+                {
+                    "index": 3,
+                    "name": "КП и цены",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "44d49e9bfb35469ce3f49a70900598a93deedf01a93fa5d93ac08769152e0990",
+                },
+                {
+                    "index": 4,
+                    "name": "План действий",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "11b1caba8e3cd165599a451da51de1c4e6f3e2eb6eda53e6f95fee3b5274c67b",
+                },
+                {
+                    "index": 5,
+                    "name": "Источники",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "078f83e1253ab7c844bbe8748f19543658391661b44bf8f31b9f721539b6dfed",
+                },
+                {
+                    "index": 6,
+                    "name": "Пробелы",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "c4007ea418f59acca5a0a683277bdcd878efa67ae7160b7ec5b10b4f12f66eee",
+                },
+            ],
+        },
+        # SRC-36: 114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.pdf
+        "4f31d0fdfbce4677a52581ea18766476aacf4fcc19ed959822e9435ed804913f": {
+            "source_id": "SRC-36",
+            "relative_path": "114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.pdf",
+            "source_sha256": "4f31d0fdfbce4677a52581ea18766476aacf4fcc19ed959822e9435ed804913f",
+            "source_bytes": 128035,
+            "format": "pdf",
+            "total_fragments": 10,
+            "fragments": [
+                {
+                    "index": 0,
+                    "name": "Страница 1",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "e5367e3325e1b45243aa7f8ed4ec54059d1269883f4083fc64d693400b9ea4d9",
+                },
+                {
+                    "index": 1,
+                    "name": "Страница 2",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "1fc96dee3f365a415e2f7ef0c079fc871426d95249c220937a1d80e8e2800009",
+                },
+                {
+                    "index": 2,
+                    "name": "Страница 3",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "1a79fc079cfd3d187feb8861b3c7d48418b207d5c590615e19eb62f3be20b79c",
+                },
+                {
+                    "index": 3,
+                    "name": "Страница 4",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "3f87f92a4a43240b8f2841b8c41c67461c454ed6792417517e32376811809627",
+                },
+                {
+                    "index": 4,
+                    "name": "Страница 5",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "7205cc722df87daeecffbbb0c7656f3e3b198fcd90b0cff0b1d3cc3f537b0239",
+                },
+                {
+                    "index": 5,
+                    "name": "Страница 6",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "cd9c94f8c09d1b6a213bb129df787ffbbc0cd70af77d82f09e6ae3bf239abda1",
+                },
+                {
+                    "index": 6,
+                    "name": "Страница 7",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "d022e613f95f6199d33e3db8f100ba772985bd1b225215eadfda55cce4fcfaac",
+                },
+                {
+                    "index": 7,
+                    "name": "Страница 8",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "e0bce005c6cd44af6c09b0dbffece6f408aed8697d5b816c73c9f87a9b43cc4c",
+                },
+                {
+                    "index": 8,
+                    "name": "Страница 9",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "a75672e5de4ba2aad877a427e1cba83da44b61f7ff884fb68ddd770d8e670d2d",
+                },
+                {
+                    "index": 9,
+                    "name": "Страница 10",
+                    "allowed_empty": False,
+                    "min_substantive_chars": 1,
+                    "content_sha256": "6c9d93cfbaa9aee5d66719b4e4ff553490d251928fa98fedbd144b43d3a3394c",
+                },
+            ],
+        },
+        # SRC-38: 115-competitor-presentation-checklist-01/CHECKLIST_StarBuilding_Competitors_Presentation_v01.xlsx
+        "8703912cc60c01ed8eb45224a354b0ad456f0010b8df59fcea66623c3402897c": {
+            "source_id": "SRC-38",
+            "relative_path": "115-competitor-presentation-checklist-01/CHECKLIST_StarBuilding_Competitors_Presentation_v01.xlsx",
+            "source_sha256": "8703912cc60c01ed8eb45224a354b0ad456f0010b8df59fcea66623c3402897c",
+            "source_bytes": 58764,
+            "format": "xlsx",
+            "total_fragments": 6,
+            "fragments": [
+                {
+                    "index": 0,
+                    "name": "Начните здесь",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "9a59b2d8879e166c87b035160e70fefb33cdab0aaef81ed64f80e192d28b8c74",
+                },
+                {
+                    "index": 1,
+                    "name": "Чек-лист",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "76d46581a5485b23cb55c3f193847e7edb9f78d67fa09a6330163bd20be2958c",
+                },
+                {
+                    "index": 2,
+                    "name": "Перед встречей",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "8df47747271196a1f04cf13c34e9ce2ccfaf5f738e0b1916349eec4e1a1aac81",
+                },
+                {
+                    "index": 3,
+                    "name": "Фразы менеджеру",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "e7ea10c67b3b136c205e13deef29cea14ef5c423c0ac10168f425be42a65eea9",
+                },
+                {
+                    "index": 4,
+                    "name": "Пробелы карточки",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "e2f59f732fe6283b4fd2812ad294575d1e057aca4dbd9ad36c2b5ce4ffe199ed",
+                },
+                {
+                    "index": 5,
+                    "name": "Основания",
+                    "allowed_empty": False,
+                    "min_substantive_rows": 1,
+                    "content_sha256": "ccf9ce7bf883fa59cc55391e2abc57845665f2958fefe745a4a6d7fef0c7fb04",
+                },
+            ],
+        },
+    }
+
     def __init__(self) -> None:
         self.DOCUMENT_VERSIONS = copy.deepcopy(P026SubjectBase.DOCUMENT_VERSIONS)
 
@@ -502,6 +702,99 @@ class P026SubjectBase:
 
     @staticmethod
     def _extract_xlsx_text(raw_bytes: bytes, rel_path: str = "") -> str:
+        return P026SubjectBase.extract_xlsx_text_verified(raw_bytes, rel_path)
+
+    @staticmethod
+    def _extract_pdf_text(raw_bytes: bytes, rel_path: str = "") -> str:
+        return P026SubjectBase.extract_pdf_text_verified(raw_bytes, rel_path)
+
+    @classmethod
+    def get_coverage_manifest(cls) -> dict[str, dict[str, Any]]:
+        """Возвращает нормативный манифест покрытия бинарных источников P-026."""
+        return copy.deepcopy(cls.CANONICAL_COVERAGE_MANIFEST)
+
+    @classmethod
+    def get_coverage_for_source(cls, file_sha: str, rel_path: str = "") -> dict[str, Any] | None:
+        """Находит и верифицирует спецификацию покрытия для бинарного источника.
+
+        Если относительный путь соответствует каноническому бинарному источнику,
+        но хэш файла отличается от утверждённого в манифесте, выбрасывается
+        SubjectBaseIntegrityError (отказ устаревшего или подменённого артефакта).
+        """
+        coverage = cls.CANONICAL_COVERAGE_MANIFEST.get(file_sha)
+        if coverage is not None:
+            return coverage
+
+        if rel_path:
+            norm_rel = rel_path.strip().replace("\\", "/").lstrip("./")
+            for exp_sha, cov in cls.CANONICAL_COVERAGE_MANIFEST.items():
+                cov_rel = cov["relative_path"].strip().replace("\\", "/").lstrip("./")
+                if norm_rel == cov_rel or norm_rel.endswith(cov_rel):
+                    raise SubjectBaseIntegrityError(
+                        f"Отказ полноты: артефакт покрытия для {rel_path} устарел (stale) или подменён: "
+                        f"{file_sha} != {exp_sha}"
+                    )
+        return None
+
+    def verify_coverage_manifest(self) -> dict[str, Any]:
+        """Проверяет полноту, непротиворечивость и неизменность канонического манифеста покрытия."""
+        binary_sources = [
+            s for s in self.CANONICAL_SOURCE_MANIFEST
+            if s["relative_path"].endswith((".xlsx", ".pdf"))
+        ]
+        manifest_shas = {s["sha256"] for s in binary_sources}
+        coverage_shas = set(self.CANONICAL_COVERAGE_MANIFEST.keys())
+
+        if manifest_shas != coverage_shas:
+            diff = manifest_shas.symmetric_difference(coverage_shas)
+            raise SubjectBaseIntegrityError(
+                f"Отказ целостности манифеста покрытия: несовпадение множества бинарных источников: {diff}"
+            )
+
+        for s in binary_sources:
+            cov = self.CANONICAL_COVERAGE_MANIFEST[s["sha256"]]
+            if cov["source_sha256"] != s["sha256"]:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности манифеста покрытия для {s['relative_path']}: не совпадает source_sha256"
+                )
+            if cov["source_bytes"] != s["bytes"]:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности манифеста покрытия для {s['relative_path']}: не совпадает source_bytes"
+                )
+            if cov["total_fragments"] != len(cov["fragments"]):
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности манифеста покрытия для {s['relative_path']}: total_fragments != len(fragments)"
+                )
+            for idx, frag in enumerate(cov["fragments"]):
+                if frag["index"] != idx:
+                    raise SubjectBaseIntegrityError(
+                        f"Отказ структуры манифеста покрытия для {s['relative_path']}: неверный индекс фрагмента {idx}"
+                    )
+                if not frag.get("content_sha256") or len(frag["content_sha256"]) != 64:
+                    raise SubjectBaseIntegrityError(
+                        f"Отказ манифеста покрытия для {s['relative_path']}: некорректный хэш фрагмента {idx}"
+                    )
+
+        # Проверка дискового артефакта p026_coverage_manifest.json (при наличии)
+        json_path = Path(__file__).resolve().parent / "p026_coverage_manifest.json"
+        if json_path.exists():
+            try:
+                disk_cov = json.loads(json_path.read_text(encoding="utf-8"))
+                if disk_cov != self.CANONICAL_COVERAGE_MANIFEST:
+                    raise SubjectBaseIntegrityError(
+                        "Отказ целостности: артефакт p026_coverage_manifest.json на диске не совпадает с каноническим манифестом"
+                    )
+            except SubjectBaseIntegrityError:
+                raise
+            except Exception as e:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности артефакта манифеста покрытия на диске: {e}"
+                ) from e
+
+        return {"ok": True, "covered_sources": len(binary_sources)}
+
+    @classmethod
+    def extract_xlsx_text_verified(cls, raw_bytes: bytes, rel_path: str = "") -> str:
         try:
             import io
             import openpyxl
@@ -509,15 +802,76 @@ class P026SubjectBase:
                 raise SubjectBaseIntegrityError(
                     f"Библиотека openpyxl недоступна для извлечения содержимого XLSX: {rel_path}"
                 )
+            file_sha = hashlib.sha256(raw_bytes).hexdigest()
+            coverage = cls.get_coverage_for_source(file_sha, rel_path)
+
             wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), data_only=True)
+            if not wb.sheetnames:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности XLSX {rel_path}: рабочая книга не содержит листов"
+                )
+
+            if coverage:
+                expected_sheets = [frag["name"] for frag in coverage["fragments"]]
+                if len(wb.sheetnames) != coverage["total_fragments"]:
+                    raise SubjectBaseIntegrityError(
+                        f"Отказ полноты XLSX {rel_path}: несовпадение количества листов "
+                        f"({len(wb.sheetnames)} != {coverage['total_fragments']})"
+                    )
+                if list(wb.sheetnames) != expected_sheets:
+                    raise SubjectBaseIntegrityError(
+                        f"Отказ полноты XLSX {rel_path}: несовпадение структуры или порядка листов: "
+                        f"{list(wb.sheetnames)} != {expected_sheets}"
+                    )
+
             lines = []
-            for sheet in wb.sheetnames:
+            total_substantive_rows = 0
+
+            for idx, sheet in enumerate(wb.sheetnames):
                 ws = wb[sheet]
-                lines.append(f"\n--- Лист: {sheet} ---")
+                sheet_rows = []
                 for row in ws.iter_rows(values_only=True):
                     vals = [str(v).strip() for v in row if v is not None and str(v).strip()]
                     if vals:
-                        lines.append(" | ".join(vals))
+                        sheet_rows.append(" | ".join(vals))
+
+                sheet_text = "\n".join(sheet_rows).strip()
+                total_substantive_rows += len(sheet_rows)
+
+                if coverage:
+                    frag = coverage["fragments"][idx]
+                    allowed_empty = frag.get("allowed_empty", False)
+                    if not sheet_text:
+                        if not allowed_empty:
+                            raise SubjectBaseIntegrityError(
+                                f"Отказ полноты XLSX {rel_path}: обязательный лист '{sheet}' "
+                                "пуст (отсутствуют значащие ячейки)"
+                            )
+                    else:
+                        min_rows = frag.get("min_substantive_rows", 1)
+                        if len(sheet_rows) < min_rows:
+                            raise SubjectBaseIntegrityError(
+                                f"Отказ полноты XLSX {rel_path}: лист '{sheet}' содержит меньше "
+                                f"строк, чем требуется ({len(sheet_rows)} < {min_rows})"
+                            )
+                        exp_sha = frag.get("content_sha256")
+                        actual_frag_sha = hashlib.sha256(sheet_text.encode("utf-8")).hexdigest()
+                        if exp_sha and actual_frag_sha != exp_sha:
+                            raise SubjectBaseIntegrityError(
+                                f"Отказ содержательной целостности XLSX {rel_path}: подмена или "
+                                f"повреждение содержимого листа '{sheet}' ({actual_frag_sha} != {exp_sha})"
+                            )
+
+                if sheet_rows:
+                    lines.append(f"\n--- Лист: {sheet} ---")
+                    lines.extend(sheet_rows)
+
+            if total_substantive_rows == 0:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности: извлечение XLSX документа {rel_path} вернуло пустой текст "
+                    "(отсутствуют значащие ячейки)"
+                )
+
             extracted = "\n".join(lines).strip()
             if not extracted:
                 raise SubjectBaseIntegrityError(
@@ -532,8 +886,8 @@ class P026SubjectBase:
                 f"Сбой извлечения обязательного документа XLSX ({rel_path}): {err}"
             ) from err
 
-    @staticmethod
-    def _extract_pdf_text(raw_bytes: bytes, rel_path: str = "") -> str:
+    @classmethod
+    def extract_pdf_text_verified(cls, raw_bytes: bytes, rel_path: str = "") -> str:
         try:
             import io
             import pypdf
@@ -541,12 +895,72 @@ class P026SubjectBase:
                 raise SubjectBaseIntegrityError(
                     f"Библиотека pypdf недоступна для извлечения содержимого PDF: {rel_path}"
                 )
+            file_sha = hashlib.sha256(raw_bytes).hexdigest()
+            coverage = cls.get_coverage_for_source(file_sha, rel_path)
+
             reader = pypdf.PdfReader(io.BytesIO(raw_bytes))
+            if not reader.pages:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности PDF {rel_path}: документ не содержит страниц"
+                )
+
+            if coverage:
+                if len(reader.pages) != coverage["total_fragments"]:
+                    raise SubjectBaseIntegrityError(
+                        f"Отказ полноты PDF {rel_path}: несовпадение количества страниц "
+                        f"({len(reader.pages)} != {coverage['total_fragments']})"
+                    )
+
             lines = []
+            total_substantive_chars = 0
+            empty_pages = []
+
             for idx, page in enumerate(reader.pages):
-                t = page.extract_text()
-                if t and t.strip():
-                    lines.append(f"\n--- Страница {idx + 1} ---\n{t.strip()}")
+                raw_t = page.extract_text()
+                t = (raw_t or "").strip()
+                total_substantive_chars += len(t)
+
+                if coverage:
+                    frag = coverage["fragments"][idx]
+                    allowed_empty = frag.get("allowed_empty", False)
+                    if not t:
+                        if not allowed_empty:
+                            raise SubjectBaseIntegrityError(
+                                f"Отказ полноты PDF {rel_path}: обязательная страница {idx + 1} "
+                                "пуста или не извлечена (получен пустой текст)"
+                            )
+                    else:
+                        min_chars = frag.get("min_substantive_chars", 1)
+                        if len(t) < min_chars:
+                            raise SubjectBaseIntegrityError(
+                                f"Отказ полноты PDF {rel_path}: страница {idx + 1} содержит меньше "
+                                f"знаков, чем требуется ({len(t)} < {min_chars})"
+                            )
+                        exp_sha = frag.get("content_sha256")
+                        actual_frag_sha = hashlib.sha256(t.encode("utf-8")).hexdigest()
+                        if exp_sha and actual_frag_sha != exp_sha:
+                            raise SubjectBaseIntegrityError(
+                                f"Отказ содержательной целостности PDF {rel_path}: подмена или "
+                                f"повреждение содержимого страницы {idx + 1} ({actual_frag_sha} != {exp_sha})"
+                            )
+                else:
+                    if not t:
+                        empty_pages.append(idx + 1)
+
+                if t:
+                    lines.append(f"\n--- Страница {idx + 1} ---\n{t}")
+
+            if total_substantive_chars == 0:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности: извлечение PDF документа {rel_path} вернуло пустой текст "
+                    "(отсутствуют значащие символы)"
+                )
+
+            if not coverage and empty_pages:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ полноты PDF {rel_path}: страницы {empty_pages} пусты или не извлечены"
+                )
+
             extracted = "\n".join(lines).strip()
             if not extracted:
                 raise SubjectBaseIntegrityError(
@@ -637,6 +1051,7 @@ class P026SubjectBase:
     def verify_all_sources(self) -> dict[str, Any]:
         """Проверяет целостность всех 40 канонических источников базы P026v1 (fail-closed)."""
         self.verify_parsers()
+        self.verify_coverage_manifest()
         verified = []
         for s in self.CANONICAL_SOURCE_MANIFEST:
             rel = s["relative_path"]

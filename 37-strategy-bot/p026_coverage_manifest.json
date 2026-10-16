@@ -1,0 +1,193 @@
+{
+  "9150ff7d01f7d2e67b1917301606dad9c1b978580afc4a77ea5aac01f6a4a564": {
+    "source_id": "SRC-35",
+    "relative_path": "114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.xlsx",
+    "source_sha256": "9150ff7d01f7d2e67b1917301606dad9c1b978580afc4a77ea5aac01f6a4a564",
+    "source_bytes": 74094,
+    "format": "xlsx",
+    "total_fragments": 7,
+    "fragments": [
+      {
+        "index": 0,
+        "name": "Руководству",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "70f0e6a3350baa4fb1dfc5a5886b52e0ee2f963677cd07fb136d03498e70af38"
+      },
+      {
+        "index": 1,
+        "name": "Сравнение",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "4bebe82a6b16f47c111e46af990de59126c3af7ef4ba17863f0d40e9e6bf00fa"
+      },
+      {
+        "index": 2,
+        "name": "Карточка",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "dabf78e6533182192eb7448e316f43fbe8d1148a201c89136cd5164d2900042d"
+      },
+      {
+        "index": 3,
+        "name": "КП и цены",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "44d49e9bfb35469ce3f49a70900598a93deedf01a93fa5d93ac08769152e0990"
+      },
+      {
+        "index": 4,
+        "name": "План действий",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "11b1caba8e3cd165599a451da51de1c4e6f3e2eb6eda53e6f95fee3b5274c67b"
+      },
+      {
+        "index": 5,
+        "name": "Источники",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "078f83e1253ab7c844bbe8748f19543658391661b44bf8f31b9f721539b6dfed"
+      },
+      {
+        "index": 6,
+        "name": "Пробелы",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "c4007ea418f59acca5a0a683277bdcd878efa67ae7160b7ec5b10b4f12f66eee"
+      }
+    ]
+  },
+  "4f31d0fdfbce4677a52581ea18766476aacf4fcc19ed959822e9435ed804913f": {
+    "source_id": "SRC-36",
+    "relative_path": "114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.pdf",
+    "source_sha256": "4f31d0fdfbce4677a52581ea18766476aacf4fcc19ed959822e9435ed804913f",
+    "source_bytes": 128035,
+    "format": "pdf",
+    "total_fragments": 10,
+    "fragments": [
+      {
+        "index": 0,
+        "name": "Страница 1",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "e5367e3325e1b45243aa7f8ed4ec54059d1269883f4083fc64d693400b9ea4d9"
+      },
+      {
+        "index": 1,
+        "name": "Страница 2",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "1fc96dee3f365a415e2f7ef0c079fc871426d95249c220937a1d80e8e2800009"
+      },
+      {
+        "index": 2,
+        "name": "Страница 3",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "1a79fc079cfd3d187feb8861b3c7d48418b207d5c590615e19eb62f3be20b79c"
+      },
+      {
+        "index": 3,
+        "name": "Страница 4",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "3f87f92a4a43240b8f2841b8c41c67461c454ed6792417517e32376811809627"
+      },
+      {
+        "index": 4,
+        "name": "Страница 5",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "7205cc722df87daeecffbbb0c7656f3e3b198fcd90b0cff0b1d3cc3f537b0239"
+      },
+      {
+        "index": 5,
+        "name": "Страница 6",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "cd9c94f8c09d1b6a213bb129df787ffbbc0cd70af77d82f09e6ae3bf239abda1"
+      },
+      {
+        "index": 6,
+        "name": "Страница 7",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "d022e613f95f6199d33e3db8f100ba772985bd1b225215eadfda55cce4fcfaac"
+      },
+      {
+        "index": 7,
+        "name": "Страница 8",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "e0bce005c6cd44af6c09b0dbffece6f408aed8697d5b816c73c9f87a9b43cc4c"
+      },
+      {
+        "index": 8,
+        "name": "Страница 9",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "a75672e5de4ba2aad877a427e1cba83da44b61f7ff884fb68ddd770d8e670d2d"
+      },
+      {
+        "index": 9,
+        "name": "Страница 10",
+        "allowed_empty": false,
+        "min_substantive_chars": 1,
+        "content_sha256": "6c9d93cfbaa9aee5d66719b4e4ff553490d251928fa98fedbd144b43d3a3394c"
+      }
+    ]
+  },
+  "8703912cc60c01ed8eb45224a354b0ad456f0010b8df59fcea66623c3402897c": {
+    "source_id": "SRC-38",
+    "relative_path": "115-competitor-presentation-checklist-01/CHECKLIST_StarBuilding_Competitors_Presentation_v01.xlsx",
+    "source_sha256": "8703912cc60c01ed8eb45224a354b0ad456f0010b8df59fcea66623c3402897c",
+    "source_bytes": 58764,
+    "format": "xlsx",
+    "total_fragments": 6,
+    "fragments": [
+      {
+        "index": 0,
+        "name": "Начните здесь",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "9a59b2d8879e166c87b035160e70fefb33cdab0aaef81ed64f80e192d28b8c74"
+      },
+      {
+        "index": 1,
+        "name": "Чек-лист",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "76d46581a5485b23cb55c3f193847e7edb9f78d67fa09a6330163bd20be2958c"
+      },
+      {
+        "index": 2,
+        "name": "Перед встречей",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "8df47747271196a1f04cf13c34e9ce2ccfaf5f738e0b1916349eec4e1a1aac81"
+      },
+      {
+        "index": 3,
+        "name": "Фразы менеджеру",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "e7ea10c67b3b136c205e13deef29cea14ef5c423c0ac10168f425be42a65eea9"
+      },
+      {
+        "index": 4,
+        "name": "Пробелы карточки",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "e2f59f732fe6283b4fd2812ad294575d1e057aca4dbd9ad36c2b5ce4ffe199ed"
+      },
+      {
+        "index": 5,
+        "name": "Основания",
+        "allowed_empty": false,
+        "min_substantive_rows": 1,
+        "content_sha256": "ccf9ce7bf883fa59cc55391e2abc57845665f2958fefe745a4a6d7fef0c7fb04"
+      }
+    ]
+  }
+}

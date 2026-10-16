@@ -81,6 +81,20 @@
 
 Правило валидации: чтение источников выполняется в режиме fail-closed; при отсутствии файла, наличии символических ссылок или расхождении хэша операции экспорта черновика, генерации контекста модели и команды `/project` прерываются с отказом целостности (`SubjectBaseIntegrityError`), генерация фиктивных шаблонов запрещена.
 
+### 3.1. Манифест покрытия бинарных источников P026v1 (Coverage Manifest v1.0, `p026_coverage_manifest.json`)
+Архитектурный инвариант Integrity связывает хэш исходных байтов с проверяемой содержательной полнотой фрагментов:
+- **Инвариант:** hash/size исходного файла + поддерживаемый extraction + проверяемая содержательная полнота фрагментов.
+- **Служебные заголовки:** строки `--- Лист: ... ---` и `--- Страница N ---` исключены из расчёта содержательного наполнения.
+- **Отказ fail-closed:** при пустом содержании ячеек/страниц, несовпадении числа листов/страниц, перестановке или несовпадении хэша фрагмента выбрасывается `SubjectBaseIntegrityError` строго ДО вызова SDK (`0` SDK calls) и ДО мутации истории (`0` history writes).
+
+| Источник | Формат | Число фрагментов | Политика допустимости пустых | Хэш исходного файла |
+|---|---|---|---|---|
+| `114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.xlsx` (`SRC-35`) | XLSX | 7 листов | Запрещены (`allowed_empty: false`) | `9150ff7d01f7d2e67b1917301606dad9c1b978580afc4a77ea5aac01f6a4a564` |
+| `114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.pdf` (`SRC-36`) | PDF | 10 страниц | Запрещены (`allowed_empty: false`) | `4f31d0fdfbce4677a52581ea18766476aacf4fcc19ed959822e9435ed804913f` |
+| `115-competitor-presentation-checklist-01/CHECKLIST_StarBuilding_Competitors_Presentation_v01.xlsx` (`SRC-38`) | XLSX | 6 листов | Запрещены (`allowed_empty: false`) | `8703912cc60c01ed8eb45224a354b0ad456f0010b8df59fcea66623c3402897c` |
+
+Каждый фрагмент фиксирует `index`, `name`, `allowed_empty`, минимальный размер значащего содержимого и эталонный SHA-256 содержательного текста фрагмента. Дисковый артефакт `p026_coverage_manifest.json` и in-memory манифест валидируются взаимно методом `verify_coverage_manifest()`.
+
 ### 4. Границы изоляции среды исполнения и акторов
 - Хранилище runtime state изолировано по пути `DRAMKNOTE_P026_STORAGE_DIR` или systemd `STATE_DIRECTORY` (`~/.local/share/star-building/dramknote-p026`).
 - Черновики и решения пользователя/чата А недоступны пользователю/чату Б (actor & chat isolation); черновики без подтверждённого владельца имеют статус fail-closed.

@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -290,6 +291,47 @@ class P026SubjectBaseTest(unittest.TestCase):
                     checked_count += 1
                     self.assertEqual(manifest_map[backticks[-2]], backticks[-1], f"Несовпадение хэша для {backticks[-2]}")
         self.assertEqual(7, checked_count, f"Ожидалось 7 проверенных хэшей дельты P026v1 в DATA_MODEL.md, найдено: {checked_count}")
+
+    def test_extract_xlsx_rejects_empty_workbook_and_headings_only(self):
+        """HIGH INTEGRITY: Genuinely empty workbook (headings only) must raise SubjectBaseIntegrityError."""
+        import io
+        import openpyxl
+        buf = io.BytesIO()
+        wb = openpyxl.Workbook()
+        wb.save(buf)
+        with self.assertRaises(SubjectBaseIntegrityError):
+            self.base._extract_xlsx_text(buf.getvalue(), "genuinely-empty-workbook.xlsx")
+
+    def test_extract_pdf_rejects_dropped_first_text_page(self):
+        """HIGH INTEGRITY: Dropped PDF text page must raise SubjectBaseIntegrityError."""
+        from pypdf._page import PageObject
+        pdf_entry = next(x for x in self.base.CANONICAL_SOURCE_MANIFEST if x["relative_path"].endswith(".pdf"))
+        p = self.base._resolve_source_path(pdf_entry["relative_path"])
+        raw_bytes = p.read_bytes()
+
+        original_extract = PageObject.extract_text
+        counter = [0]
+        def drop_first_page(self_page, *a, **kw):
+            counter[0] += 1
+            text = original_extract(self_page, *a, **kw)
+            if counter[0] == 1:
+                return None
+            return text
+
+        with patch.object(PageObject, "extract_text", drop_first_page):
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base._extract_pdf_text(raw_bytes, pdf_entry["relative_path"])
+
+    def test_extract_xlsx_rejects_empty_rows_on_mandatory_sheet(self):
+        """HIGH INTEGRITY: Iter_rows returning empty iterator must raise SubjectBaseIntegrityError."""
+        from openpyxl.worksheet.worksheet import Worksheet
+        xlsx_entry = next(x for x in self.base.CANONICAL_SOURCE_MANIFEST if x["relative_path"].endswith(".xlsx"))
+        p = self.base._resolve_source_path(xlsx_entry["relative_path"])
+        raw_bytes = p.read_bytes()
+
+        with patch.object(Worksheet, "iter_rows", return_value=iter(())):
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base._extract_xlsx_text(raw_bytes, xlsx_entry["relative_path"])
 
 if __name__ == "__main__":
     unittest.main()

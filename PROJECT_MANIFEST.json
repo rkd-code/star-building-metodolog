@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "21128f5c13126caa9aa51d61c20c82f9c90031fccda1d2274c00559af5f12103",
+  "source_tree_hash": "a6f0817106f7bcf19cacb899220ec6dfbe15c236070b992c13ea0c6ba08afe12",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1102,6 +1102,13 @@
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/UNKNOWN_LIST.md"
     },
     {
+      "path": "37-strategy-bot/p026_coverage_manifest.json",
+      "name": "p026_coverage_manifest.json",
+      "area": "37-strategy-bot",
+      "description": "{ \"9150ff7d01f7d2e67b1917301606dad9c1b978580afc4a77ea5aac01f6a4a564\": { \"source_id\": \"SRC-35\", \"relative_path\": \"114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.xlsx\", \"source_sha256\": \"9150ff7d01f7d2e67b1917301606dad",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_coverage_manifest.json"
+    },
+    {
       "path": "37-strategy-bot/p026_handler.py",
       "name": "p026_handler.py",
       "area": "37-strategy-bot",
@@ -1144,6 +1151,13 @@
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/systemd/star-building-strategy.service"
     },
     {
+      "path": "37-strategy-bot/test_p026_coverage_contract.py",
+      "name": "test_p026_coverage_contract.py",
+      "area": "37-strategy-bot",
+      "description": "Регрессионные испытания архитектурного контракта полноты P026v1 (Integrity). Проверяет: 1. Инвариант Integrity: hash/size + supported extraction + содержательная полнота фрагментов. 2. Служебные заголовки и номера страниц не считаются содер",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_coverage_contract.py"
+    },
+    {
       "path": "37-strategy-bot/test_p026_deep_probes_repro.py",
       "name": "test_p026_deep_probes_repro.py",
       "area": "37-strategy-bot",
@@ -1182,7 +1196,7 @@
       "path": "37-strategy-bot/test_p026_subject_base.py",
       "name": "test_p026_subject_base.py",
       "area": "37-strategy-bot",
-      "description": "import os import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError class P026SubjectBaseTest(unitte",
+      "description": "import os import sys import tempfile import unittest from unittest.mock import patch from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError ",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_subject_base.py"
     },
     {

@@ -448,5 +448,67 @@ class P026StrategyBotIntegrationTest(unittest.IsolatedAsyncioTestCase):
             self.assertIn("целостность", answer.lower())
             self.assertNotIn("\ufffd", answer)
 
+    def test_generate_answer_parser_partial_or_empty_failures_block_sdk_and_preserve_history(self):
+        """FN-014 HIGH INTEGRITY: Пустой XLSX (headings only) или потеря страницы PDF блокируют вызов модели (0 calls, 0 writes)."""
+        import asyncio, types
+        from types import SimpleNamespace as NS
+        import openpyxl, pypdf
+        from openpyxl.worksheet.worksheet import Worksheet
+        from pypdf._page import PageObject
+
+        calls = []
+        def model_call(**kw):
+            calls.append(kw)
+            return NS(text="SHOULD_NOT_BE_CALLED")
+
+        genai_mod = types.ModuleType("google.genai")
+        genai_mod.Client = lambda **kw: NS(models=NS(generate_content=model_call))
+        st_mod = types.ModuleType("google.genai.types")
+        st_mod.GenerateContentConfig = lambda **kw: NS(**kw)
+        st_mod.Part = NS(from_bytes=lambda **kw: NS(**kw))
+        genai_mod.types = st_mod
+        google_mod = types.ModuleType("google")
+        google_mod.genai = genai_mod
+
+        # Сценарий 1: iter_rows возвращает пустой итератор (XLSX empty all rows)
+        user_id = 999810
+        self.module._user_histories[user_id] = ["PRE_EXISTING_HISTORY"]
+        self.module._user_histories[(user_id, user_id)] = ["PRE_EXISTING_CHAT_HISTORY"]
+        calls.clear()
+
+        with patch.dict(sys.modules, {"google": google_mod, "google.genai": genai_mod, "google.genai.types": st_mod}), \
+             patch.object(self.module, "get_api_key", return_value="OFFLINE_KEY"), \
+             patch.object(self.module, "get_strategy_context", return_value="BASE"), \
+             patch.object(Worksheet, "iter_rows", return_value=iter(())):
+            answer = asyncio.run(self.module.generate_answer("Вопрос по P-026", "Автор", user_id, user_id))
+
+        self.assertEqual(0, len(calls), "При пустом XLSX вызов SDK должен быть строго 0")
+        self.assertEqual(["PRE_EXISTING_HISTORY"], self.module._user_histories[user_id], "История не должна мутировать")
+        self.assertEqual(["PRE_EXISTING_CHAT_HISTORY"], self.module._user_histories[(user_id, user_id)], "Чат-история не должна мутировать")
+        self.assertIn("целостност", answer.lower())
+
+        # Сценарий 2: первая текстовая страница PDF потеряна (возвращает None)
+        user_id = 999811
+        self.module._user_histories[user_id] = ["PRE_EXISTING_HISTORY_2"]
+        self.module._user_histories[(user_id, user_id)] = ["PRE_EXISTING_CHAT_HISTORY_2"]
+        calls.clear()
+        orig_extract = PageObject.extract_text
+        cnt = [0]
+        def partial_extract(self_page, *a, **kw):
+            cnt[0] += 1
+            t = orig_extract(self_page, *a, **kw)
+            return None if cnt[0] == 1 else t
+
+        with patch.dict(sys.modules, {"google": google_mod, "google.genai": genai_mod, "google.genai.types": st_mod}), \
+             patch.object(self.module, "get_api_key", return_value="OFFLINE_KEY"), \
+             patch.object(self.module, "get_strategy_context", return_value="BASE"), \
+             patch.object(PageObject, "extract_text", partial_extract):
+            answer = asyncio.run(self.module.generate_answer("Вопрос по P-026", "Автор", user_id, user_id))
+
+        self.assertEqual(0, len(calls), "При потере страницы PDF вызов SDK должен быть строго 0")
+        self.assertEqual(["PRE_EXISTING_HISTORY_2"], self.module._user_histories[user_id], "История не должна мутировать")
+        self.assertEqual(["PRE_EXISTING_CHAT_HISTORY_2"], self.module._user_histories[(user_id, user_id)], "Чат-история не должна мутировать")
+        self.assertIn("целостност", answer.lower())
+
 if __name__ == "__main__":
     unittest.main()

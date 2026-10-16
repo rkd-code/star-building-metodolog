@@ -1,16 +1,16 @@
 # Graph Report - t_7b954f30  (2026-10-16)
 
 ## Corpus Check
-- 180 files · ~193,291 words
+- 182 files · ~198,466 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1313 nodes · 1746 edges · 188 communities (96 shown, 92 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 58 edges (avg confidence: 0.9)
+- 1365 nodes · 1819 edges · 168 communities (99 shown, 69 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 60 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1069d27a`
+- Built from commit: `73c360fb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -163,54 +163,34 @@
 - card_REG-008_sistema_motivacii.md
 - card_REG-009_toplivnye_karty.md
 - SubjectBaseIntegrityError
-- P026Storage
+- PathTraversalError
 - P026StorageTest
 - P026HandlerTest
 - P026SubjectBase
 - 3. Пошаговая процедура точного развертывания (Exact Release Deployment)
-- P026SecurityTest
+- P026Storage
 - MANIFEST.json
 - P026Handler
-- .test_lock_symlink_attack_rejected_fail_closed
-- .test_no_hardcoded_secrets_or_tokens
-- .test_parent_directory_symlink_attack_rejected_fail_closed
-- .test_path_traversal_attack_matrix
-- .test_side_effects_before_refusal_prevented
-- .test_source_catalogs_sha256_unmodified
-- .test_symlink_attack_rejected
-- .test_t2_rollback_procedure_tampered_backup_fails_closed_without_mutations
-- .test_u2_u3_u4_rollback_comprehensive_matrix
-- .test_u5_backup_allowlist_and_symlink_protection
-- .test_v2_v3_v4_v5_deployment_plan_probes
-- .test_v5_consecutive_backup_switch_rollback_roundtrip
-- .test_w3_w4_backup_security_probes
-- .test_w4_destructive_recovery_roundtrip
-- .test_x1_x2_rollback_approved_roots_and_execstart_probes
-- .test_x3_backup_target_and_source_symlinks
-- .test_x4_manifest_incomplete_and_executable_recovery_e2e
-- .test_y1_execstart_identity_and_command_validation
-- .test_y2_backup_target_hardlink_protection
-- .test_y3_backup_full_preflight_before_first_mutation
-- .test_z1_z2_z3_z4_comprehensive_matrix
-- JournalCorruptionError
+- P026CoverageContractTest
+- P026SecurityTest
+- P026DeepProbesReproTest
+- validate_ownership_id
 - Path
-- .get_p026_prompt_context
 - Акт готовности предметной базы знаний P026v1
 - Реестр неизвестного, открытых вопросов и незаполненных данных P-026v1
 - Договор передачи базы P026v1 Разработчику (Пондер Стиббонс)
-- .test_aa1_aa2_independent_recheck_coverage
 
 ## God Nodes (most connected - your core abstractions)
-1. `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` - 43 edges
-2. `P026Storage` - 41 edges
-3. `P026SubjectBase` - 38 edges
+1. `P026SubjectBase` - 48 edges
+2. `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` - 43 edges
+3. `P026Storage` - 41 edges
 4. `P026StorageTest` - 31 edges
-5. `P026Handler` - 29 edges
-6. `P026SecurityTest` - 29 edges
-7. `P026HandlerTest` - 25 edges
-8. `SubjectBaseIntegrityError` - 23 edges
-9. `P026StrategyBotIntegrationTest` - 23 edges
-10. `P026SubjectBaseTest` - 21 edges
+5. `SubjectBaseIntegrityError` - 30 edges
+6. `P026SecurityTest` - 30 edges
+7. `P026Handler` - 29 edges
+8. `P026SubjectBaseTest` - 27 edges
+9. `P026HandlerTest` - 25 edges
+10. `P026StrategyBotIntegrationTest` - 25 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `@ReglamentSB_bot (Watchman)` --calls--> `REG-004: How to Write a Regulation`  [INFERRED]
@@ -243,7 +223,7 @@
 - **Процесс управления персоналом** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_007_kadrovoe_deloproizvodstvo, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_008_sistema_motivacii, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura [INFERRED 0.85]
 - **Кадровые и мотивационные процессы** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_007_kadrovoe_deloproizvodstvo_reglament, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_008_sistema_motivacii_reglament [INFERRED 0.90]
 
-## Communities (188 total, 92 thin omitted)
+## Communities (168 total, 69 thin omitted)
 
 ### Community 0 - "@ReglamentSB_bot (Watchman)"
 Cohesion: 0.17
@@ -254,8 +234,8 @@ Cohesion: 0.22
 Nodes (11): TC-01: Happy Path Test, Prompt: Sverchik (Auditor), Основной агент «Кодификатор», Промпт «Карточник», Промпт «Сверщик», 5-Section Regulation Schema, Bot: Om (Consultant), REG-001: Code of Conduct (+3 more)
 
 ### Community 2 - "P026SubjectBaseTest"
-Cohesion: 0.10
-Nodes (4): P026SubjectBaseTest, S2 / R3 / FN-014: Все 40 источников предметной базы P026v1 должны быть…, S2 / R3 / FN-014: Проверка фактического чтения содержимого всех 40 источников и…, FN-014: Проверка доступности артефактов базы P026v1 (SUBJECT_BASE,…
+Cohesion: 0.06
+Nodes (10): P026SubjectBaseTest, S2 / R3 / FN-014: Все 40 источников предметной базы P026v1 должны быть…, S2 / R3 / FN-014: Проверка фактического чтения содержимого всех 40 источников и…, FN-014: Проверка доступности артефактов базы P026v1 (SUBJECT_BASE,…, FN-014 HIGH INTEGRITY: Проверка runtime preflight доступности парсеров., FN-014 HIGH INTEGRITY: Отказ парсеров XLSX/PDF выбрасывает…, FN-014 MEDIUM DOCUMENTATION: Хэши дельты P026v1 в DATA_MODEL.md в точности…, HIGH INTEGRITY: Genuinely empty workbook (headings only) must raise… (+2 more)
 
 ### Community 3 - "8.1. 14 критериев сопоставления А-Профиль vs Star Building"
 Cohesion: 0.06
@@ -270,8 +250,8 @@ Cohesion: 0.29
 Nodes (7): Dual-Circuit Architecture, Voice Input Support, Consultant Scenario Flow, Bitrix24 Integration, @ReglamentSB_bot (Смотритель), @star_building_help_bot (Ом), Cross-Check Engine
 
 ### Community 6 - "strategy_bot.py"
-Cohesion: 0.17
-Nodes (30): allowed_user_ids(), build_system_prompt(), build_user_prompt(), deny(), extract_message(), generate_answer(), get_p026_handler(), get_strategy_context() (+22 more)
+Cohesion: 0.16
+Nodes (33): JournalCorruptionError, RuntimeError, Исключение при синтаксическом или структурном повреждении журнала решений., allowed_user_ids(), build_system_prompt(), build_user_prompt(), deny(), extract_message() (+25 more)
 
 ### Community 7 - "Битрикс24"
 Cohesion: 0.33
@@ -334,8 +314,8 @@ Cohesion: 0.27
 Nodes (17): build_graph(), build_inventory(), classify_project(), describe_content(), extract_content(), extract_docx(), extract_xlsx(), main() (+9 more)
 
 ### Community 54 - "Модель данных сервиса «Экзаменатор Star Building»"
-Cohesion: 0.09
-Nodes (21): 10. Ограничения целостности, 1. Вопрос, 2. Вариант ответа, 3. Программа тестирования, 4. Назначение, 5. Попытка, 6. Вопрос попытки, 7. Ответ сотрудника (+13 more)
+Cohesion: 0.08
+Nodes (22): 10. Ограничения целостности, 1. Вопрос, 2. Вариант ответа, 3. Программа тестирования, 4. Назначение, 5. Попытка, 6. Вопрос попытки, 7. Ответ сотрудника (+14 more)
 
 ### Community 55 - "РЕГЛАМЕНТ: Входной контроль и приемка строительных материалов и конструкций на объекте"
 Cohesion: 0.13
@@ -379,7 +359,7 @@ Nodes (7): add_report_sheet(), build_bank(), extract_questions(), reset_data_row
 
 ### Community 65 - "P026StrategyBotIntegrationTest"
 Cohesion: 0.08
-Nodes (9): P026StrategyBotIntegrationTest, T1 / S3: Псевдосогласия («Всё устраивает», «Возражений не имею» и т.д.)…, T1 / S3: End-to-end проверка transport → handler → storage для предложений и…, U1: Проверка на уровне транспорта: фразы с оговорками и условиями отклоняются…, R2 / F2: Обычные сообщения в групповых чатах отклоняются до модели, исключая…, R3 / F6: Отказ генерации системного промпта при нарушении манифеста источников., R3 / F6: Генерация контекста P-026 фактически считывает канонические источники…, S1 / R3: Сбой integrity gate обязан останавливать модель и историю до SDK. (+1 more)
+Nodes (8): P026StrategyBotIntegrationTest, T1 / S3: Псевдосогласия («Всё устраивает», «Возражений не имею» и т.д.)…, T1 / S3: End-to-end проверка transport → handler → storage для предложений и…, U1: Проверка на уровне транспорта: фразы с оговорками и условиями отклоняются…, R2 / F2: Обычные сообщения в групповых чатах отклоняются до модели, исключая…, R3 / F6: Генерация контекста P-026 фактически считывает канонические источники…, FN-014 HIGH INTEGRITY: Отсутствие openpyxl или pypdf блокирует модель и историю…, FN-014 HIGH INTEGRITY: Пустой XLSX (headings only) или потеря страницы PDF…
 
 ### Community 66 - "ЧАСТЬ 2. Интеграции следующих версий (v2.0+)"
 Cohesion: 0.22
@@ -426,8 +406,8 @@ Cohesion: 0.25
 Nodes (7): 1. Вывод по исходному файлу, 2. Рекомендуемый предел, 3. Что финансируется, 4. Правила увеличения бюджета, 5. Целевые показатели, 6. Решения для утверждения, Обоснование маркетингового бюджета до конца 2026 года
 
 ### Community 78 - "37 — «Драмкнот»: стратегический бот Star Building"
-Cohesion: 0.25
-Nodes (7): 37 — «Драмкнот»: стратегический бот Star Building, Возможности, Глоссарий, Границы, Нормативные источники и контроль целостности, Проверка и тестирование, Эксплуатация и границы среды исполнения
+Cohesion: 0.22
+Nodes (8): 37 — «Драмкнот»: стратегический бот Star Building, Возможности, Глоссарий, Границы, Нормативные источники и контроль целостности, Поддерживаемые зависимости и парсеры документов (Host Prerequisites), Проверка и тестирование, Эксплуатация и границы среды исполнения
 
 ### Community 79 - "strategy_healthcheck.py"
 Cohesion: 0.43
@@ -558,12 +538,12 @@ Cohesion: 0.67
 Nodes (3): 3.1. Цель до конца 2026 года, 3.2. Цель 2027 года, 3. Цели и ключевые результаты
 
 ### Community 151 - "SubjectBaseIntegrityError"
-Cohesion: 0.26
-Nodes (6): Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота., RuntimeError, Предметная база знаний P-026 («Коммерческий департамент» — релиз P026v1) в…, Исключение при нарушении целостности, отсутствии или подмене нормативного…, SubjectBaseIntegrityError, load_bot()
+Cohesion: 0.14
+Nodes (8): RuntimeError, Исключение при нарушении целостности, отсутствии или подмене нормативного…, Проверяет доступность обязательных библиотек для парсинга XLSX и PDF., Runtime preflight доступности и работоспособности обязательных парсеров…, SubjectBaseIntegrityError, R3 / F6: Отказ генерации системного промпта при нарушении манифеста источников., S1 / R3: Сбой integrity gate обязан останавливать модель и историю до SDK., S1 / R3: process_and_reply при сбое целостности возвращает отказ без обращения…
 
-### Community 152 - "P026Storage"
-Cohesion: 0.18
-Nodes (15): P026Storage, Any, Path, Строгая fail-closed проверка на отсутствие символических ссылок на всех уровнях…, Создает изолированные каталоги с защитой от symlink-атак., Межпроцессная сериализация через flock с поддержкой реентерабельности и…, Строгая fail-closed валидация без доверия симлинкованным родителям., Атомарная запись с fsync временного файла и родительского каталога. (+7 more)
+### Community 152 - "PathTraversalError"
+Cohesion: 0.17
+Nodes (12): get_default_storage_dir(), PathTraversalError, Path, Определяет базовый путь хранилища с поддержкой systemd STATE_DIRECTORY., Строгая fail-closed проверка на отсутствие символических ссылок на всех уровнях…, Создает изолированные каталоги с защитой от symlink-атак., Межпроцессная сериализация через flock с поддержкой реентерабельности и…, Исключение при попытке обхода каталога или использования некорректного пути. (+4 more)
 
 ### Community 153 - "P026StorageTest"
 Cohesion: 0.05
@@ -574,32 +554,44 @@ Cohesion: 0.07
 Nodes (11): P026HandlerTest, R3 / F6: Отказ команды /project при нарушении целостности манифеста источников., R3 / F6: Отказ экспорта черновика при нарушении целостности манифеста…, S3 / R5: Вариации согласий без pending proposal обязаны отклоняться., S3 / R5: Двухшаговый механизм: подтверждение согласует точное ранее показанное…, T1 / S3: Без предложения запрещено сохранять псевдосогласия как решения., T1 / S3: Пустая строка, точки, отказ и условные фразы не должны утверждать…, T1 / S3: Привязка подтверждения к proposal_id, отказ для чужого и повторного ID. (+3 more)
 
 ### Community 155 - "P026SubjectBase"
-Cohesion: 0.17
-Nodes (5): P026SubjectBase, Any, Нормативные константы, правила, версии документов и статус проекта P-026 (база…, Возвращает нормативный манифест 40 предметных источников P-026 (база P026v1)., Форматирует сводный отчёт о статусе P-026 для команды /project.
+Cohesion: 0.10
+Nodes (11): P026SubjectBase, Any, Возвращает нормативный манифест 40 предметных источников P-026 (база P026v1)., Проверяет целостность всех 40 канонических источников базы P026v1 (fail-closed)., Форматирует сводный отчёт о статусе P-026 для команды /project., Формирует нормативный контекст предметной базы P-026 (база P026v1) для…, Считывает машиночитаемый манифест базы MANIFEST.json., Нормативные константы, правила, версии документов и статус проекта P-026 (база… (+3 more)
 
 ### Community 156 - "3. Пошаговая процедура точного развертывания (Exact Release Deployment)"
 Cohesion: 0.10
 Nodes (20): 1. Точный состав и инвентарь релиза (Exact Release Inventory), 2. Предварительные условия и подготовка окружения (Pre-flight & Provisioning), 3. Пошаговая процедура точного развертывания (Exact Release Deployment), 4. Процедура безопасного отката (Safe Rollback Procedure), 5. Политика ограничений безопасности, Архитектурная документация и реестры:, Кодовая база компонента (37-strategy-bot):, Ограниченная модель установки на этом хосте (Bounded Host Installation Model) (+12 more)
 
-### Community 157 - "P026SecurityTest"
-Cohesion: 0.29
-Nodes (3): P026SecurityTest, R1 / F1: Проверяет блокировку symlink на любом уровне предков (выше…, Хранилище по умолчанию расположено изолированно вне репозитория и вне prod.
+### Community 157 - "P026Storage"
+Cohesion: 0.12
+Nodes (7): P026Storage, Возвращает список сохранённых версионных черновиков (от новых к старым)., R1 / F1: Проверяет блокировку symlink на любом уровне предков (выше…, R1 / F1: Проверяет отсутствие побочных каталогов/файлов при отказе., R1 / F1: Проверяет блокировку symlink на lock-файле (.decisions.lock) с…, Хранилище по умолчанию расположено изолированно вне репозитория и вне prod., Проверяет блокировку symlink на уровне родительских папок drafts и decisions…
 
 ### Community 158 - "MANIFEST.json"
 Cohesion: 0.08
 Nodes (24): all_hashes_verified, delta_sources_count, ГД, КД, МОП, ОД, РОП, Старший МОП (+16 more)
 
 ### Community 159 - "P026Handler"
-Cohesion: 0.07
-Nodes (20): P026Handler, Any, Сохраняется для совместимости: делегирует к is_unambiguous_confirmation., Положительная структурная валидация решения (Star Building P-026 /…, Файлы и вложенные документы расцениваются только как данные., Привязывает решение к конкретному обсуждаемому предметному вопросу., Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией., Явный метод подтверждения ожидающего предложения системы. (+12 more)
+Cohesion: 0.08
+Nodes (19): P026Handler, Any, Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота., Сохраняется для совместимости: делегирует к is_unambiguous_confirmation., Положительная структурная валидация решения (Star Building P-026 /…, Файлы и вложенные документы расцениваются только как данные., Привязывает решение к конкретному обсуждаемому предметному вопросу., Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией. (+11 more)
 
-### Community 181 - "JournalCorruptionError"
-Cohesion: 0.17
-Nodes (14): get_default_storage_dir(), JournalCorruptionError, PathTraversalError, RuntimeError, Изолированное защищённое файловое хранилище решений владельца и черновиков…, Определяет базовый путь хранилища с поддержкой systemd STATE_DIRECTORY., Исключение при попытке обхода каталога или использования некорректного пути., Исключение при синтаксическом или структурном повреждении журнала решений. (+6 more)
+### Community 160 - "P026CoverageContractTest"
+Cohesion: 0.10
+Nodes (10): P026CoverageContractTest, Регрессионные испытания архитектурного контракта полноты P026v1 (Integrity).…, HIGH INTEGRITY: Потеря части ячеек листа XLSX вызывает…, HIGH INTEGRITY: Пропуск страницы PDF вызывает SubjectBaseIntegrityError., HIGH INTEGRITY: Потеря части текста страницы PDF вызывает…, Штатный путь: Все 40 канонических источников извлекаются без ложных отказов с…, Инвариант Integrity: манифест покрытия строго согласован с 40 источниками…, HIGH INTEGRITY: Stale / подменённый coverage-артефакт вызывает… (+2 more)
+
+### Community 161 - "P026SecurityTest"
+Cohesion: 0.05
+Nodes (21): P026SecurityTest, Y2 (HIGH): Запрет перезаписи внешнего inode через существующий target hardlink., Y3 (MEDIUM): Полный preflight всего инвентаря source/target до первой операции…, Z1–Z4: Комплексная матрица регрессионных проверок безопасности развертывания и…, AA1 & AA2: Точные регрессионные тесты одиннадцатой ревизии (AA1 identity и AA2…, FN-014 HIGH IMMUTABILITY: Повторная распаковка в существующий релиз завершается…, Проверяет отсутствие токенов Telegram и паролей в компоненте 37-strategy-bot., T2 / S4: Процедура отката из DEPLOYMENT_PLAN.md на повреждённом бэкапе обязана… (+13 more)
+
+### Community 162 - "P026DeepProbesReproTest"
+Cohesion: 0.18
+Nodes (5): P026DeepProbesReproTest, S3: Общие согласия отклоняются без pending proposal; конкретная норма…, S5: Карантин при пустом/невалидном журнале и безопасная обработка в consumer., S1: Отказ integrity gate останавливает модель и историю до SDK., S2: Содержательное чтение всех 30 источников и отсутствие пропусков норм.
+
+### Community 181 - "validate_ownership_id"
+Cohesion: 0.26
+Nodes (11): Any, Строгая типизация идентификаторов актора и чата Telegram: Исключает bool (в…, Читает журнал решений; при повреждении отправляет в карантин и возвращает отказ., Фиксирует точное решение владельца в журнале с сериализацией и изоляцией., Возвращает список решений со строгой actor/chat фильтрацией., Строгая валидация формата timestamp: Требует полный ISO-8601 с датой, временем…, Единый канонический валидатор записей решений для чтения и записи. Обеспечивает…, validate_decision_record() (+3 more)
 
 ### Community 182 - "Path"
-Cohesion: 0.18
-Nodes (6): Path, Безопасное чтение нормативного документа со строгой fail-closed проверкой…, Считывает канонический текст согласованной предметной базы SUBJECT_BASE.md., Считывает реестр неизвестного UNKNOWN_LIST.md., Считывает акт готовности базы READINESS_ACT.md., Считывает машиночитаемый манифест базы MANIFEST.json.
+Cohesion: 0.22
+Nodes (5): Path, Безопасное чтение нормативного документа со строгой fail-closed проверкой…, Считывает канонический текст согласованной предметной базы SUBJECT_BASE.md., Считывает реестр неизвестного UNKNOWN_LIST.md., Считывает акт готовности базы READINESS_ACT.md.
 
 ### Community 184 - "Акт готовности предметной базы знаний P026v1"
 Cohesion: 0.29
@@ -614,24 +606,24 @@ Cohesion: 0.50
 Nodes (3): 1. Состав передаваемого пакета, 2. Требования к технической интеграции (Integration Phase), Договор передачи базы P026v1 Разработчику (Пондер Стиббонс)
 
 ## Knowledge Gaps
-- **489 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `version`, `package`, `function_id` (+484 more)
+- **491 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `version`, `package`, `function_id` (+486 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **92 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **69 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `P026Storage` connect `P026Storage` to `.test_lock_symlink_attack_rejected_fail_closed`, `P026StrategyBotIntegrationTest`, `.test_parent_directory_symlink_attack_rejected_fail_closed`, `.test_side_effects_before_refusal_prevented`, `strategy_bot.py`, `JournalCorruptionError`, `SubjectBaseIntegrityError`, `P026StorageTest`, `P026HandlerTest`, `P026SubjectBase`, `P026SecurityTest`, `P026Handler`?**
-  _High betweenness centrality (0.037) - this node is a cross-community bridge._
-- **Why does `P026StorageTest` connect `P026StorageTest` to `P026Storage`, `JournalCorruptionError`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
-- **Why does `P026SubjectBase` connect `P026SubjectBase` to `P026StrategyBotIntegrationTest`, `P026SubjectBaseTest`, `strategy_bot.py`, `Path`, `.get_p026_prompt_context`, `SubjectBaseIntegrityError`, `P026HandlerTest`, `P026Handler`?**
+- **Why does `P026Storage` connect `P026Storage` to `P026StrategyBotIntegrationTest`, `P026DeepProbesReproTest`, `P026SecurityTest`, `strategy_bot.py`, `validate_ownership_id`, `PathTraversalError`, `P026StorageTest`, `P026HandlerTest`, `P026Handler`?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
+- **Why does `P026HandlerTest` connect `P026HandlerTest` to `strategy_bot.py`, `SubjectBaseIntegrityError`, `P026SubjectBase`, `P026Storage`, `P026Handler`?**
   _High betweenness centrality (0.022) - this node is a cross-community bridge._
+- **Why does `P026SubjectBase` connect `P026SubjectBase` to `P026CoverageContractTest`, `P026StrategyBotIntegrationTest`, `P026SubjectBaseTest`, `strategy_bot.py`, `Path`, `SubjectBaseIntegrityError`, `P026HandlerTest`, `P026Handler`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+- **Are the 5 inferred relationships involving `P026SubjectBase` (e.g. with `P026Handler` and `P026CoverageContractTest`) actually correct?**
+  _`P026SubjectBase` has 5 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 6 inferred relationships involving `P026Storage` (e.g. with `P026Handler` and `P026DeepProbesReproTest`) actually correct?**
   _`P026Storage` has 6 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 4 inferred relationships involving `P026SubjectBase` (e.g. with `P026Handler` and `P026HandlerTest`) actually correct?**
-  _`P026SubjectBase` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 3 inferred relationships involving `P026StorageTest` (e.g. with `JournalCorruptionError` and `P026Storage`) actually correct?**
   _`P026StorageTest` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 7 inferred relationships involving `P026Handler` (e.g. with `JournalCorruptionError` and `P026Storage`) actually correct?**
-  _`P026Handler` has 7 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 7 inferred relationships involving `SubjectBaseIntegrityError` (e.g. with `P026Handler` and `build_system_prompt()`) actually correct?**
+  _`SubjectBaseIntegrityError` has 7 INFERRED edges - model-reasoned connections that need verification._
