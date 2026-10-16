@@ -2,6 +2,13 @@
 
 ## 2026-10-16
 
+- **Устранение 4 дефектов ревизии 1069d27 (Integrity, Immutability, Docs, Provenance) в расширении P-026 для штаба @Dramknote_bot (FN-014):**
+  - **HIGH INTEGRITY (`p026_subject_base.py`):** Устранён аварийный fallback `raw_bytes.decode('utf-8', errors='replace')` при сбое парсинга XLSX/PDF; внедрено строгое fail-closed прерывание с `SubjectBaseIntegrityError` при отсутствии библиотек `openpyxl`/`pypdf` или ошибках извлечения; вызов модели и запись истории блокируются (0 SDK calls, 0 history writes); добавлен runtime preflight доступности парсеров `verify_parsers()`.
+  - **HIGH IMMUTABILITY (`DEPLOYMENT_PLAN.md`):** Удалена деструктивная команда `rm -rf "$RELEASE_DIR"` в Шаге 3; внедрена fail-closed проверка существования каталога релиза (`if [ -e "$RELEASE_DIR" ] || [ -L "$RELEASE_DIR" ]`) с отказом до первой мутации (`rc!=0`), гарантируя неизменность sentinels и содержимого на диске.
+  - **MEDIUM DOCUMENTATION (`DATA_MODEL.md`):** Исправлены 7 неверных хэшей SHA-256 дельты P026v1, приведены в точное соответствие с каноническим `37-strategy-bot/knowledge-base-v1/MANIFEST.json` и фактическими файлами.
+  - **MEDIUM PROVENANCE (`graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`):** Устранена устаревшая ссылка на коммит `726a87d4`, не содержавший файлов `knowledge-base-v1`; обеспечена честная привязка provenance графа к базовому коммиту `1069d27a`, включающему полный корпус P026v1.
+  - **Тестовый комплекс:** 117/117 тестов PASS, подтверждено прохождение всех offline-проб (runtime_probes, release_overwrite, documentation_provenance).
+
 - **Интеграция предметной базы P026v1 и единый ограниченный релиз расширения P-026 для штаба @Dramknote_bot (FN-014):**
   - **Интеграция 40 источников в runtime (`p026_subject_base.py`, `p026_handler.py`):** В неизменяемый манифест `CANONICAL_SOURCE_MANIFEST` включены все 40 источников (30 базовых + 10 дельты) с точными размерами и SHA-256 хэшами; проверка целостности `verify_all_sources()` валидирует отсутствие symlinks, регулярность, непустой размер (0 байт — отказ) и точные хэши всех 40 файлов в режиме fail-closed.
   - **Содержательное извлечение и иерархия приоритетов:** Реализовано безопасное извлечение текстов из HTML, XLSX (openpyxl) и PDF (pypdf); сортировка контекста по строгой иерархии: 1) утверждённые РЕГ-001..009 > 2) решения владельца (№88, №89, 99, 107v0.6, 109v0.3) > 3) функционалы и базовая модель 76 > 4) аналитика 110/111/114/115 > 5) контрольные реестры.

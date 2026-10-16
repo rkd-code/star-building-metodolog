@@ -233,5 +233,63 @@ class P026SubjectBaseTest(unittest.TestCase):
         self.assertEqual(40, manifest_data["total_sources"])
         self.assertTrue(manifest_data["all_hashes_verified"])
 
+    def test_parser_preflight_and_fail_closed_on_missing_libraries(self):
+        """FN-014 HIGH INTEGRITY: Проверка runtime preflight доступности парсеров."""
+        from unittest.mock import patch
+        # В норме оба парсера доступны
+        status = self.base.check_parsers_availability()
+        self.assertTrue(status.get("openpyxl"), "openpyxl обязан быть доступен в среде выполнения")
+        self.assertTrue(status.get("pypdf"), "pypdf обязан быть доступен в среде выполнения")
+        self.base.verify_parsers()
+
+        # При отсутствии openpyxl verify_parsers и verify_all_sources обязаны выбрасывать SubjectBaseIntegrityError
+        with patch.dict("sys.modules", {"openpyxl": None}):
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base.verify_parsers()
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base.verify_all_sources()
+
+        # При отсутствии pypdf verify_parsers и verify_all_sources обязаны выбрасывать SubjectBaseIntegrityError
+        with patch.dict("sys.modules", {"pypdf": None}):
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base.verify_parsers()
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base.verify_all_sources()
+
+    def test_extract_xlsx_and_pdf_fail_closed_no_replacement_chars(self):
+        """FN-014 HIGH INTEGRITY: Отказ парсеров XLSX/PDF выбрасывает SubjectBaseIntegrityError без binary replacement."""
+        from unittest.mock import patch
+        # Некорректные байты
+        bad_bytes = b"CORRUPTED_NON_XLSX_BYTES"
+        with self.assertRaises(SubjectBaseIntegrityError):
+            self.base._extract_xlsx_text(bad_bytes, "test.xlsx")
+
+        bad_pdf_bytes = b"CORRUPTED_NON_PDF_BYTES"
+        with self.assertRaises(SubjectBaseIntegrityError):
+            self.base._extract_pdf_text(bad_pdf_bytes, "test.pdf")
+
+        # Отсутствие модулей
+        with patch.dict("sys.modules", {"openpyxl": None}):
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base._extract_xlsx_text(b"some_bytes", "test.xlsx")
+        with patch.dict("sys.modules", {"pypdf": None}):
+            with self.assertRaises(SubjectBaseIntegrityError):
+                self.base._extract_pdf_text(b"some_bytes", "test.pdf")
+
+    def test_data_model_delta_hashes_match_canonical_manifest(self):
+        """FN-014 MEDIUM DOCUMENTATION: Хэши дельты P026v1 в DATA_MODEL.md в точности совпадают с каноническим манифестом."""
+        import re
+        data_model = Path(__file__).resolve().parent.parent / "DATA_MODEL.md"
+        self.assertTrue(data_model.is_file(), "DATA_MODEL.md должен присутствовать в корне репозитория")
+        manifest_map = {x["relative_path"]: x["sha256"] for x in self.base.CANONICAL_SOURCE_MANIFEST}
+        checked_count = 0
+        for line in data_model.read_text(encoding="utf-8").splitlines():
+            if "Дельта P026v1:" in line:
+                backticks = re.findall(r"`([^`]+)`", line)
+                if len(backticks) >= 3 and backticks[-2] in manifest_map:
+                    checked_count += 1
+                    self.assertEqual(manifest_map[backticks[-2]], backticks[-1], f"Несовпадение хэша для {backticks[-2]}")
+        self.assertEqual(7, checked_count, f"Ожидалось 7 проверенных хэшей дельты P026v1 в DATA_MODEL.md, найдено: {checked_count}")
+
 if __name__ == "__main__":
     unittest.main()

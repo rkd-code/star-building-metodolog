@@ -501,10 +501,14 @@ class P026SubjectBase:
         return " ".join(html.unescape(no_b64).split())
 
     @staticmethod
-    def _extract_xlsx_text(raw_bytes: bytes) -> str:
+    def _extract_xlsx_text(raw_bytes: bytes, rel_path: str = "") -> str:
         try:
             import io
             import openpyxl
+            if openpyxl is None or not hasattr(openpyxl, "load_workbook"):
+                raise SubjectBaseIntegrityError(
+                    f"Библиотека openpyxl недоступна для извлечения содержимого XLSX: {rel_path}"
+                )
             wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), data_only=True)
             lines = []
             for sheet in wb.sheetnames:
@@ -514,26 +518,81 @@ class P026SubjectBase:
                     vals = [str(v).strip() for v in row if v is not None and str(v).strip()]
                     if vals:
                         lines.append(" | ".join(vals))
-            return "\n".join(lines)
+            extracted = "\n".join(lines).strip()
+            if not extracted:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности: извлечение XLSX документа {rel_path} вернуло пустой текст"
+                )
+            return extracted
+        except SubjectBaseIntegrityError:
+            raise
         except Exception as err:
-            logger.warning("Ошибка извлечения xlsx: %s", err)
-            return raw_bytes.decode("utf-8", errors="replace")
+            logger.error("Ошибка извлечения xlsx %s: %s", rel_path, err)
+            raise SubjectBaseIntegrityError(
+                f"Сбой извлечения обязательного документа XLSX ({rel_path}): {err}"
+            ) from err
 
     @staticmethod
-    def _extract_pdf_text(raw_bytes: bytes) -> str:
+    def _extract_pdf_text(raw_bytes: bytes, rel_path: str = "") -> str:
         try:
             import io
             import pypdf
+            if pypdf is None or not hasattr(pypdf, "PdfReader"):
+                raise SubjectBaseIntegrityError(
+                    f"Библиотека pypdf недоступна для извлечения содержимого PDF: {rel_path}"
+                )
             reader = pypdf.PdfReader(io.BytesIO(raw_bytes))
             lines = []
             for idx, page in enumerate(reader.pages):
                 t = page.extract_text()
-                if t:
+                if t and t.strip():
                     lines.append(f"\n--- Страница {idx + 1} ---\n{t.strip()}")
-            return "\n".join(lines)
+            extracted = "\n".join(lines).strip()
+            if not extracted:
+                raise SubjectBaseIntegrityError(
+                    f"Отказ целостности: извлечение PDF документа {rel_path} вернуло пустой текст"
+                )
+            return extracted
+        except SubjectBaseIntegrityError:
+            raise
         except Exception as err:
-            logger.warning("Ошибка извлечения pdf: %s", err)
-            return raw_bytes.decode("utf-8", errors="replace")
+            logger.error("Ошибка извлечения pdf %s: %s", rel_path, err)
+            raise SubjectBaseIntegrityError(
+                f"Сбой извлечения обязательного документа PDF ({rel_path}): {err}"
+            ) from err
+
+    @classmethod
+    def check_parsers_availability(cls) -> dict[str, bool]:
+        """Проверяет доступность обязательных библиотек для парсинга XLSX и PDF."""
+        status = {"openpyxl": False, "pypdf": False}
+        try:
+            import openpyxl
+            if openpyxl is not None and hasattr(openpyxl, "load_workbook"):
+                status["openpyxl"] = True
+        except Exception:
+            pass
+        try:
+            import pypdf
+            if pypdf is not None and hasattr(pypdf, "PdfReader"):
+                status["pypdf"] = True
+        except Exception:
+            pass
+        return status
+
+    @classmethod
+    def verify_parsers(cls) -> None:
+        """Runtime preflight доступности и работоспособности обязательных парсеров (openpyxl, pypdf).
+
+        При отсутствии парсеров или сбое их инициализации выбрасывает SubjectBaseIntegrityError,
+        обеспечивая строгое fail-closed поведение до обращения к модели и записи истории.
+        """
+        parsers = cls.check_parsers_availability()
+        missing = [name for name, ok in parsers.items() if not ok]
+        if missing:
+            raise SubjectBaseIntegrityError(
+                f"Отказ runtime preflight: отсутствуют обязательные библиотеки парсинга документов P-026: {missing}. "
+                "Работа заблокирована для предотвращения повреждения контекста модели (fail-closed)."
+            )
 
     @staticmethod
     def _get_normative_priority(rel_path: str) -> tuple[int, str]:
@@ -577,6 +636,7 @@ class P026SubjectBase:
 
     def verify_all_sources(self) -> dict[str, Any]:
         """Проверяет целостность всех 40 канонических источников базы P026v1 (fail-closed)."""
+        self.verify_parsers()
         verified = []
         for s in self.CANONICAL_SOURCE_MANIFEST:
             rel = s["relative_path"]
@@ -724,9 +784,9 @@ class P026SubjectBase:
                 if suffix == ".html":
                     content = self._clean_html_text(data)
                 elif suffix == ".xlsx":
-                    content = self._extract_xlsx_text(data)
+                    content = self._extract_xlsx_text(data, rel_path=rel_path)
                 elif suffix == ".pdf":
-                    content = self._extract_pdf_text(data)
+                    content = self._extract_pdf_text(data, rel_path=rel_path)
                 else:
                     content = data.decode("utf-8", errors="replace")
 

@@ -413,5 +413,40 @@ class P026StrategyBotIntegrationTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("целостност", call_args_str.lower())
         self.assertEqual(0, len(self.module._user_histories[user_id]))
 
+    def test_generate_answer_missing_parsers_fails_closed_before_sdk(self):
+        """FN-014 HIGH INTEGRITY: Отсутствие openpyxl или pypdf блокирует модель и историю (0 SDK calls, 0 writes)."""
+        import asyncio, types
+        from types import SimpleNamespace as NS
+
+        calls = []
+        def model_call(**kw):
+            calls.append(kw)
+            return NS(text="SHOULD_NOT_BE_CALLED")
+
+        genai_mod = types.ModuleType("google.genai")
+        genai_mod.Client = lambda **kw: NS(models=NS(generate_content=model_call))
+        st_mod = types.ModuleType("google.genai.types")
+        st_mod.GenerateContentConfig = lambda **kw: NS(**kw)
+        st_mod.Part = NS(from_bytes=lambda **kw: NS(**kw))
+        genai_mod.types = st_mod
+        google_mod = types.ModuleType("google")
+        google_mod.genai = genai_mod
+
+        for missing_mod in ("openpyxl", "pypdf"):
+            user_id = 999800 + (1 if missing_mod == "openpyxl" else 2)
+            self.module._user_histories[user_id].clear()
+            calls.clear()
+
+            with patch.dict(sys.modules, {"google": google_mod, "google.genai": genai_mod, "google.genai.types": st_mod, missing_mod: None}), \
+                 patch.object(self.module, "get_api_key", return_value="OFFLINE_KEY"), \
+                 patch.object(self.module, "get_strategy_context", return_value="BASE"):
+
+                answer = asyncio.run(self.module.generate_answer("Вопрос по скидкам", "Автор", user_id, user_id))
+
+            self.assertEqual(0, len(calls), f"При отсутствии {missing_mod} модель не должна вызываться")
+            self.assertEqual(0, len(self.module._user_histories[user_id]), f"При отсутствии {missing_mod} история не должна пополняться")
+            self.assertIn("целостность", answer.lower())
+            self.assertNotIn("\ufffd", answer)
+
 if __name__ == "__main__":
     unittest.main()

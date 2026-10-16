@@ -281,6 +281,34 @@
   6. **Сохранение регрессионной стабильности:** Подтверждено сохранение всех свойств V1, V5, U6, S1, S2, F3, F4, F5, R1, R2, R7, T3, T4 (106/106 тестов PASS).
 - **Политика NoMergeProdRestartCostsCredentialsACL:** Строго соблюдена во всех компонентах и тестах.
 
+### ADR-039: Устранение 4 дефектов ревизии 1069d27 (Integrity, Immutability, Docs, Provenance) в расширении P-026 для штаба @Dramknote_bot
+- **Статус:** Реализовано разработчиком (профиль developer), подготовлено к независимой приёмке ревизором (профиль reviewer) в рамках FN-014.
+- **Контекст:** Независимая приёмка ревизии 1069d27 (отчёт /home/roman/119-review-fn014-1069d27/REVIEW.md, вердикт FAIL) выявила 4 дефекта при подтверждении всех 115 тестов, docs gate, AA1/AA2, synthetic switch и destructive recovery:
+  1) HIGH INTEGRITY (p026_subject_base.py:503–538, 723–728): аварийный fallback возвращал `raw_bytes.decode('utf-8', errors='replace')` при сбое извлечения XLSX/PDF или отсутствии библиотек `openpyxl`/`pypdf`, что приводило к передаче повреждённого бинарного контекста (до 53K replacement chars) в модель и запись в историю;
+  2) HIGH IMMUTABILITY (DEPLOYMENT_PLAN.md:869–883): деструктивная команда `rm -rf "$RELEASE_DIR"` при повторной распаковке релиза в занятый каталог нарушала неизменяемость (immutability) опубликованных версий и удаляла sentinels;
+  3) MEDIUM DOCUMENTATION (DATA_MODEL.md:73–79): 7 значений SHA-256 дельты P026v1 расходились с каноническим MANIFEST.json и дисковыми файлами;
+  4) MEDIUM PROVENANCE (graphify-out/graph.json:36043, GRAPH_REPORT.md:12–15): граф ссылался на коммит `726a87d4`, в котором ещё отсутствовали файлы `knowledge-base-v1/`.
+- **Решение:**
+  1. **HIGH INTEGRITY (`p026_subject_base.py`):**
+     - Устранён fallback `raw_bytes.decode('utf-8', errors='replace')`;
+     - Реализовано строгое fail-closed поведение: методы `_extract_xlsx_text` и `_extract_pdf_text` выбрасывают `SubjectBaseIntegrityError` при отсутствии библиотек `openpyxl`/`pypdf`, ошибках чтения или пустом тексте;
+     - Добавлен runtime preflight доступности парсеров `check_parsers_availability()` и `verify_parsers()`, вызываемый в `verify_all_sources()`;
+     - Сбой извлечения или отсутствие парсеров блокирует вызов модели (0 SDK calls) и изменение истории (0 history writes).
+  2. **HIGH IMMUTABILITY (`DEPLOYMENT_PLAN.md`):**
+     - Удалена деструктивная команда `rm -rf "$RELEASE_DIR"`;
+     - Внедрена fail-closed проверка `if [ -e "$RELEASE_DIR" ] || [ -L "$RELEASE_DIR" ]; then exit 1; fi` до первой файловой мутации;
+     - Повторная распаковка в существующий релиз гарантирует неизменность существующих sentinels и содержимого на диске (rc!=0, 0 mutations).
+  3. **MEDIUM DOCUMENTATION (`DATA_MODEL.md`):**
+     - Все 7 значений SHA-256 дельты P026v1 в `DATA_MODEL.md` приведены в точное соответствие с каноническим манифестом `37-strategy-bot/knowledge-base-v1/MANIFEST.json` и файлами на диске;
+     - Добавлен автоматический регрессионный тест сверки `test_data_model_delta_hashes_match_canonical_manifest`.
+  4. **MEDIUM PROVENANCE (`graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`):**
+     - Ссылка `built_at_commit` обновлена на базовый коммит `1069d27a39fdd72c8e5203dae6118117d5cb9c02`, содержащий полный корпус P026v1;
+     - Устранена ложная атрибуция, `documentation_provenance.py` подтверждает 0 absent nodes и 0 hash mismatches.
+  5. **Сохранение регрессионной стабильности:**
+     - Набор тестов расширен до 117 тестов (117/117 PASS);
+     - Все 3 offline-пробы ревизора 119 (`runtime_probes.py`, `release_overwrite.py`, `documentation_provenance.py`) подтверждены PASS.
+- **Политика NoMergeProdRestartCostsCredentialsACL:** Строго соблюдена во всех компонентах и тестах.
+
 ### ADR-038: Интеграция предметной базы P026v1 и единый релиз расширения P-026 для штаба @Dramknote_bot (FN-014)
 - **Статус:** Реализовано разработчиком (профиль developer), подготовлено к независимой приёмке ревизором (профиль reviewer) в рамках FN-014.
 - **Контекст:** В соответствии с утверждённым договором APPROVED_EXECUTION_CONTRACT.md выполнена сквозная интеграция результатов Линии А (устранение дефектов AA1/AA2, ограниченная модель установки на хосте) и Линии Б (подготовка согласованной предметной базы P026v1 из 40 источников):

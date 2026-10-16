@@ -872,9 +872,10 @@ set -euo pipefail
 
 RELEASE_DIR="/home/roman/srv/star-building-strategy/releases/${TARGET_COMMIT}"
 
-# Защита от смешивания: если каталог уже существовал, он очищается перед распаковкой
-if [ -d "$RELEASE_DIR" ]; then
-    rm -rf "$RELEASE_DIR"
+# Защита от перезаписи (Fail-Closed Immutability): если каталог релиза уже существует, отказ до первой мутации
+if [ -e "$RELEASE_DIR" ] || [ -L "$RELEASE_DIR" ]; then
+    echo "ОШИБКА (Fail-Closed): Каталог релиза $RELEASE_DIR уже существует! Перезапись существующего релиза категорически запрещена для сохранения неизменяемости (immutability)." >&2
+    exit 1
 fi
 mkdir -p "$RELEASE_DIR"
 

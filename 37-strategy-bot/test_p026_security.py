@@ -1307,5 +1307,52 @@ else:
         r_aa1_stop = subprocess.run(["/bin/bash", "-c", stop_blk], env=env_aa1, capture_output=True, text=True, timeout=15)
         self.assertNotEqual(0, r_aa1_stop.returncode, "AA1: скопированный /bin/echo обязан отвергаться до остановки службы (rc!=0)")
         self.assertFalse(log_aa1.exists(), "AA1: служба не должна быть остановлена при не-Python ExecStart")
+
+    def test_step3_release_unpack_immutability_and_overwrite_rejection(self):
+        """FN-014 HIGH IMMUTABILITY: Повторная распаковка в существующий релиз завершается fail-closed (rc!=0) до мутации."""
+        import subprocess, json, tarfile, io
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        m = re.search(r"```bash\n(.*?)\n```", plan.split("### Шаг 3. Распаковка релиза")[1], re.S)
+        self.assertIsNotNone(m, "Блок Шага 3 обязан присутствовать в DEPLOYMENT_PLAN.md")
+        block = m.group(1)
+
+        # Проверяем отсутствие rm -rf $RELEASE_DIR в тексте плана
+        self.assertNotIn('rm -rf "$RELEASE_DIR"', block, "Команда rm -rf $RELEASE_DIR категорически запрещена в Шаге 3")
+
+        p = Path(self.temp_dir.name) / "step3_immutability"
+        home = p / "home"
+        release = home / "srv/star-building-strategy/releases/EXISTING_VERSION"
+        release.mkdir(parents=True)
+        sentinel = release / "IMMUTABLE_RELEASE_SENTINEL"
+        sentinel.write_text("MUST_NOT_BE_DELETED\n", encoding="utf-8")
+        st_before = sentinel.stat()
+
+        archive = p / "test-archive.tar"
+        with tarfile.open(archive, "w") as t:
+            d = b"print('SYNTHETIC_ENTRYPOINT')\n"
+            info = tarfile.TarInfo("37-strategy-bot/strategy_bot.py")
+            info.size = len(d)
+            t.addfile(info, io.BytesIO(d))
+
+        bin_dir = p / "bin"
+        bin_dir.mkdir()
+        (bin_dir / "git").write_text("#!/bin/sh\nprintf '37-strategy-bot/strategy_bot.py\\n'\n")
+        (bin_dir / "git").chmod(0o700)
+        (home / ".worktrees/t_7b954f30").mkdir(parents=True)
+
+        script = f"TARGET_COMMIT=EXISTING_VERSION\nTMP_ARCHIVE={archive}\n" + block.replace("/home/roman", str(home))
+        env = {"HOME": str(home), "PATH": f"{bin_dir}:/usr/bin:/bin", "LANG": "C.UTF-8"}
+
+        r = subprocess.run(["/bin/bash", "-c", script], env=env, capture_output=True, text=True, timeout=20)
+
+        # Ожидается: отказ с rc != 0, sentinel сохранён, entrypoint не создан
+        self.assertNotEqual(0, r.returncode, "Повторная распаковка в занятый каталог обязана завершаться с ошибкой (rc!=0)")
+        self.assertTrue(sentinel.exists(), "Sentinel существующего релиза обязан сохраниться")
+        self.assertEqual("MUST_NOT_BE_DELETED\n", sentinel.read_text(encoding="utf-8"))
+        self.assertEqual(st_before.st_mtime_ns, sentinel.stat().st_mtime_ns, "mtime sentinel не должен измениться")
+        self.assertFalse((release / "37-strategy-bot/strategy_bot.py").exists(), "Файлы нового релиза не должны появиться в занятом каталоге")
+        self.assertIn("уже существует", r.stderr, "Сообщение об ошибке должно сообщать о существовании каталога")
+
 if __name__ == "__main__":
     unittest.main()

@@ -70,13 +70,13 @@
 | Менеджер по продажам (МОП) | `v0.1` | 101 | `/home/roman/101-commercial-role-functions-sales-01/04_SALES_MANAGER_FUNCTIONAL_V0.1.md` | `178f0d2a9956df116334f9b4735d56bb34059f381e7a841e7df15536c2ddcc96` |
 | Лидоруб | `v0.1` | 106 | `/home/roman/106-commercial-role-functions-leadrub-01/05_LEAD_QUALIFIER_FUNCTIONAL_V0.1.md` | `24446f80a5b4ac870e82e79e26f101a11f6cc1cc49236ad783863f7a8e7b0d00` |
 || Оргструктура КД | `v0.1` | 102 | `/home/roman/102-commercial-department-org-regulation-01/REG_COMMERCIAL_ORG_V0.1.md` | `737861acea65400fb3f8f175eab909cf5e880705ad72d7a71bb44f0159c17560` |
-|| Дельта P026v1: Стратегия | `раб.` | 35 | `35-commercial-marketing-strategy/STRATEGY.md` | `6317b14a8fc31b262a5b287fe29845da2f0cc3d410dbd63749c81121544a42d9` |
-|| Дельта P026v1: 110 Вопросы | `раб.` | 110 | `110-commercial-interviews-01/questions.json` | `4e4e162e0787a20c3a886beeb598cc6f8662ce84a0d944c68d9d5926ec002244` |
-|| Дельта P026v1: 111 Стандарт | `раб.` | 111 | `111-competitor-card-design-01/CARD_STANDARD_V0.1.md` | `beaa0c58f0dd876cb8bf4cb3604f3238ca7975bf81c54ba8a91dd456ea9079bf` |
-|| Дельта P026v1: 114 А-Профиль XLSX | `appr.` | 114 | `114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.xlsx` | `9150ff7d47fc9ecce005d52e5572aeb9773ea614341c28c86d8cb24a68285514` |
-|| Дельта P026v1: 114 А-Профиль PDF | `appr.` | 114 | `114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.pdf` | `4f31d0fd8be1288b839bbd725612f0043c2cbb6dc480112dd1804f86d8e23f03` |
-|| Дельта P026v1: 115 Чек-лист XLSX | `раб.` | 115 | `115-competitor-presentation-checklist-01/CHECKLIST_StarBuilding_Competitors_Presentation_v01.xlsx` | `8703912ca6a5fc1f40957580ba98fc1a1413d712e022f4b4cefc175a034440bc` |
-|| Дельта P026v1: 115 Запросы JSON | `раб.` | 115 | `115-competitor-presentation-checklist-01/CHECKLIST_ITEMS.json` | `ab5ac9f56353d262fe79133a8264516361a6b0c2cb0ba7918a245f78c9d4ff89` |
+||| Дельта P026v1: Стратегия | `раб.` | 35 | `35-commercial-marketing-strategy/STRATEGY.md` | `6317b14a596d286b15def6cafef26d84797fc7a784d709c3b04554b1dd72d6a1` |
+||| Дельта P026v1: 110 Вопросы | `раб.` | 110 | `110-commercial-interviews-01/questions.json` | `4e4e162ec9034cdce7037ccc9213555ec7446f9ad73d231138b2674fef8011c1` |
+||| Дельта P026v1: 111 Стандарт | `раб.` | 111 | `111-competitor-card-design-01/CARD_STANDARD_V0.1.md` | `beaa0c583212acaddad0218677d08fcaa9c5569cd33071bd42c76f93474b91b9` |
+||| Дельта P026v1: 114 А-Профиль XLSX | `appr.` | 114 | `114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.xlsx` | `9150ff7d01f7d2e67b1917301606dad9c1b978580afc4a77ea5aac01f6a4a564` |
+||| Дельта P026v1: 114 А-Профиль PDF | `appr.` | 114 | `114-a-profile-executive-card-02/approved/A_Profile_Card_Leadership_v02.pdf` | `4f31d0fdfbce4677a52581ea18766476aacf4fcc19ed959822e9435ed804913f` |
+||| Дельта P026v1: 115 Чек-лист XLSX | `раб.` | 115 | `115-competitor-presentation-checklist-01/CHECKLIST_StarBuilding_Competitors_Presentation_v01.xlsx` | `8703912cc60c01ed8eb45224a354b0ad456f0010b8df59fcea66623c3402897c` |
+||| Дельта P026v1: 115 Запросы JSON | `раб.` | 115 | `115-competitor-presentation-checklist-01/CHECKLIST_ITEMS.json` | `ab5ac9f5d0170b3dd809304ad3604d0e528c702503ed1704a9b78a6d465fba24` |
 || Дельта P026v1: Акты и приёмки | `appr.` | 110/114/115 | `110/...`, `114/...`, `115/...` (ONLINE/FINAL_ACCEPTANCE.md) | Проверены по MANIFEST.json |
 
 Правило валидации: чтение источников выполняется в режиме fail-closed; при отсутствии файла, наличии символических ссылок или расхождении хэша операции экспорта черновика, генерации контекста модели и команды `/project` прерываются с отказом целостности (`SubjectBaseIntegrityError`), генерация фиктивных шаблонов запрещена.
