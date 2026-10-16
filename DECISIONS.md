@@ -281,6 +281,26 @@
   6. **Сохранение регрессионной стабильности:** Подтверждено сохранение всех свойств V1, V5, U6, S1, S2, F3, F4, F5, R1, R2, R7, T3, T4 (106/106 тестов PASS).
 - **Политика NoMergeProdRestartCostsCredentialsACL:** Строго соблюдена во всех компонентах и тестах.
 
+### ADR-043: Устранение дефекта H1 (Telegram API boundary validation в evaluate_bot) и честная маркировка сетевой онлайн-диагностики
+- **Статус:** Реализовано разработчиком (профиль developer), подготовлено к независимой приёмке ревизором (профиль reviewer) в рамках FN-014.
+- **Контекст:** Независимая post-deploy проверка службы @Dramknote_bot (задача t_526fb9ce, акт POST_DEPLOY_REVIEW.md, вердикт FAIL) выявила дефект H1 (MEDIUM): в `evaluate_bot` (`strategy_healthcheck.py`) неуспешный ответ Telegram Bot API (`webhook={'ok': False, 'description': '...'}`) ошибочно принимался за пустой успешный webhook из-за fallback `webhook.get("result", {}) if webhook.get("ok") else {}`, возвращая ложный `ok: True, problems: []`. Ошибка `getMe` маскировалась под «неверное имя бота». Кроме того, `main()` в `strategy_healthcheck.py` ошибочно обозначался в runbook как «офлайн-проверка», хотя выполняет реальные сетевые HTTP-запросы и читает защищённый `strategy-bot.env`.
+- **Решение:**
+  1. **Строгая валидация Telegram API boundary (`_validate_telegram_response`):**
+     - Поле `ok` проверяется строго на булево значение `True` (`is True`), отклоняя truthy-значения (`1`, `"true"`, `None`);
+     - Поле `result` обязано присутствовать и являться словарем (`isinstance(..., dict)`);
+     - При `ok=False`, наличии `error_code` или `description` формируется явное сообщение об ошибке;
+     - Ответы не-словари вызывают немедленный отказ с понятным описанием в `problems`.
+  2. **Корректная обработка в `evaluate_bot`:**
+     - Ошибки `getMe` фиксируются в `problems` и не маскируются под неверное имя бота (`username: None`);
+     - Неуспешный ответ `getWebhookInfo` переводит функцию в fail-closed (`ok: False`), текст ошибки попадает в `problems`;
+     - Сохранены позитивные сценарии для валидных ответов Telegram.
+  3. **Офлайн-тесты граничных условий (`test_strategy_healthcheck.py`):**
+     - Добавлены 9 модульных тестов: позитивный контроль, отказ webhook с `description`, отказ `getMe` с `description`, отсутствующий/невалидный `result`, небулев `ok`, не-словари, активный webhook, ошибка `last_error_message`, неактивная служба, недоступные источники (157/157 PASS).
+  4. **Честные диагностические обозначения (Labels) и runbook:**
+     - В `DEPLOYMENT_PLAN.md`, `README.md` и коде `strategy_healthcheck.py` четко зафиксировано, что `main()` — это сетевая онлайн-проверка (smoke check), требующая сети и секретов, и НЕ являющаяся офлайн-диагностикой;
+     - Зафиксировано, что `sources_are_ready()` проверяет исключительно 3 стратегических markdown-файла (`STRATEGY.md`, `PRESENTATION_THESES.md`, `BUDGET_RATIONALE.md`), а полнота 40 нормативных источников P-026v1 проверяется `p026_coverage_manifest.json` и `graph_provenance.py`.
+- **Политика NoMergeProdRestartCostsCredentialsACL:** Строго соблюдена (действующий релиз 0f358cf не изменялся и не перезапускался, credentials не читались, ACL не менялись).
+
 ### ADR-042: Устранение остаточных дефектов P1 и P2 (MEDIUM PROVENANCE) ревизии 38bda5b: полный inventory графа, строгая disk-проверка и удаление staged claims
 - **Статус:** Реализовано разработчиком (профиль developer), подготовлено к независимой приёмке ревизором (профиль reviewer) в рамках FN-014.
 - **Контекст:** Независимая приёмка exact snapshot 38bda5b (акт 125-review-fn014-38bda5b/REVIEW.md, вердикт FAIL) выявила два остаточных дефекта provenance: 1) P1: входной манифест содержал 178 источников узлов и пропускал `12-mindmap-update/mindmap.html`, являющийся источником ребра графа, а верификатор проверял только узлы; 2) P2: режим `--source-mode disk` содержал необоснованное исключение (`REPO_DOCS_DYNAMIC_FILES`), позволявшее подменять `DECISIONS.md` на произвольные байты, а манифест содержал непроверяемые поля `staged_sha256` и `staged_size`. Все свойства HIGH INTEGRITY, IMMUTABILITY, DOCUMENTATION, AA1/AA2, recovery и 40 нормативных источников независимо подтверждены.

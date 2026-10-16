@@ -61,7 +61,7 @@
 13. `37-strategy-bot/test_p026_integration.py` — интеграционные тесты (блокировка групповых сообщений, fail-closed runtime gate промпта с 0 обращений к модели и без записи истории, бинарная отправка документов Telegram);
 14. `37-strategy-bot/test_p026_deep_probes_repro.py` — тесты независимых офлайн-проб (содержательное чтение 40 источников, строгая семантика подтверждения);
 15. `37-strategy-bot/test_strategy_bot.py` — регрессионные тесты hardened-службы и тест-гард чистоты `$HOME/.local/share`;
-16. `37-strategy-bot/test_strategy_healthcheck.py` — тесты диагностического модуля.
+16. `37-strategy-bot/test_strategy_healthcheck.py` — модульные офлайн-тесты граничных условий ответа Telegram API и диагностического модуля (`evaluate_bot`).
 
 ### Архитектурная документация и реестры:
 17. `DATA_MODEL.md` — точное описание сущностей решений (us-timestamp, каноническая схема), версионных черновиков, fail-closed unowned правил и манифеста 40 источников;
@@ -1023,7 +1023,12 @@ systemctl --user is-active star-building-strategy.service
 # 2. Проверка свежего системного журнала
 journalctl --user -u star-building-strategy.service -n 50 --no-pager
 
-# 3. Запуск встроенной офлайн-проверки работоспособности
+# 3. Запуск встроенной сетевой онлайн-проверки работоспособности
+# Внимание: данный шаг выполняет реальные сетевые HTTP-запросы getMe/getWebhookInfo к api.telegram.org
+# и читает защищённый файл конфигурации strategy-bot.env, поэтому является сетевой онлайн-проверкой
+# (smoke check), а НЕ офлайн-диагностикой. Логическая функция evaluate_bot тестируется строго офлайн.
+# Функция sources_are_ready() проверяет только 3 базовых файла (STRATEGY.md, PRESENTATION_THESES.md,
+# BUDGET_RATIONALE.md); полнота 40 нормативных источников P-026v1 проверяется p026_coverage_manifest.json.
 /srv/hermes-agent/venv/bin/python3 "$RELEASE_DIR/37-strategy-bot/strategy_healthcheck.py"
 ```
 

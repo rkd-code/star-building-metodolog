@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "65f7adebb206419bfd67421544a0c144cc6df22ea2e5a94eda9d23c2a5fc83cd",
+  "source_tree_hash": "4b6767762261df7bea4909a375fc419f64d402666d7e31636de5dc8297d034d2",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1147,7 +1147,7 @@
       "path": "37-strategy-bot/strategy_healthcheck.py",
       "name": "strategy_healthcheck.py",
       "area": "37-strategy-bot",
-      "description": "Проверяет Telegram API, службу и источники стратегического бота без вывода секретов.",
+      "description": "Проверяет Telegram API (онлайн), службу и базовые источники стратегического бота без вывода секретов.",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_healthcheck.py"
     },
     {

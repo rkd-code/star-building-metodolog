@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Проверяет Telegram API, службу и источники стратегического бота без вывода секретов."""
+"""Проверяет Telegram API (онлайн), службу и базовые источники стратегического бота без вывода секретов."""
 from __future__ import annotations
 
 import json
@@ -43,23 +43,63 @@ def service_is_active() -> bool:
 
 
 def sources_are_ready() -> bool:
+    """Проверяет наличие и непустоту 3 базовых стратегических markdown-файлов.
+
+    Внимание: функция проверяет исключительно 3 базовых файла (STRATEGY.md,
+    PRESENTATION_THESES.md, BUDGET_RATIONALE.md) и НЕ проверяет 40 источников
+    нормативной базы P-026v1 (их полнота проверяется через p026_coverage_manifest.json).
+    """
     return all(path.is_file() and path.stat().st_size > 0 for path in SOURCE_FILES)
 
 
+def _validate_telegram_response(response: object, method_name: str) -> tuple[dict | None, str | None]:
+    """Строго валидирует структуру ответа Telegram Bot API на уровне границы (fail-closed)."""
+    if not isinstance(response, dict):
+        return None, f"Telegram API {method_name}: некорректный ответ (не является словарем)"
+    if response.get("ok") is not True:
+        desc = response.get("description")
+        code = response.get("error_code")
+        if desc and code:
+            return None, f"Telegram API {method_name} вернул ошибку ({code}): {desc}"
+        if desc:
+            return None, f"Telegram API {method_name} вернул ошибку: {desc}"
+        if code:
+            return None, f"Telegram API {method_name} вернул ошибку с кодом {code}"
+        return None, f"Telegram API {method_name} вернул неуспешный ответ (ok={response.get('ok')!r})"
+    result = response.get("result")
+    if not isinstance(result, dict):
+        return None, f"Telegram API {method_name}: некорректный формат ответа (result не является словарем)"
+    return result, None
+
+
 def evaluate_bot(expected_username: str, me: dict, webhook: dict, service_active: bool, sources_ready: bool) -> dict:
+    """Офлайн-валидация диагностического статуса бота без сетевых вызовов."""
     problems = []
-    actual_username = me.get("result", {}).get("username") if me.get("ok") else None
-    webhook_data = webhook.get("result", {}) if webhook.get("ok") else {}
-    if actual_username != expected_username:
-        problems.append("неверное имя бота")
+
+    actual_username = None
+    me_data, me_error = _validate_telegram_response(me, "getMe")
+    if me_error or me_data is None:
+        problems.append(me_error or "Telegram API getMe: сбой валидации")
+    else:
+        actual_username = me_data.get("username")
+        if actual_username != expected_username:
+            problems.append("неверное имя бота")
+
+    webhook_data: dict = {}
+    webhook_res, webhook_error = _validate_telegram_response(webhook, "getWebhookInfo")
+    if webhook_error or webhook_res is None:
+        problems.append(webhook_error or "Telegram API getWebhookInfo: сбой валидации")
+    else:
+        webhook_data = webhook_res
+        if webhook_data.get("url"):
+            problems.append("активен webhook при режиме polling")
+        if webhook_data.get("last_error_message"):
+            problems.append(f"Telegram сообщил ошибку: {webhook_data['last_error_message']}")
+
     if not service_active:
         problems.append("служба не запущена")
     if not sources_ready:
         problems.append("источники стратегии недоступны")
-    if webhook_data.get("url"):
-        problems.append("активен webhook при режиме polling")
-    if webhook_data.get("last_error_message"):
-        problems.append(f"Telegram сообщил ошибку: {webhook_data['last_error_message']}")
     return {
         "ok": not problems,
         "username": actual_username,
@@ -71,6 +111,12 @@ def evaluate_bot(expected_username: str, me: dict, webhook: dict, service_active
 
 
 def main() -> int:
+    """Сетевая онлайн-диагностика состояния бота и Telegram API.
+
+    Внимание: функция читает защищённый файл конфигурации strategy-bot.env и
+    отправляет реальные сетевые HTTP-запросы (getMe, getWebhookInfo) к api.telegram.org.
+    Является сетевой онлайн-проверкой и НЕ является офлайн-диагностикой.
+    """
     credentials = load_env(ENV_FILE)
     token = credentials.get("STAR_BUILDING_STRATEGY_BOT_TOKEN")
     expected = credentials.get("STAR_BUILDING_STRATEGY_EXPECTED_USERNAME")

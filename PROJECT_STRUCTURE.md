@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `65f7adebb206419bfd67421544a0c144cc6df22ea2e5a94eda9d23c2a5fc83cd`
+Отпечаток исходной структуры: `4b6767762261df7bea4909a375fc419f64d402666d7e31636de5dc8297d034d2`
 
 ## .git-templates
 
@@ -349,7 +349,7 @@
 | [`37-strategy-bot/p026_storage.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_storage.py) | Изолированное защищённое файловое хранилище решений владельца и черновиков P-026. |
 | [`37-strategy-bot/p026_subject_base.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_subject_base.py) | Предметная база знаний P-026 («Коммерческий департамент» — релиз P026v1) в режиме read-only с контролем целостности. |
 | [`37-strategy-bot/strategy_bot.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_bot.py) | Закрытый Telegram-бот «Драмкнот» для работы со стратегией Star Building. |
-| [`37-strategy-bot/strategy_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_healthcheck.py) | Проверяет Telegram API, службу и источники стратегического бота без вывода секретов. |
+| [`37-strategy-bot/strategy_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_healthcheck.py) | Проверяет Telegram API (онлайн), службу и базовые источники стратегического бота без вывода секретов. |
 | [`37-strategy-bot/systemd/star-building-strategy.service`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/systemd/star-building-strategy.service) | Файл проекта: star-building-strategy.service. |
 | [`37-strategy-bot/test_graph_provenance.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_graph_provenance.py) | Комплексные тесты происхождения и целостности графа знаний (FN-014 / P1 и P2 PROVENANCE). |
 | [`37-strategy-bot/test_p026_coverage_contract.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_coverage_contract.py) | Регрессионные испытания архитектурного контракта полноты P026v1 (Integrity). Проверяет: 1. Инвариант Integrity: hash/size + supported extraction + содержательная полнота фрагментов. 2. Служебные заголовки и номера страниц не считаются содер |
