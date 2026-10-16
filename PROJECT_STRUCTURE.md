@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `a6f0817106f7bcf19cacb899220ec6dfbe15c236070b992c13ea0c6ba08afe12`
+Отпечаток исходной структуры: `fea17dcfe92fcff366a07a6bed88efea6ae56eaee2eb37c4f4bbea148f92b17a`
 
 ## .git-templates
 
@@ -338,6 +338,7 @@
 | [`37-strategy-bot/DEPLOYMENT_PLAN.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/DEPLOYMENT_PLAN.md) | Офлайн-план развертывания расширения P-026 для @Dramknote_bot (FN-014) |
 | [`37-strategy-bot/README.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/README.md) | 37 — «Драмкнот»: стратегический бот Star Building |
 | [`37-strategy-bot/env.template`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/env.template) | Файл проекта: env.template. |
+| [`37-strategy-bot/graph_provenance.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/graph_provenance.py) | Модуль проверки происхождения (provenance), манифеста входов и согласованности графа знаний Graphify. |
 | [`37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md) | Договор передачи базы P026v1 Разработчику (Пондер Стиббонс) |
 | [`37-strategy-bot/knowledge-base-v1/MANIFEST.json`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/MANIFEST.json) | { "version": "1.0.0", "package": "P-026v1", "function_id": "FN-014", "target": "existing @Dramknote_bot", "total_sources": 40, "original_sources_count": 30, "delta_sources_count": 10, "all_hashes_verified": true, "hash_mismatches_count": 0, |
 | [`37-strategy-bot/knowledge-base-v1/READINESS_ACT.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/READINESS_ACT.md) | Акт готовности предметной базы знаний P026v1 |
@@ -350,6 +351,7 @@
 | [`37-strategy-bot/strategy_bot.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_bot.py) | Закрытый Telegram-бот «Драмкнот» для работы со стратегией Star Building. |
 | [`37-strategy-bot/strategy_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_healthcheck.py) | Проверяет Telegram API, службу и источники стратегического бота без вывода секретов. |
 | [`37-strategy-bot/systemd/star-building-strategy.service`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/systemd/star-building-strategy.service) | Файл проекта: star-building-strategy.service. |
+| [`37-strategy-bot/test_graph_provenance.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_graph_provenance.py) | Комплексные тесты происхождения и целостности графа знаний (FN-014 / P1 PROVENANCE). |
 | [`37-strategy-bot/test_p026_coverage_contract.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_coverage_contract.py) | Регрессионные испытания архитектурного контракта полноты P026v1 (Integrity). Проверяет: 1. Инвариант Integrity: hash/size + supported extraction + содержательная полнота фрагментов. 2. Служебные заголовки и номера страниц не считаются содер |
 | [`37-strategy-bot/test_p026_deep_probes_repro.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_deep_probes_repro.py) | Воспроизведение независимых deep_probes ревизии f9ae76f8 в изолированных фикстурах. |
 | [`37-strategy-bot/test_p026_handler.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_handler.py) | import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_handler import P026Handler from p026_storage import P026Storage, JournalCorruptionError from p026_subject |
@@ -365,8 +367,10 @@
 | Файл | Назначение |
 |---|---|
 | [`graphify-out/GRAPH_REPORT.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/GRAPH_REPORT.md) | Graph Report - t_7b954f30 (2026-10-16) |
-| [`graphify-out/graph.html`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.html) | <!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <title>graphify - graphify-out/graph.html</title> <script src="https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js" integrity="sha384-Ux6phic9PEHJ38YtrijhkzyJ8 |
+| [`graphify-out/graph.html`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.html) | <!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="provenance:base_commit" content="1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5"> <meta name="provenance:input_manifest_sha256" content="c90066a41bb186a096b2033827e06c7d59 |
 | [`graphify-out/graph.json`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.json) | { "directed": false, "multigraph": false, "graph": { "hyperedges": [ { "id": "home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow", "label": "Marketing Automation Flow", "nodes": [ "home_roman:: |
+| [`graphify-out/input_manifest.json`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/input_manifest.json) | { "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Graphify Input Provenance Manifest", "version": "1.0", "provenance_type": "immutable_input_manifest", "provenance_mode": "immutable_base_with_staged_provenance", "base_c |
+| [`graphify-out/provenance.json`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/provenance.json) | { "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Graphify Input Provenance Manifest", "version": "1.0", "provenance_type": "immutable_input_manifest", "provenance_mode": "immutable_base_with_staged_provenance", "base_c |
 
 ## knowledge_base
 
@@ -410,6 +414,7 @@
 | Файл | Назначение |
 |---|---|
 | [`tools/ensure_repo_docs.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/tools/ensure_repo_docs.py) | Создает и проверяет обязательную документацию любого Git-репозитория. |
+| [`tools/verify_graph_provenance.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/tools/verify_graph_provenance.py) | CLI-утилита проверки происхождения графа знаний Graphify. |
 
 ## Корень репозитория
 

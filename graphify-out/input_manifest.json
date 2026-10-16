@@ -1,0 +1,948 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Graphify Input Provenance Manifest",
+  "version": "1.0",
+  "provenance_type": "immutable_input_manifest",
+  "provenance_mode": "immutable_base_with_staged_provenance",
+  "base_commit": "1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5",
+  "base_tree": "28b4b8506c968df859d191d60490e6651c415e8b",
+  "base_archive_sha256": "3e035d20a22437f62d099f51179b9959a1273a27d6d67d666bd2783a4c9b5c47",
+  "input_manifest_sha256": "c90066a41bb186a096b2033827e06c7d592c5eadf7443a4e6068a4043391ceb4",
+  "total_input_files": 178,
+  "generator": {
+    "tool": "graphify",
+    "version": "0.9.48",
+    "scope": "code_and_knowledge_base",
+    "exclusions": [
+      "graphify-out/*",
+      ".git/*",
+      ".worktrees/*",
+      "__pycache__/*",
+      "*.pyc"
+    ],
+    "no_cyclic_self_hashing": true
+  },
+  "graph_metrics": {
+    "nodes": 1365,
+    "edges": 1819,
+    "communities": 168,
+    "source_files_count": 178
+  },
+  "accounted_new_files": [
+    "37-strategy-bot/test_p026_coverage_contract.py"
+  ],
+  "accounted_modified_files": [
+    "37-strategy-bot/README.md",
+    "37-strategy-bot/p026_subject_base.py",
+    "37-strategy-bot/test_p026_integration.py",
+    "37-strategy-bot/test_p026_subject_base.py",
+    "CHANGELOG.md",
+    "DATA_MODEL.md",
+    "DECISIONS.md",
+    "KNOWLEDGE_BASE.md",
+    "PROJECT_CONTEXT.md",
+    "PROJECT_STRUCTURE.md"
+  ],
+  "inputs": [
+    {
+      "path": ".git-templates/hooks/pre-commit",
+      "sha256": "c550931846767009020ec23e54da0b954b3bcd4227914058fcf927ea606164c1",
+      "size": 425
+    },
+    {
+      "path": ".githooks/pre-commit",
+      "sha256": "c550931846767009020ec23e54da0b954b3bcd4227914058fcf927ea606164c1",
+      "size": 425
+    },
+    {
+      "path": ".hermes.md",
+      "sha256": "22965474c115677b0ddb78e1b11105108dd508d108e03f6df216ec30155bfa04",
+      "size": 188
+    },
+    {
+      "path": "01-report/01_input_draft.md",
+      "sha256": "a2b7e42f347efca456c678b5b34e1655b561fe8ed96075379a5f12125d07bc99",
+      "size": 3702
+    },
+    {
+      "path": "01-report/02_output_regulation.md",
+      "sha256": "75b64b6e2d66f4c0dd8bec84ddd3d4da231c92c3efe1884c691975303c3e6fbc",
+      "size": 9754
+    },
+    {
+      "path": "01-report/03_fields_description.md",
+      "sha256": "ea454f5b3fdfe62c514ba1542c2dfa10b1ab0e80d67723d66c21408690d7833c",
+      "size": 7517
+    },
+    {
+      "path": "01-report/04_assumptions.md",
+      "sha256": "2f6bcb1eba0bc6d8de79b3a371be824568d0bffe6954dd01e0173a5a4f0fe99e",
+      "size": 5549
+    },
+    {
+      "path": "02-tests/README.md",
+      "sha256": "27728543da7941a35103c196adf25498e3b0aace037684929141865ce2656278",
+      "size": 2918
+    },
+    {
+      "path": "02-tests/test_01_happy_path.md",
+      "sha256": "6769dbedaba785301d77cedef691dcd579e20e672c0557d5e92288423a022d6f",
+      "size": 8932
+    },
+    {
+      "path": "02-tests/test_02_edge_cases.md",
+      "sha256": "14bbc7f9e96042b5fba58fc73696e15b6b8d99a0404a30c07d1282bd9d1e39d3",
+      "size": 7391
+    },
+    {
+      "path": "02-tests/test_03_safe_stop.md",
+      "sha256": "9d78cf63027ffd8b58ede41f9619bc77fd9a7142eafbb781b16405cfa28a5057",
+      "size": 5713
+    },
+    {
+      "path": "02-tests/test_04_idempotency_and_explainability.md",
+      "sha256": "c84fd1d2d5e7ab94a66a34be6318d3fd466acc82f6e7605b03b86f8bb7ce209e",
+      "size": 5872
+    },
+    {
+      "path": "02-tests/test_assumptions.md",
+      "sha256": "9e8f806f6291ceb8e79f9efa745879fb05beb0ca94fe6b7950fa612c6799e8d2",
+      "size": 3465
+    },
+    {
+      "path": "03-data-model/README.md",
+      "sha256": "bb9161844275d6b102d786b3e9d7b239db3b8337be7d4063a52b00475187415e",
+      "size": 1054
+    },
+    {
+      "path": "03-data-model/assumptions.md",
+      "sha256": "7a2144210297fcdcbb1c38eb5368b3d9011a4b69a759e00cc29a9c4d075dc827",
+      "size": 1725
+    },
+    {
+      "path": "03-data-model/entities.md",
+      "sha256": "7e31a85a5c4b887d331da9ba8955e95d7c0e65931fd056b6844875b94f806f13",
+      "size": 10853
+    },
+    {
+      "path": "03-data-model/examples.md",
+      "sha256": "332f8a52494b36da6f1374eeffec9fd52067aadb0c564fa7ee25995361cbf09f",
+      "size": 2876
+    },
+    {
+      "path": "03-data-model/input_and_decisions.md",
+      "sha256": "385138859830d9ecc72d95cdb23bcd839afa7587ab2353778c43bbfa07f7a670",
+      "size": 4077
+    },
+    {
+      "path": "03-data-model/relationships_schema.md",
+      "sha256": "e7ef8f3e64257b3e746cb13b8c3c68bc1b7849724df867d7ff77415a02a1c8a7",
+      "size": 2811
+    },
+    {
+      "path": "04-environment/README.md",
+      "sha256": "d12e34fbb57c8eb355a7c2d51e7b268648ba5a8de790e900db16ad77c238035a",
+      "size": 1413
+    },
+    {
+      "path": "04-environment/assumptions.md",
+      "sha256": "5839c8695346c185a4bae01c21506ef6651af68ea288254a57c07226c93ea9d3",
+      "size": 1560
+    },
+    {
+      "path": "04-environment/backup_and_logging.md",
+      "sha256": "e372b58adfc6bd5993a3bad62be7acc50098ed84390ff87add2b217665a7ea71",
+      "size": 2317
+    },
+    {
+      "path": "04-environment/custom_instructions.md",
+      "sha256": "264660cb3106aec97cc3294da737322856c4380795761d6bb723bb52bf88da48",
+      "size": 5253
+    },
+    {
+      "path": "04-environment/launch_instructions.md",
+      "sha256": "098934d6c4fc79894b71676cac478ee986ed00621c49bee55d0638917df382cc",
+      "size": 1510
+    },
+    {
+      "path": "04-environment/promt-kartochnik.md",
+      "sha256": "5a7078bfcc94884cb458fb05fe4a1dd447ef476860764e3d0e6adbad7dd65f8a",
+      "size": 2279
+    },
+    {
+      "path": "04-environment/promt-sverschik.md",
+      "sha256": "6fd77855acfbed02f962d3f3d6c2b4f9aed94b9d1f9e28d0f49a08d4888a1192",
+      "size": 2350
+    },
+    {
+      "path": "04-environment/roles_and_permissions.md",
+      "sha256": "b4d9da63111574d203ab82f1f7322949aa064a204d5822fee2b1d3110bfa32f3",
+      "size": 2097
+    },
+    {
+      "path": "04-environment/structure.md",
+      "sha256": "b8b89db617b164bed4c8fbc3b88a5f6081710e0155326fd9c144d498f6c0779b",
+      "size": 4697
+    },
+    {
+      "path": "05-integrations/README.md",
+      "sha256": "ecc5fd1e97ed4a4fa0de002c9666dbc5db35ebd0cca882cf2cbf3c03bc927bdb",
+      "size": 1136
+    },
+    {
+      "path": "05-integrations/assumptions.md",
+      "sha256": "07ad4b1bff65a29274ad34a6f3176e9ff02a4907891942f73edaaae110e624a7",
+      "size": 1695
+    },
+    {
+      "path": "05-integrations/data_flow_map.md",
+      "sha256": "7ef193ab4e1afc43f6131cfe565555b8c25301be745d03da2603c5ebda0d49b0",
+      "size": 3719
+    },
+    {
+      "path": "05-integrations/systems_catalog.md",
+      "sha256": "505ca0321376e3d491fc49e6b5353a4fadf08a40ea4a50d5276cfe60065ce61d",
+      "size": 7765
+    },
+    {
+      "path": "05-integrations/version_scope.md",
+      "sha256": "2865b46a73ab0f5148d18e69455754d0e2978c547c3d3c938097f5450707e317",
+      "size": 1423
+    },
+    {
+      "path": "06-tools/README.md",
+      "sha256": "561dea08bb715197fd2597daecb7db872569ea58b565f9ab6f0eebc59d2b160c",
+      "size": 928
+    },
+    {
+      "path": "06-tools/assumptions.md",
+      "sha256": "dd1a88ea6b4627b975e1590e44f903ac475657ad6aae44fddbdd008f9dd909c5",
+      "size": 1435
+    },
+    {
+      "path": "06-tools/tools_specification.md",
+      "sha256": "62576b468ec89412c2298be8c42211aab94a065e1f1deaa6e080e136d07566f9",
+      "size": 11162
+    },
+    {
+      "path": "07-concept/README.md",
+      "sha256": "0cf08f190d5fbc4e5368f9a2b522b08c1697e6fc03ea199ffaad9c0d3605cc56",
+      "size": 588
+    },
+    {
+      "path": "07-concept/concept.html",
+      "sha256": "ea33307ffc727ec1c32585b82c0af57c92e4783b7cbed8047c90fa8648d0a235",
+      "size": 19553
+    },
+    {
+      "path": "08-refinement/README.md",
+      "sha256": "a6150ca1414591283eb12bb4220c3d7d057bcd237f2965ca14726742fca9f15c",
+      "size": 3201
+    },
+    {
+      "path": "09-roadmap/README.md",
+      "sha256": "8ec678b0593d200268b53b0014330275537ccd3df7f6cea5626c62ec5b046276",
+      "size": 1466
+    },
+    {
+      "path": "09-roadmap/roadmap.html",
+      "sha256": "4c82801826fc930743ac21f4cb6986feccec9a0486eae54a7f06b00c6b01a6d3",
+      "size": 10742
+    },
+    {
+      "path": "10-general-assistant/README.md",
+      "sha256": "42cdbd8ad9a438a69f7efe572f4767d2fbf416760eb85523dbe4ccd4f90ff162",
+      "size": 2787
+    },
+    {
+      "path": "10-general-assistant/consultant_scenario.md",
+      "sha256": "9508a72481079c66aab3a123767d869037480e9fce2f48578d4c7c4d1a7fd9d7",
+      "size": 4671
+    },
+    {
+      "path": "10-general-assistant/document_templates_catalog.md",
+      "sha256": "3df5e959c55f6a72b78771e4a6230ecdfb76ae8606b7e4b101ab0dd82a05c158",
+      "size": 2949
+    },
+    {
+      "path": "10-general-assistant/updated_tz_v2.md",
+      "sha256": "f89f169dea2a6cac039a440c4067dbd2188c3cc8ed2afdc62601064282cc9459",
+      "size": 3868
+    },
+    {
+      "path": "11-updated-artifacts/README.md",
+      "sha256": "1f15355c8362a14e8c7b1ef06fe40a5729e72164bee9918db31a018128dc29bc",
+      "size": 1527
+    },
+    {
+      "path": "12-mindmap-update/README.md",
+      "sha256": "a1a43058272b9f903078e7c78266796da8a851d9efc349019e8a8f594699daad",
+      "size": 615
+    },
+    {
+      "path": "14-intake-tool/README.md",
+      "sha256": "23840d43a93f7182ca0aa2b727ab201385848deb5a64808d31bbd5a9c41d63bd",
+      "size": 1526
+    },
+    {
+      "path": "15-bitrix24-integration/README.md",
+      "sha256": "b1ea4e1e3a1e0b693cab68eac948283865ce6e1e2042984004a7d1a0719843fd",
+      "size": 3849
+    },
+    {
+      "path": "16-telegram-setup/README.md",
+      "sha256": "a4ceb62bded05fb34aeeca5d5b3df15ec363124abd5795b8f90d86fa11e193ca",
+      "size": 3248
+    },
+    {
+      "path": "16-telegram-setup/telegram_bot_service.py",
+      "sha256": "42d1f6aa995ad4ada73615ea9a7474a934fbc021136a70de03000200b48c25f7",
+      "size": 10838
+    },
+    {
+      "path": "16-telegram-setup/topic_1_instructions.md",
+      "sha256": "d12a3b3860096f17164d902df1515acbceb5e359afde3209c0c12772f1769f5a",
+      "size": 2662
+    },
+    {
+      "path": "16-telegram-setup/topic_2_instructions.md",
+      "sha256": "506b4eaced1228976a95f3ecaba05fcd3645595abfde47bfa5dfeb98c021530f",
+      "size": 1737
+    },
+    {
+      "path": "17-two-bots-split/README.md",
+      "sha256": "ec7d52c7b43cdbbafecea4fb22c40398f27395e020048f3a2a749de5b22b0bdc",
+      "size": 3284
+    },
+    {
+      "path": "17-two-bots-split/bot_1_codifier.py",
+      "sha256": "5781db0d947894c264fbec080665cc4a5f6e5f67aeea7cadcf02f253fdb97f4f",
+      "size": 14111
+    },
+    {
+      "path": "17-two-bots-split/bot_2_consultant.py",
+      "sha256": "ba88931ac2e7e1acca9b9e14b17cecb59df15b417c26cadc711cbe3b300d4f01",
+      "size": 12641
+    },
+    {
+      "path": "17-two-bots-split/bot_healthcheck.py",
+      "sha256": "93f56f3e5541ee323e4356614332d592f7b7e0bc8847ca4986ac3ddcd7f2672c",
+      "size": 3457
+    },
+    {
+      "path": "17-two-bots-split/test_bot_healthcheck.py",
+      "sha256": "7b28801724257155b39ba1e01875d24e20b4b6178c9a1063b8fa6b16d4a89ed0",
+      "size": 1864
+    },
+    {
+      "path": "18-bot-behavior-refinement/README.md",
+      "sha256": "86ae6741b471110fc374505f5fee4db64e4f9f766e09a79a37783a082ba47e84",
+      "size": 1771
+    },
+    {
+      "path": "19-top-20-roadmap/README.md",
+      "sha256": "e81dbff1d0b545b9415929802a9ee1004c0ca128249d36d319a37f82f451e630",
+      "size": 1449
+    },
+    {
+      "path": "19-top-20-roadmap/top_20_regulations.md",
+      "sha256": "6340592c9b45121feff601a7b3f779ade7bce31c4170f114ec94816df52464c3",
+      "size": 7679
+    },
+    {
+      "path": "20-cross-check-engine/README.md",
+      "sha256": "a716e98b0d67df7de9e55df2d97d4dd9c0ccb217e973c93502f23f56fc419bad",
+      "size": 2081
+    },
+    {
+      "path": "21-cross-audit/README.md",
+      "sha256": "2340191a7e1241b81ff04f3327c6675efaa38e169a76d139a960b8c97bbfd244",
+      "size": 727
+    },
+    {
+      "path": "21-cross-audit/audit_report.md",
+      "sha256": "2a1a321d17669fa9f5d8b36ebdf51992710c99f0f414876bd763f4251d548491",
+      "size": 13789
+    },
+    {
+      "path": "22-actual-master-package/README.md",
+      "sha256": "ab8e5cff0d40c94a45467e8c69e7723f8e2353aa48cdf3d106a7599e59a79606",
+      "size": 934
+    },
+    {
+      "path": "22-actual-master-package/concept.html",
+      "sha256": "ea33307ffc727ec1c32585b82c0af57c92e4783b7cbed8047c90fa8648d0a235",
+      "size": 19553
+    },
+    {
+      "path": "23-code-names/README.md",
+      "sha256": "083dd5db7403204eae2f6f798ed964ca5d7a700016b6a2837c0e79d28a96fc1c",
+      "size": 2013
+    },
+    {
+      "path": "24-marketing-bots/README.md",
+      "sha256": "aee1944e9e7b7dedd1ad20b02d696255ac9307dc3350b7f7e6913ca56072d23f",
+      "size": 1974
+    },
+    {
+      "path": "24-marketing-bots/content_bots_detailed.md",
+      "sha256": "4dd8667fcee09e3acd8f4fc736c25e7d9ddb40bff069e729d70a9f042255f4fc",
+      "size": 18679
+    },
+    {
+      "path": "24-marketing-bots/top_20_marketing_bots.md",
+      "sha256": "9cd788622be4c32c8fa477689c6c1b5190fa0cbfe8214571101ec41817271754",
+      "size": 20483
+    },
+    {
+      "path": "25-marketing-bots-detailed/README.md",
+      "sha256": "1d51e77cf72f7edb4dd6ccc61978a8e116925e08171521a458c148733cbfcd84",
+      "size": 3484
+    },
+    {
+      "path": "25-marketing-bots-detailed/build_workbook.py",
+      "sha256": "5999f33a71d3d9818d5b6833bea5be33a1ba2baf2fa69ef3005029e647337735",
+      "size": 67256
+    },
+    {
+      "path": "26-hermes-profiles/PROJECT_CONTEXT_TEMPLATE.md",
+      "sha256": "4715e8f490508f91dba3acc959523df01593c67ff220d11804c589c6146ec94f",
+      "size": 2064
+    },
+    {
+      "path": "26-hermes-profiles/README.md",
+      "sha256": "ee7dd2cb7e376cc65b8c961cbde0fd01bab555a23bef45281faac6cdf5ebb4c3",
+      "size": 11219
+    },
+    {
+      "path": "26-hermes-profiles/TASK_CONTRACT.md",
+      "sha256": "a3b2e26866b5dabebb45903e18ebddcf83989b274f17f164fc792e3c49d8d23e",
+      "size": 3412
+    },
+    {
+      "path": "26-hermes-profiles/developer/SOUL.md",
+      "sha256": "62635f53ca248a20050b829ee12c8c6764e050a373aa75a33f8df26ddd6b0884",
+      "size": 15286
+    },
+    {
+      "path": "26-hermes-profiles/orchestrator/SOUL.md",
+      "sha256": "de4b501f05c17ad0773d8d18319e76a89421f3bf2d86d1c587bccf0d6689f038",
+      "size": 13966
+    },
+    {
+      "path": "26-hermes-profiles/register_project.sh",
+      "sha256": "d9e91f11b038be990d6233aaa0bb394ea73422fe49b57a32d2ab6e81b6a1b7ea",
+      "size": 1997
+    },
+    {
+      "path": "26-hermes-profiles/setup_profiles.sh",
+      "sha256": "3b02a9d58d3aab3e3911aef1dbe2052d9e88ed4d14abb05139d35442513b15aa",
+      "size": 3095
+    },
+    {
+      "path": "27-developer-skills/README.md",
+      "sha256": "cb0400862f19c4ac5586c44153219fade9a9923c009819b7c9d2185ecb48c8a6",
+      "size": 3392
+    },
+    {
+      "path": "28-unified-project-graph/PROJECT_REGISTRY.md",
+      "sha256": "0c4c89ea05db5aa53cb884d28e671023289569cb1b0d30e4cbb48b7aa6cbba5c",
+      "size": 31301
+    },
+    {
+      "path": "28-unified-project-graph/README.md",
+      "sha256": "bdedec852597e41820464042c8cc0ff4ad371fae98fa1e7754f8b2b44bc780a4",
+      "size": 4724
+    },
+    {
+      "path": "28-unified-project-graph/RELATIONSHIPS.md",
+      "sha256": "efa2c0d2a7a5a5f0e44333e7c707cd49465c998bc11ca9f4cd54f7599722e11d",
+      "size": 6429
+    },
+    {
+      "path": "28-unified-project-graph/build_curated_graph.py",
+      "sha256": "6c5fd0f579fc90a504b6ad792e65e40ca58719c9ee6d71e3a988c4800cce0733",
+      "size": 24661
+    },
+    {
+      "path": "28-unified-project-graph/test_build_curated_graph.py",
+      "sha256": "2054059bf8a548a80d279b6892afbb5f00537665652a8c0c752ee2e13ecb8cea",
+      "size": 4256
+    },
+    {
+      "path": "29-employee-testing-service/DATA_MODEL.md",
+      "sha256": "763e285cf273940b10e517f340be8306ddde4566511a2c1736653a66290afe31",
+      "size": 5491
+    },
+    {
+      "path": "29-employee-testing-service/IMPORT_RULES.md",
+      "sha256": "b20fabd2ac1600768fa2f793e1c01563353c40f6326aafe264f3879fc2124311",
+      "size": 3600
+    },
+    {
+      "path": "29-employee-testing-service/POOL_001_IMPORT_REPORT.md",
+      "sha256": "d0c6217cf0126057485c6f647ed98809b9e5fb2209533bdc3e2bd9f309df28bd",
+      "size": 4734
+    },
+    {
+      "path": "29-employee-testing-service/README.md",
+      "sha256": "03c103666ad5bf15ae560e868a46d4148957025992951aa0c335f9b0afdec762",
+      "size": 15115
+    },
+    {
+      "path": "29-employee-testing-service/build_question_bank.py",
+      "sha256": "a4f85f2765fb927d66a432b4a6a41b8824850a877cbc6b1da9d76767061a0137",
+      "size": 6485
+    },
+    {
+      "path": "29-employee-testing-service/import_pool_001.py",
+      "sha256": "7257d2d2bbebf6a0dde179b8dcb4177dd88f29c010972f13438b9ea1d377cd95",
+      "size": 18878
+    },
+    {
+      "path": "30-employee-testing-html/README.md",
+      "sha256": "1df088a4020512d7d55d4abefc8cbaf74639c8d29bce9f7d1cd1686a15d0db41",
+      "size": 4409
+    },
+    {
+      "path": "30-employee-testing-html/build_platform.py",
+      "sha256": "dafdffe796ab5fcfc7b7df4242d8e6b420be2912b176721361ccb2f6976d5cbc",
+      "size": 27886
+    },
+    {
+      "path": "30-employee-testing-html/test_browser.py",
+      "sha256": "691fb8d0856567f8620d0cbc12b6c57c7e17c16f0fe6575e2eaf3a69020d087c",
+      "size": 2065
+    },
+    {
+      "path": "30-employee-testing-html/test_build_platform.py",
+      "sha256": "23ce357ddd5db70035caa91224017a99d5de848e6cbfec3a56f39892548ca8ea",
+      "size": 2865
+    },
+    {
+      "path": "32-chat-history-archive/README.md",
+      "sha256": "e83f09553f5ab43f3a2ccec6ae7f2e6f92ac5ff4d0e10ac9b209858add38a28c",
+      "size": 2503
+    },
+    {
+      "path": "32-chat-history-archive/export_chat_history.py",
+      "sha256": "6bb757bf217630b72b9c94b64998b9405f4849af399258452d1a98a231e84426",
+      "size": 8439
+    },
+    {
+      "path": "32-chat-history-archive/test_export_chat_history.py",
+      "sha256": "532b85dfd2f34f77b9493ec04d43a2a0ff19313ba99e2453113c4125a09a3538",
+      "size": 4609
+    },
+    {
+      "path": "33-vm-file-knowledge-graph/README.md",
+      "sha256": "03eca063613033ac26ff8aad4c3a8afcb6beac1682d1b9031acecfc92027bf5a",
+      "size": 3121
+    },
+    {
+      "path": "33-vm-file-knowledge-graph/build_inventory.py",
+      "sha256": "ad8885318f9ceda4df4c3c6a119a09cef622c4ffa2af984b63d6ff4464ff00d4",
+      "size": 19485
+    },
+    {
+      "path": "33-vm-file-knowledge-graph/test_build_inventory.py",
+      "sha256": "7c547b67f4e0ca6da37bc199b541857ff85975976bd3c789b2568105838881ea",
+      "size": 3485
+    },
+    {
+      "path": "34-agent-repository-documentation/README.md",
+      "sha256": "8e09746da445fa8338ddf7cf611ac65132fbd0221f0386e8c489568c2a3bd3cc",
+      "size": 2068
+    },
+    {
+      "path": "34-agent-repository-documentation/ensure_repo_docs.py",
+      "sha256": "cb118ae34a579db165e1ef8073043cfa8f22cd7ea0ae122867a4bb1a9cadbb13",
+      "size": 16855
+    },
+    {
+      "path": "34-agent-repository-documentation/test_ensure_repo_docs.py",
+      "sha256": "8b35b17c093baecb306ecb376ef41d1cb546486c01edc908ee0663c2a88728d3",
+      "size": 4180
+    },
+    {
+      "path": "35-commercial-marketing-strategy/PRESENTATION_THESES.md",
+      "sha256": "7585951a17e217a335ec18a748929fbab54b6f6b9e9f89898af70e04c49685d9",
+      "size": 8741
+    },
+    {
+      "path": "35-commercial-marketing-strategy/README.md",
+      "sha256": "0e132dc1c2e06b32667b45c33c7c28a9dd5e9b63850be7c0fccc84dd632a9960",
+      "size": 1814
+    },
+    {
+      "path": "35-commercial-marketing-strategy/STRATEGY.md",
+      "sha256": "6317b14a596d286b15def6cafef26d84797fc7a784d709c3b04554b1dd72d6a1",
+      "size": 36659
+    },
+    {
+      "path": "35-commercial-marketing-strategy/build_artifacts.py",
+      "sha256": "adb20e1d62657ce80b0fb72b5b91f7dfa83f9427eafdc618293b48f528e4efa5",
+      "size": 34405
+    },
+    {
+      "path": "35-commercial-marketing-strategy/test_artifacts.py",
+      "sha256": "1acc121dd3dad41cb350bac8e4ee70f64daadde1a22c25930cfb0b1642ade71e",
+      "size": 2684
+    },
+    {
+      "path": "36-marketing-budget-2026/BUDGET_RATIONALE.md",
+      "sha256": "eb7920ea711456d19a29d51719f407976ee9170d9fb804b9b531ef5f44f49312",
+      "size": 7758
+    },
+    {
+      "path": "36-marketing-budget-2026/README.md",
+      "sha256": "a026c52d324593fda6ab0e3bff928c2a75a7da75b8ddbdca4d3ce470efe66930",
+      "size": 1754
+    },
+    {
+      "path": "36-marketing-budget-2026/budget_model.py",
+      "sha256": "6ccdc2a3f25b18c83095870c214842dc1f54e0381b41cc0dd67e8334f86bc1a0",
+      "size": 2739
+    },
+    {
+      "path": "36-marketing-budget-2026/build_budget.py",
+      "sha256": "cd85c0a22254d5c125609c94bf8e4f9698f4b7b3b4ffde3cad7466d84d366cc3",
+      "size": 29956
+    },
+    {
+      "path": "36-marketing-budget-2026/test_budget_model.py",
+      "sha256": "9b65760f648f7bba7485ad6b113f24380037a7900dc6003b9f6324d75affe8c4",
+      "size": 1661
+    },
+    {
+      "path": "37-strategy-bot/DEPLOYMENT_PLAN.md",
+      "sha256": "4b042df84fb7f4477bf3f328f2b65b5045c3d21d3ceb45f989db7c38a51e3e39",
+      "size": 128181
+    },
+    {
+      "path": "37-strategy-bot/README.md",
+      "sha256": "564f77d6d9fc0fa5ab229f70a2b653a8820ba3eec785f79c2a4c516cf6e1ef25",
+      "size": 11192
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md",
+      "sha256": "9193f31642773cbf696f732edac608c9456f16742938e58e477dd56bae74db9f",
+      "size": 4333
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/MANIFEST.json",
+      "sha256": "82f42999b03b8eb801c9fedbb9652a0cabfce0a7be78ebf6aa671a45091315ec",
+      "size": 18571
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/READINESS_ACT.md",
+      "sha256": "81e4aba87a430a143cb652ec1396d4fcd36146f45835825f3b7ace69d311721a",
+      "size": 4767
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/SUBJECT_BASE.md",
+      "sha256": "da290f6bf96d8f5959081502db480baf6305e5ed5eb1483cbcf6505dea5602cf",
+      "size": 40238
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/UNKNOWN_LIST.md",
+      "sha256": "a0d403853bf85c55b4313747ca981b63373c4157b383673f84d85076a07f4c5c",
+      "size": 6465
+    },
+    {
+      "path": "37-strategy-bot/p026_handler.py",
+      "sha256": "2626446488f1ede602a462a42244394a11f7f1bf0f6fc8fce8d22d5c453c85e4",
+      "size": 30222
+    },
+    {
+      "path": "37-strategy-bot/p026_storage.py",
+      "sha256": "7d65b00dd8a7d14227b5ea8df1b387d6ff1ac36f868aab220d17220221c64cc7",
+      "size": 29751
+    },
+    {
+      "path": "37-strategy-bot/p026_subject_base.py",
+      "sha256": "5e34c49bfa6df0fd57aca7f5d40382717f98b9d4b1a975d9a5995e51f2dc3f67",
+      "size": 76431
+    },
+    {
+      "path": "37-strategy-bot/strategy_bot.py",
+      "sha256": "eb4941eb815dce06e5039682b57eba52a1fa7914f3dc087e51fc9e6d8fbdba0d",
+      "size": 35105
+    },
+    {
+      "path": "37-strategy-bot/strategy_healthcheck.py",
+      "sha256": "254ad98e57b7a4d9dc5e4a74e91f05312c7d2c6ec792d243c6c027ab45e952d5",
+      "size": 3626
+    },
+    {
+      "path": "37-strategy-bot/test_p026_coverage_contract.py",
+      "sha256": "fe5a5c0c3d32690fd7a77891036c7a69ca9f4471ec8bf0889752ae9b478c2bea",
+      "size": 10235
+    },
+    {
+      "path": "37-strategy-bot/test_p026_deep_probes_repro.py",
+      "sha256": "1d09305e16bee94c378e58b0ee81a8206a2a8818f8cd3666c75c3ef8861fba0e",
+      "size": 7978
+    },
+    {
+      "path": "37-strategy-bot/test_p026_handler.py",
+      "sha256": "7bd0eedf7926fae31fc3351b4201a514145ac9bf10e4a1ef0bda1f1c99538d60",
+      "size": 21297
+    },
+    {
+      "path": "37-strategy-bot/test_p026_integration.py",
+      "sha256": "60830c4193bd1d00dfbafe0956b742352599e442cfbba46a7f773568f163ad8c",
+      "size": 28568
+    },
+    {
+      "path": "37-strategy-bot/test_p026_security.py",
+      "sha256": "192aae25e8ab6fb3b01f0d591bc828e30f6bc77d09e40a47e66bb1e4b82fc54c",
+      "size": 84738
+    },
+    {
+      "path": "37-strategy-bot/test_p026_storage.py",
+      "sha256": "7c4f8b01ab1871a6be766376de96dc85351caf57e337d60def53cb2fe8f7db6a",
+      "size": 18247
+    },
+    {
+      "path": "37-strategy-bot/test_p026_subject_base.py",
+      "sha256": "daf8ed0d74e7d2e921f1515672df711d2abad449640d3f4fd2a06443dbf2314b",
+      "size": 18681
+    },
+    {
+      "path": "37-strategy-bot/test_strategy_bot.py",
+      "sha256": "d439ba77e4b322faf9f7e842cfff00f0bf10c98fc5a7540fba2ea17837d2746b",
+      "size": 10926
+    },
+    {
+      "path": "37-strategy-bot/test_strategy_healthcheck.py",
+      "sha256": "1f169405008865c916ce8a1415a76c035cd3ac5d0b251263c2076510be30f357",
+      "size": 1535
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "86a3b1e4d28134297d3105516d7842e2aef0ed0a2ed7f89356da6abb5f160cd7",
+      "size": 11796
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "4407794e6b8ce944bd906782af42945d336e15b9f684104f30c27eac7870ef36",
+      "size": 39715,
+      "staged_sha256": "fb24bb17ecb5e8a9965519047dc52b510fc7eeabb869cc45d22cedb366bbf147",
+      "staged_size": 42811
+    },
+    {
+      "path": "DATA_MODEL.md",
+      "sha256": "2912264f553f6cae1364517edf91d7ceaa739f6d4b8f12020f4aabf7a1acf499",
+      "size": 16462
+    },
+    {
+      "path": "DECISIONS.md",
+      "sha256": "d207edfb4ea14327fb70bc86fcaa0013201abd34a7f0256b206fe62eddab28dc",
+      "size": 108492,
+      "staged_sha256": "76789c079d0affa3120dab11cc1fbdee3abd5b0550395bc67df0622cd88b99aa",
+      "staged_size": 113003
+    },
+    {
+      "path": "DOCS_INDEX.md",
+      "sha256": "aeb9af8207ea41361dbad1ba652b4c603ef223c6f4c4c555ac423286054864b7",
+      "size": 2104
+    },
+    {
+      "path": "DOCUMENTATION_STANDARD.md",
+      "sha256": "627da2c52c7a7e4a74a3e3ca54f73b64c9ee11c6673ec6f0f94716b66991e5dc",
+      "size": 2842
+    },
+    {
+      "path": "KNOWLEDGE_BASE.md",
+      "sha256": "961d721e927e533ac76f7b552cd88c86d790a4d3bc4861f784ee78b14224f629",
+      "size": 38390,
+      "staged_sha256": "a06987e1deb9ffe988a28ebfd7cce1dc23324ec31d28d5426aab308eb5f03860",
+      "staged_size": 39839
+    },
+    {
+      "path": "PROJECT_CONTEXT.md",
+      "sha256": "566254f9ed8f2b7e8dd29cad258a2e30b6bed8ee69aacb3f146905c8cde80987",
+      "size": 1159,
+      "staged_sha256": "7eaee78677bd865e41c845977b3f1f871dfb5e67cb7348ec4f48d638602b7369",
+      "staged_size": 1159
+    },
+    {
+      "path": "PROJECT_MAP.md",
+      "sha256": "1d5814706d474031f1b960d424103dfe6e8f3ac7e672472f83dbe7c01d9c6796",
+      "size": 12900
+    },
+    {
+      "path": "PROJECT_STRUCTURE.md",
+      "sha256": "74058f8188a31f35e922d72f78423ec3ce4f82ec9f28155a865ffa3a31db24bc",
+      "size": 76840,
+      "staged_sha256": "55f36ee368565b7ed2ead347685d5bb241268b572cc7e95df1d225b9ed9ca676",
+      "staged_size": 78561
+    },
+    {
+      "path": "README.md",
+      "sha256": "df963117c0c65a56b10464dd8d1869d25b07dfa9cc1fdd345429ceb3c2e95d07",
+      "size": 5589
+    },
+    {
+      "path": "knowledge_base/00_РЕЕСТР/reestr-reglamentov.md",
+      "sha256": "b28771a7dd5554ae34d6c5208a48b5b881e85c099bff01e8a3414418a96d9da6",
+      "size": 7667
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-001_kodeks.md",
+      "sha256": "8c6066314e6942f903d88b3811f5b513f40ff9457b3b07ea53cbd57d1440df4f",
+      "size": 83369
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-002_orgstruktura.md",
+      "sha256": "315361c65bb80411afa7ba1808a76e5a3c9c02eab9daa9f39e37e5536f3859c9",
+      "size": 53508
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-003_strategicheskaya_osnova.md",
+      "sha256": "41b63eb80c9963b198807b5f20a740b1896782acb5f4f9c499d21110741b9f04",
+      "size": 14845
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-004_kak_napisat_reglament.md",
+      "sha256": "cdb2c29a1c11a00e9b94122bc4409e929f16e2443488808fdb619c2826537a95",
+      "size": 5963
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-005_vidy_reglamentov.md",
+      "sha256": "5a67b60d1a86ef5bdf0485dc5fa2c341aa40e7f0d9ae2190dca2bd72cdfd3e92",
+      "size": 26177
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-006_dogovornaya_rabota.md",
+      "sha256": "4da917c0c8888aca882bb8cb4bcdf70eb4a10c423a5c0e8a231d99677507f013",
+      "size": 36303
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-007_kadrovoe_deloproizvodstvo.md",
+      "sha256": "8e96162380abee36c67c82e8f7dc4661aaa35db96ba36b856f749621c5224bb7",
+      "size": 37035
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-008_sistema_motivacii.md",
+      "sha256": "a36a31ba773b2cd53a3ef26c56b9b4059ea044cb585ef3543f09209217552ba0",
+      "size": 10713
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-009_toplivnye_karty.md",
+      "sha256": "12c3e29033e3c8081a8de69e35517e3287b28a94bdb0d86431520a7ab96fac69",
+      "size": 12170
+    },
+    {
+      "path": "knowledge_base/01_В_РАБОТЕ/full_REG-010_klientoorientirovannost.md",
+      "sha256": "9cb598bf9b3d31ed44e432d5ab579dc031c2d39e56302a621d6322155eaa06fa",
+      "size": 10894
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-001_kodeks.md",
+      "sha256": "d30efad58011e0a721ca51c121707b1f43445f9c3ed7e881bcf995008271b388",
+      "size": 1879
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-002_orgstruktura.md",
+      "sha256": "130985b85c503dade8051815a40f4528c794f10ab2aee1247153db057613080d",
+      "size": 1833
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-003_strategicheskaya_osnova.md",
+      "sha256": "cdba6213f0cb740978c0f24c8d538c7303b178d731b712a42087f61349d1c321",
+      "size": 1593
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-004_kak_napisat_reglament.md",
+      "sha256": "5e1076d288a6aa96f4d04c130125b7acce35a467d563050f092d6042ce3a1543",
+      "size": 1859
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-005_vidy_reglamentov.md",
+      "sha256": "1a673addb9cc02b1c4f713a457bc8de82d641dedb8a364817b3acbc292eeeb83",
+      "size": 1568
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-006_dogovornaya_rabota.md",
+      "sha256": "ea87f238cdb62240429f2ebe67aacceecedb013b55879186ba28077ffbc0f5f7",
+      "size": 2102
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-007_kadrovoe_deloproizvodstvo.md",
+      "sha256": "93b316f4260c6589ad063b29b06b6b910d792371f47a0ceb08dcd255a3ad18a4",
+      "size": 1947
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-008_sistema_motivacii.md",
+      "sha256": "04616d00efd4c7ba0621855a2050761b1ef585981a512b25be1e5e2be8ad996a",
+      "size": 1772
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-009_toplivnye_karty.md",
+      "sha256": "e3584e16d168291b8a443b4902420573d466232b3b63f59319e754467525ec92",
+      "size": 2113
+    },
+    {
+      "path": "knowledge_base/01_КАРТОЧКИ/card_REG-010_klientoorientirovannost.md",
+      "sha256": "44a15d0569d8126ba528b8ab753e52253be8f635dee068e09bde2da19f950082",
+      "size": 2435
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-001_kodeks.md",
+      "sha256": "8c6066314e6942f903d88b3811f5b513f40ff9457b3b07ea53cbd57d1440df4f",
+      "size": 83369
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-002_orgstruktura.md",
+      "sha256": "315361c65bb80411afa7ba1808a76e5a3c9c02eab9daa9f39e37e5536f3859c9",
+      "size": 53508
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-003_strategicheskaya_osnova.md",
+      "sha256": "41b63eb80c9963b198807b5f20a740b1896782acb5f4f9c499d21110741b9f04",
+      "size": 14845
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-004_kak_napisat_reglament.md",
+      "sha256": "cdb2c29a1c11a00e9b94122bc4409e929f16e2443488808fdb619c2826537a95",
+      "size": 5963
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-005_vidy_reglamentov.md",
+      "sha256": "5a67b60d1a86ef5bdf0485dc5fa2c341aa40e7f0d9ae2190dca2bd72cdfd3e92",
+      "size": 26177
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-006_dogovornaya_rabota.md",
+      "sha256": "4da917c0c8888aca882bb8cb4bcdf70eb4a10c423a5c0e8a231d99677507f013",
+      "size": 36303
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-007_kadrovoe_deloproizvodstvo.md",
+      "sha256": "8e96162380abee36c67c82e8f7dc4661aaa35db96ba36b856f749621c5224bb7",
+      "size": 37035
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-008_sistema_motivacii.md",
+      "sha256": "a36a31ba773b2cd53a3ef26c56b9b4059ea044cb585ef3543f09209217552ba0",
+      "size": 10713
+    },
+    {
+      "path": "knowledge_base/02_УТВЕРЖДЕНО/full_REG-009_toplivnye_karty.md",
+      "sha256": "12c3e29033e3c8081a8de69e35517e3287b28a94bdb0d86431520a7ab96fac69",
+      "size": 12170
+    },
+    {
+      "path": "knowledge_base/03_ПРИЕМ_ЧЕРНОВИКОВ/README.md",
+      "sha256": "616260392650e284673a59614804e640c95aeb63e590d5a4670e6c305ab6a7f6",
+      "size": 757
+    },
+    {
+      "path": "tools/ensure_repo_docs.py",
+      "sha256": "cb118ae34a579db165e1ef8073043cfa8f22cd7ea0ae122867a4bb1a9cadbb13",
+      "size": 16855
+    }
+  ]
+}

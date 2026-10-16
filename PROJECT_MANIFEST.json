@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "a6f0817106f7bcf19cacb899220ec6dfbe15c236070b992c13ea0c6ba08afe12",
+  "source_tree_hash": "fea17dcfe92fcff366a07a6bed88efea6ae56eaee2eb37c4f4bbea148f92b17a",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1067,6 +1067,13 @@
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/env.template"
     },
     {
+      "path": "37-strategy-bot/graph_provenance.py",
+      "name": "graph_provenance.py",
+      "area": "37-strategy-bot",
+      "description": "Модуль проверки происхождения (provenance), манифеста входов и согласованности графа знаний Graphify.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/graph_provenance.py"
+    },
+    {
       "path": "37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md",
       "name": "HANDOFF_TO_DEVELOPER.md",
       "area": "37-strategy-bot",
@@ -1149,6 +1156,13 @@
       "area": "37-strategy-bot",
       "description": "Файл проекта: star-building-strategy.service.",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/systemd/star-building-strategy.service"
+    },
+    {
+      "path": "37-strategy-bot/test_graph_provenance.py",
+      "name": "test_graph_provenance.py",
+      "area": "37-strategy-bot",
+      "description": "Комплексные тесты происхождения и целостности графа знаний (FN-014 / P1 PROVENANCE).",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_graph_provenance.py"
     },
     {
       "path": "37-strategy-bot/test_p026_coverage_contract.py",
@@ -1308,7 +1322,7 @@
       "path": "graphify-out/graph.html",
       "name": "graph.html",
       "area": "graphify-out",
-      "description": "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <title>graphify - graphify-out/graph.html</title> <script src=\"https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js\" integrity=\"sha384-Ux6phic9PEHJ38YtrijhkzyJ8",
+      "description": "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"provenance:base_commit\" content=\"1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5\"> <meta name=\"provenance:input_manifest_sha256\" content=\"c90066a41bb186a096b2033827e06c7d59",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.html"
     },
     {
@@ -1317,6 +1331,20 @@
       "area": "graphify-out",
       "description": "{ \"directed\": false, \"multigraph\": false, \"graph\": { \"hyperedges\": [ { \"id\": \"home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow\", \"label\": \"Marketing Automation Flow\", \"nodes\": [ \"home_roman::",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.json"
+    },
+    {
+      "path": "graphify-out/input_manifest.json",
+      "name": "input_manifest.json",
+      "area": "graphify-out",
+      "description": "{ \"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"title\": \"Graphify Input Provenance Manifest\", \"version\": \"1.0\", \"provenance_type\": \"immutable_input_manifest\", \"provenance_mode\": \"immutable_base_with_staged_provenance\", \"base_c",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/input_manifest.json"
+    },
+    {
+      "path": "graphify-out/provenance.json",
+      "name": "provenance.json",
+      "area": "graphify-out",
+      "description": "{ \"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"title\": \"Graphify Input Provenance Manifest\", \"version\": \"1.0\", \"provenance_type\": \"immutable_input_manifest\", \"provenance_mode\": \"immutable_base_with_staged_provenance\", \"base_c",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/provenance.json"
     },
     {
       "path": "knowledge_base/00_РЕЕСТР/reestr-reglamentov.md",
@@ -1548,6 +1576,13 @@
       "area": "tools",
       "description": "Создает и проверяет обязательную документацию любого Git-репозитория.",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/tools/ensure_repo_docs.py"
+    },
+    {
+      "path": "tools/verify_graph_provenance.py",
+      "name": "verify_graph_provenance.py",
+      "area": "tools",
+      "description": "CLI-утилита проверки происхождения графа знаний Graphify.",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/tools/verify_graph_provenance.py"
     }
   ]
 }
