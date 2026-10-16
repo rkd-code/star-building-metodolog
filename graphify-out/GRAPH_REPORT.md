@@ -12,9 +12,9 @@
 ## Graph Freshness & Input Provenance
 - Built from commit: `1e372e84`
 - Base commit SHA: `1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5`
-- Input manifest digest (SHA-256): `c90066a41bb186a096b2033827e06c7d592c5eadf7443a4e6068a4043391ceb4`
+- Input manifest digest (SHA-256): `b6b0a1054b5f930d8ac5c36ad213b90bcb29f030abc806fdecc923229ad0e1df`
 - Input manifest: [`graphify-out/provenance.json`](provenance.json)
-- Total verified input files: 178
+- Total verified input files: 179
 - Accounted new files: `37-strategy-bot/test_p026_coverage_contract.py`
 - Accounted modified files: 10 files (`37-strategy-bot/README.md`, `37-strategy-bot/p026_subject_base.py`, `37-strategy-bot/test_p026_integration.py`, `37-strategy-bot/test_p026_subject_base.py`, `CHANGELOG.md`, `DATA_MODEL.md`, `DECISIONS.md`, `KNOWLEDGE_BASE.md`, `PROJECT_CONTEXT.md`, `PROJECT_STRUCTURE.md`)
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.

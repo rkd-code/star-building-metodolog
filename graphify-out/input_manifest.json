@@ -3,12 +3,12 @@
   "title": "Graphify Input Provenance Manifest",
   "version": "1.0",
   "provenance_type": "immutable_input_manifest",
-  "provenance_mode": "immutable_base_with_staged_provenance",
+  "provenance_mode": "immutable_base",
   "base_commit": "1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5",
   "base_tree": "28b4b8506c968df859d191d60490e6651c415e8b",
   "base_archive_sha256": "3e035d20a22437f62d099f51179b9959a1273a27d6d67d666bd2783a4c9b5c47",
-  "input_manifest_sha256": "c90066a41bb186a096b2033827e06c7d592c5eadf7443a4e6068a4043391ceb4",
-  "total_input_files": 178,
+  "input_manifest_sha256": "b6b0a1054b5f930d8ac5c36ad213b90bcb29f030abc806fdecc923229ad0e1df",
+  "total_input_files": 179,
   "generator": {
     "tool": "graphify",
     "version": "0.9.48",
@@ -26,7 +26,7 @@
     "nodes": 1365,
     "edges": 1819,
     "communities": 168,
-    "source_files_count": 178
+    "source_files_count": 179
   },
   "accounted_new_files": [
     "37-strategy-bot/test_p026_coverage_contract.py"
@@ -278,6 +278,11 @@
       "path": "12-mindmap-update/README.md",
       "sha256": "a1a43058272b9f903078e7c78266796da8a851d9efc349019e8a8f594699daad",
       "size": 615
+    },
+    {
+      "path": "12-mindmap-update/mindmap.html",
+      "sha256": "552756f5d42c4082e6dcfc81e26b6cc65c956248e1a2bfd6e6658c1d362ac0cf",
+      "size": 25177
     },
     {
       "path": "14-intake-tool/README.md",
@@ -727,9 +732,7 @@
     {
       "path": "CHANGELOG.md",
       "sha256": "4407794e6b8ce944bd906782af42945d336e15b9f684104f30c27eac7870ef36",
-      "size": 39715,
-      "staged_sha256": "fb24bb17ecb5e8a9965519047dc52b510fc7eeabb869cc45d22cedb366bbf147",
-      "staged_size": 42811
+      "size": 39715
     },
     {
       "path": "DATA_MODEL.md",
@@ -739,9 +742,7 @@
     {
       "path": "DECISIONS.md",
       "sha256": "d207edfb4ea14327fb70bc86fcaa0013201abd34a7f0256b206fe62eddab28dc",
-      "size": 108492,
-      "staged_sha256": "76789c079d0affa3120dab11cc1fbdee3abd5b0550395bc67df0622cd88b99aa",
-      "staged_size": 113003
+      "size": 108492
     },
     {
       "path": "DOCS_INDEX.md",
@@ -756,16 +757,12 @@
     {
       "path": "KNOWLEDGE_BASE.md",
       "sha256": "961d721e927e533ac76f7b552cd88c86d790a4d3bc4861f784ee78b14224f629",
-      "size": 38390,
-      "staged_sha256": "a06987e1deb9ffe988a28ebfd7cce1dc23324ec31d28d5426aab308eb5f03860",
-      "staged_size": 39839
+      "size": 38390
     },
     {
       "path": "PROJECT_CONTEXT.md",
       "sha256": "566254f9ed8f2b7e8dd29cad258a2e30b6bed8ee69aacb3f146905c8cde80987",
-      "size": 1159,
-      "staged_sha256": "7eaee78677bd865e41c845977b3f1f871dfb5e67cb7348ec4f48d638602b7369",
-      "staged_size": 1159
+      "size": 1159
     },
     {
       "path": "PROJECT_MAP.md",
@@ -775,9 +772,7 @@
     {
       "path": "PROJECT_STRUCTURE.md",
       "sha256": "74058f8188a31f35e922d72f78423ec3ce4f82ec9f28155a865ffa3a31db24bc",
-      "size": 76840,
-      "staged_sha256": "55f36ee368565b7ed2ead347685d5bb241268b572cc7e95df1d225b9ed9ca676",
-      "staged_size": 78561
+      "size": 76840
     },
     {
       "path": "README.md",

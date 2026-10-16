@@ -190,9 +190,9 @@
     ],
     "provenance": {
       "base_commit": "1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5",
-      "input_manifest_sha256": "c90066a41bb186a096b2033827e06c7d592c5eadf7443a4e6068a4043391ceb4",
+      "input_manifest_sha256": "b6b0a1054b5f930d8ac5c36ad213b90bcb29f030abc806fdecc923229ad0e1df",
       "manifest_file": "graphify-out/provenance.json",
-      "total_input_files": 178,
+      "total_input_files": 179,
       "nodes": 1365,
       "edges": 1819
     }
@@ -37473,6 +37473,6 @@
     }
   ],
   "built_at_commit": "1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5",
-  "input_manifest_sha256": "c90066a41bb186a096b2033827e06c7d592c5eadf7443a4e6068a4043391ceb4",
+  "input_manifest_sha256": "b6b0a1054b5f930d8ac5c36ad213b90bcb29f030abc806fdecc923229ad0e1df",
   "provenance_manifest": "graphify-out/provenance.json"
 }

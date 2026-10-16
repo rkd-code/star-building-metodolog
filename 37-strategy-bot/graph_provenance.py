@@ -20,7 +20,7 @@ class GraphProvenanceVerifier:
     CANONICAL_BASE_COMMIT = "1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5"
     EXPECTED_NODE_COUNT = 1365
     EXPECTED_EDGE_COUNT = 1819
-    EXPECTED_SOURCES_COUNT = 178
+    EXPECTED_SOURCES_COUNT = 179
 
     KEY_NEW_FILES = [
         "37-strategy-bot/test_p026_coverage_contract.py",
@@ -71,7 +71,7 @@ class GraphProvenanceVerifier:
             raise GraphProvenanceError(f"Повреждён манифест происхождения: {e}") from e
 
     def verify_manifest_integrity(self, manifest: Optional[Dict[str, Any]] = None) -> str:
-        """Проверяет внутреннюю целостность манифеста (хэш и обязательные поля)."""
+        """Проверяет внутреннюю целостность манифеста (хэш, отсутствие циклов и отсутствие staged claims)."""
         if manifest is None:
             manifest = self.load_provenance_manifest()
 
@@ -94,18 +94,12 @@ class GraphProvenanceVerifier:
                 raise GraphProvenanceError(
                     f"Обнаружен циклический самохэшинг выходов: артефакт '{path}' включён во входы"
                 )
+            if "staged_sha256" in entry or "staged_size" in entry:
+                raise GraphProvenanceError(
+                    f"Обнаружены непроверяемые staged claims в манифесте для файла: '{path}'"
+                )
 
         return computed_digest
-
-    REPO_DOCS_DYNAMIC_FILES = {
-        "PROJECT_CONTEXT.md",
-        "PROJECT_STRUCTURE.md",
-        "PROJECT_MANIFEST.json",
-        "DOCS_INDEX.md",
-        "CHANGELOG.md",
-        "DECISIONS.md",
-        "KNOWLEDGE_BASE.md",
-    }
 
     def verify_inputs(
         self,
@@ -117,7 +111,7 @@ class GraphProvenanceVerifier:
         """
         Проверяет все входы из манифеста.
         source_mode='base_commit': проверяет наличие и побайтовое совпадение с immutable git commit.
-        source_mode='disk': проверяет наличие и побайтовое совпадение с дисковым снимком.
+        source_mode='disk': проверяет наличие и побайтовое совпадение с дисковым снимком без исключений.
         """
         if manifest is None:
             manifest = self.load_provenance_manifest()
@@ -161,17 +155,10 @@ class GraphProvenanceVerifier:
                 act_sha = hashlib.sha256(content).hexdigest()
                 act_size = len(content)
 
-                # Для неизменяемых файлов кода и нормативной базы сверяем точный хэш;
-                # для динамических файлов документации, обновляемых ensure_repo_docs, допускается актуализация.
-                if p not in self.REPO_DOCS_DYNAMIC_FILES:
-                    if act_sha != exp_sha or act_size != exp_size:
-                        mutated.append({"path": p, "expected_sha": exp_sha, "actual_sha": act_sha})
-                        continue
+                if act_sha != exp_sha or act_size != exp_size:
+                    mutated.append({"path": p, "expected_sha": exp_sha, "actual_sha": act_sha})
                 else:
-                    if act_size == 0:
-                        mutated.append({"path": p, "expected_sha": "non-empty", "actual_sha": "empty"})
-                        continue
-                verified += 1
+                    verified += 1
 
         if missing:
             raise GraphProvenanceError(f"Отсутствуют заявленные входные файлы ({len(missing)}): {missing[:5]}")
@@ -227,11 +214,34 @@ class GraphProvenanceVerifier:
             )
 
         input_paths = {e["path"] for e in manifest["inputs"]}
-        graph_sources = {n.get("source_file") for n in nodes if n.get("source_file")}
+
+        # Сбор всех источников: узлы, рёбра и гиперрёбра (union всех source-bearing записей)
+        node_sources = {n.get("source_file") for n in nodes if isinstance(n, dict) and n.get("source_file")}
+        edge_sources = {e.get("source_file") for e in edges if isinstance(e, dict) and e.get("source_file")}
+        hyper_sources = set()
+        for h_list in [g.get("hyperedges", []), g.get("graph", {}).get("hyperedges", [])]:
+            if isinstance(h_list, list):
+                for h in h_list:
+                    if isinstance(h, dict) and h.get("source_file"):
+                        hyper_sources.add(h["source_file"])
+
+        graph_sources = node_sources | edge_sources | hyper_sources
+
         extra_sources = graph_sources - input_paths
         if extra_sources:
             raise GraphProvenanceError(
-                f"Граф содержит узлы из необъявленных во входах файлов (extra inputs): {extra_sources}"
+                f"Граф содержит элементы из необъявленных во входах источников (extra sources): {extra_sources}"
+            )
+
+        missing_sources = input_paths - graph_sources
+        if missing_sources:
+            raise GraphProvenanceError(
+                f"Манифест входов содержит файлы, отсутствующие в графе (missing/unused graph sources): {missing_sources}"
+            )
+
+        if len(graph_sources) != self.EXPECTED_SOURCES_COUNT:
+            raise GraphProvenanceError(
+                f"Несовпадение числа уникальных источников графа: {len(graph_sources)} != {self.EXPECTED_SOURCES_COUNT}"
             )
 
         # 2. Проверка GRAPH_REPORT.md
@@ -255,6 +265,10 @@ class GraphProvenanceVerifier:
             raise GraphProvenanceError(
                 f"GRAPH_REPORT.md не содержит число связей {self.EXPECTED_EDGE_COUNT}"
             )
+        if str(self.EXPECTED_SOURCES_COUNT) not in report_text:
+            raise GraphProvenanceError(
+                f"GRAPH_REPORT.md не содержит число источников {self.EXPECTED_SOURCES_COUNT}"
+            )
 
         # 3. Проверка graph.html
         if not self.graph_html_path.is_file():
@@ -276,6 +290,10 @@ class GraphProvenanceVerifier:
         if str(self.EXPECTED_EDGE_COUNT) not in html_text:
             raise GraphProvenanceError(
                 f"graph.html не содержит число связей {self.EXPECTED_EDGE_COUNT}"
+            )
+        if str(self.EXPECTED_SOURCES_COUNT) not in html_text:
+            raise GraphProvenanceError(
+                f"graph.html не содержит число источников {self.EXPECTED_SOURCES_COUNT}"
             )
 
         return {

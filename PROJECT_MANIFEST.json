@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "fea17dcfe92fcff366a07a6bed88efea6ae56eaee2eb37c4f4bbea148f92b17a",
+  "source_tree_hash": "65f7adebb206419bfd67421544a0c144cc6df22ea2e5a94eda9d23c2a5fc83cd",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1161,7 +1161,7 @@
       "path": "37-strategy-bot/test_graph_provenance.py",
       "name": "test_graph_provenance.py",
       "area": "37-strategy-bot",
-      "description": "Комплексные тесты происхождения и целостности графа знаний (FN-014 / P1 PROVENANCE).",
+      "description": "Комплексные тесты происхождения и целостности графа знаний (FN-014 / P1 и P2 PROVENANCE).",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_graph_provenance.py"
     },
     {
@@ -1322,7 +1322,7 @@
       "path": "graphify-out/graph.html",
       "name": "graph.html",
       "area": "graphify-out",
-      "description": "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"provenance:base_commit\" content=\"1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5\"> <meta name=\"provenance:input_manifest_sha256\" content=\"c90066a41bb186a096b2033827e06c7d59",
+      "description": "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"provenance:base_commit\" content=\"1e372e84d8d8bcbcb8e1ffaa8e078677fccd1ae5\"> <meta name=\"provenance:input_manifest_sha256\" content=\"b6b0a1054b5f930d8ac5c36ad213b90bcb",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.html"
     },
     {
@@ -1336,14 +1336,14 @@
       "path": "graphify-out/input_manifest.json",
       "name": "input_manifest.json",
       "area": "graphify-out",
-      "description": "{ \"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"title\": \"Graphify Input Provenance Manifest\", \"version\": \"1.0\", \"provenance_type\": \"immutable_input_manifest\", \"provenance_mode\": \"immutable_base_with_staged_provenance\", \"base_c",
+      "description": "{ \"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"title\": \"Graphify Input Provenance Manifest\", \"version\": \"1.0\", \"provenance_type\": \"immutable_input_manifest\", \"provenance_mode\": \"immutable_base\", \"base_commit\": \"1e372e84d8d8bc",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/input_manifest.json"
     },
     {
       "path": "graphify-out/provenance.json",
       "name": "provenance.json",
       "area": "graphify-out",
-      "description": "{ \"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"title\": \"Graphify Input Provenance Manifest\", \"version\": \"1.0\", \"provenance_type\": \"immutable_input_manifest\", \"provenance_mode\": \"immutable_base_with_staged_provenance\", \"base_c",
+      "description": "{ \"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"title\": \"Graphify Input Provenance Manifest\", \"version\": \"1.0\", \"provenance_type\": \"immutable_input_manifest\", \"provenance_mode\": \"immutable_base\", \"base_commit\": \"1e372e84d8d8bc",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/provenance.json"
     },
     {

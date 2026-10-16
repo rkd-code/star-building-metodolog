@@ -3,7 +3,7 @@
 - **Репозиторий:** https://github.com/rkd-code/star-building-metodolog
 - **Ветка:** `work/dramknote-p026-handoff`
 - **Корневая папка:** корень клонированного репозитория
-- **Отпечаток исходной структуры:** `fea17dcfe92fcff366a07a6bed88efea6ae56eaee2eb37c4f4bbea148f92b17a`
+- **Отпечаток исходной структуры:** `65f7adebb206419bfd67421544a0c144cc6df22ea2e5a94eda9d23c2a5fc83cd`
 - **Файлов в структуре:** 223
 
 ## Обязательный порядок знакомства
