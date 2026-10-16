@@ -128,21 +128,22 @@ class P026SubjectBaseTest(unittest.TestCase):
         self.assertIn("договоров №88/89", ctx)
         self.assertIn("не переоткрывать навязчиво", ctx.lower())
 
-    def test_sources_manifest_contains_30_sources(self):
+    def test_sources_manifest_contains_all_40_sources(self):
         manifest = self.base.get_source_manifest()
-        self.assertEqual(30, len(manifest))
+        self.assertEqual(40, len(manifest))
         self.assertTrue(all(s.get("sha256") and s.get("status") and (s.get("bytes") or 0) > 0 for s in manifest))
 
     def test_verify_all_sources_integrity(self):
         res = self.base.verify_all_sources()
         self.assertTrue(res["ok"])
-        self.assertEqual(30, res["verified_count"])
+        self.assertEqual(40, res["verified_count"])
+        self.assertEqual(40, res["total_sources"])
 
-
-    def test_get_p026_prompt_context_connects_all_30_sources_and_specific_norms(self):
-        """S2 / R3: Все 30 источников предметной базы должны быть содержательно подключены."""
+    def test_get_p026_prompt_context_connects_all_40_sources_and_specific_norms(self):
+        """S2 / R3 / FN-014: Все 40 источников предметной базы P026v1 должны быть содержательно подключены."""
         ctx = self.base.get_p026_prompt_context()
         self.assertGreater(len(ctx), 100_000, "Контекст обязан содержать полный подключённый корпус (>100K символов)")
+        self.assertLessEqual(len(ctx), 1_500_000, "Контекст не должен превышать лимит 1.5 млн знаков")
 
         # Проверка точной нормы МОП -> РОП -> ПТО
         self.assertIn("передаёт запрос в ПТО через РОП", ctx)
@@ -154,18 +155,37 @@ class P026SubjectBaseTest(unittest.TestCase):
         # Проверка оргорегламента 102
         self.assertIn("REG_COMMERCIAL_ORG_V0.1.md", ctx)
 
+        # Проверка подключения дельты (35, 110, 111, 114, 115)
+        self.assertIn("35-commercial-marketing-strategy", ctx)
+        self.assertIn("110-commercial-interviews-01", ctx)
+        self.assertIn("111-competitor-card-design-01", ctx)
+        self.assertIn("114-a-profile-executive-card-02", ctx)
+        self.assertIn("115-competitor-presentation-checklist-01", ctx)
+
+        # Защитные правила в контексте
+        self.assertIn("112 вопросов по 4 ролям", ctx)
+        self.assertIn("9 полей у АП, 18 полей у СБ", ctx)
+        self.assertIn("все 38 пунктов имеют статус «Не проверено»", ctx)
+        self.assertIn("требует уточнения", ctx.lower())
+
+        # Иерархия приоритетов: РЕГ-001..009 (приоритет 1) перед решениями (приоритет 2) перед функционалами (приоритет 3) перед аналитикой (приоритет 4)
+        pos_reg = ctx.find("full_REG-001_kodeks.md")
+        pos_owner = ctx.find("107-commercial-role-functions-cd-limits-04/OWNER_DECISIONS.md")
+        pos_func = ctx.find("101-commercial-role-functions-sales-01")
+        pos_anal = ctx.find("110-commercial-interviews-01")
+        self.assertGreaterEqual(pos_reg, 0)
+        self.assertGreater(pos_owner, pos_reg, "Регламенты (приоритет 1) должны предшествовать решениям (приоритет 2)")
+        self.assertGreater(pos_func, pos_owner, "Решения владельца (приоритет 2) должны предшествовать функционалам (приоритет 3)")
+        self.assertGreater(pos_anal, pos_func, "Функционалы (приоритет 3) должны предшествовать аналитике (приоритет 4)")
+
         # Безопасность извлечения: отсутствие сырых скриптов, стилей и base64
         self.assertNotIn("<script", ctx.lower())
         self.assertNotIn("<style", ctx.lower())
         self.assertNotIn("data:image/", ctx.lower())
         self.assertNotIn(";base64", ctx.lower())
 
-        # Приоритет решений 107/109
-        idx_107 = ctx.find("107-commercial-role-functions-cd-limits-04/OWNER_DECISIONS.md")
-        self.assertGreaterEqual(idx_107, 0)
-
     def test_corpus_reads_all_sources_multiple_times_and_all_norms_present(self):
-        """S2 / R3: Проверка фактического чтения содержимого всех 30 источников и отсутствия пропусков норм."""
+        """S2 / R3 / FN-014: Проверка фактического чтения содержимого всех 40 источников и отсутствия пропусков норм."""
         from unittest.mock import patch
         original_read = Path.read_bytes
         reads = []
@@ -182,7 +202,7 @@ class P026SubjectBaseTest(unittest.TestCase):
         content_read = [p for p, n in counts.items() if n > 1]
 
         self.assertEqual([], validation_only, f"Источники, прочитанные только для хеша: {validation_only}")
-        self.assertEqual(30, len(content_read), "Все 30 источников должны быть прочитаны более 1 раза (верификация + контент)")
+        self.assertEqual(40, len(content_read), "Все 40 источников должны быть прочитаны более 1 раза (верификация + контент)")
 
         evidence = []
         for entry in self.base.CANONICAL_SOURCE_MANIFEST:
@@ -192,6 +212,26 @@ class P026SubjectBaseTest(unittest.TestCase):
                 evidence.append({"source": entry["relative_path"], "sample_absent": lines[0] if lines else None})
         absent = [e for e in evidence if e["sample_absent"] is not None]
         self.assertEqual([], absent, f"Пропущенные нормы в утверждённых файлах и 101: {absent}")
+
+    def test_knowledge_base_v1_documents_accessible(self):
+        """FN-014: Проверка доступности артефактов базы P026v1 (SUBJECT_BASE, UNKNOWN_LIST, READINESS_ACT, MANIFEST)."""
+        sb_md = self.base.get_subject_base_content()
+        self.assertIn("Предметная база знаний P-026v1", sb_md)
+        self.assertGreater(len(sb_md), 10_000)
+
+        unk_md = self.base.get_unknown_list_content()
+        self.assertIn("Реестр неизвестного", unk_md)
+        self.assertIn("112 вопросов", unk_md)
+        self.assertIn("9 полей", unk_md)
+
+        act_md = self.base.get_readiness_act_content()
+        self.assertIn("Акт готовности", act_md)
+        self.assertIn("40 из 40", act_md)
+
+        manifest_data = self.base.get_manifest_data()
+        self.assertEqual("P-026v1", manifest_data["package"])
+        self.assertEqual(40, manifest_data["total_sources"])
+        self.assertTrue(manifest_data["all_hashes_verified"])
 
 if __name__ == "__main__":
     unittest.main()

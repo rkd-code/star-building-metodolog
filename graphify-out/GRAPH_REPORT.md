@@ -1,16 +1,16 @@
 # Graph Report - t_7b954f30  (2026-10-16)
 
 ## Corpus Check
-- 175 files · ~186,168 words
+- 180 files · ~193,291 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1224 nodes · 1655 edges · 181 communities (90 shown, 91 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 58 edges (avg confidence: 0.9)
+- 1313 nodes · 1746 edges · 188 communities (96 shown, 92 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 58 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8cd60b17`
+- Built from commit: `726a87d4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -18,7 +18,7 @@
 - @ReglamentSB_bot (Watchman)
 - Основной агент «Кодификатор»
 - P026SubjectBaseTest
-- generate_answer
+- 8.1. 14 критериев сопоставления А-Профиль vs Star Building
 - Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 - @ReglamentSB_bot (Смотритель)
 - strategy_bot.py
@@ -162,15 +162,15 @@
 - card_REG-007_kadrovoe_deloproizvodstvo.md
 - card_REG-008_sistema_motivacii.md
 - card_REG-009_toplivnye_karty.md
-- P026Handler
+- SubjectBaseIntegrityError
 - P026Storage
 - P026StorageTest
 - P026HandlerTest
 - P026SubjectBase
 - 3. Пошаговая процедура точного развертывания (Exact Release Deployment)
 - P026SecurityTest
-- .test_ancestor_symlink_attack_rejected_fail_closed
-- P026DeepProbesReproTest
+- MANIFEST.json
+- P026Handler
 - .test_lock_symlink_attack_rejected_fail_closed
 - .test_no_hardcoded_secrets_or_tokens
 - .test_parent_directory_symlink_attack_rejected_fail_closed
@@ -192,18 +192,25 @@
 - .test_y2_backup_target_hardlink_protection
 - .test_y3_backup_full_preflight_before_first_mutation
 - .test_z1_z2_z3_z4_comprehensive_matrix
+- JournalCorruptionError
+- Path
+- .get_p026_prompt_context
+- Акт готовности предметной базы знаний P026v1
+- Реестр неизвестного, открытых вопросов и незаполненных данных P-026v1
+- Договор передачи базы P026v1 Разработчику (Пондер Стиббонс)
+- .test_aa1_aa2_independent_recheck_coverage
 
 ## God Nodes (most connected - your core abstractions)
 1. `Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)` - 43 edges
 2. `P026Storage` - 41 edges
-3. `P026SubjectBase` - 32 edges
+3. `P026SubjectBase` - 38 edges
 4. `P026StorageTest` - 31 edges
 5. `P026Handler` - 29 edges
 6. `P026SecurityTest` - 29 edges
 7. `P026HandlerTest` - 25 edges
 8. `SubjectBaseIntegrityError` - 23 edges
 9. `P026StrategyBotIntegrationTest` - 23 edges
-10. `P026SubjectBaseTest` - 20 edges
+10. `P026SubjectBaseTest` - 21 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `@ReglamentSB_bot (Watchman)` --calls--> `REG-004: How to Write a Regulation`  [INFERRED]
@@ -236,7 +243,7 @@
 - **Процесс управления персоналом** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_007_kadrovoe_deloproizvodstvo, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_01_v_rabote_full_reg_008_sistema_motivacii, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_utverzhdeno_full_reg_002_orgstruktura [INFERRED 0.85]
 - **Кадровые и мотивационные процессы** — home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_007_kadrovoe_deloproizvodstvo_reglament, home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::knowledge_base_02_утверждено_full_reg_008_sistema_motivacii_reglament [INFERRED 0.90]
 
-## Communities (181 total, 91 thin omitted)
+## Communities (188 total, 92 thin omitted)
 
 ### Community 0 - "@ReglamentSB_bot (Watchman)"
 Cohesion: 0.17
@@ -248,11 +255,11 @@ Nodes (11): TC-01: Happy Path Test, Prompt: Sverchik (Auditor), Основной
 
 ### Community 2 - "P026SubjectBaseTest"
 Cohesion: 0.10
-Nodes (3): P026SubjectBaseTest, S2 / R3: Все 30 источников предметной базы должны быть содержательно подключены., S2 / R3: Проверка фактического чтения содержимого всех 30 источников и…
+Nodes (4): P026SubjectBaseTest, S2 / R3 / FN-014: Все 40 источников предметной базы P026v1 должны быть…, S2 / R3 / FN-014: Проверка фактического чтения содержимого всех 40 источников и…, FN-014: Проверка доступности артефактов базы P026v1 (SUBJECT_BASE,…
 
-### Community 3 - "generate_answer"
-Cohesion: 0.22
-Nodes (9): build_system_prompt(), build_user_prompt(), generate_answer(), get_strategy_context(), load_strategy_context(), Any, Формирует системный промпт модели с интеграцией актуальных решений владельца., Формирует пользовательский промпт с историей и решениями текущего актора. (+1 more)
+### Community 3 - "8.1. 14 критериев сопоставления А-Профиль vs Star Building"
+Cohesion: 0.06
+Nodes (33): 10. Стабильность цены и полнота бюджета, 11. Скорость и соблюдение сроков, 12. Сервис и репутационные сигналы, 13. Помощь монтажникам и упаковка КП, 14. Гарантия и подтверждения надёжности, 1.1. Лимиты полномочий по согласованию скидок (КД 107v0.6 / РОП 109v0.3), 1.2. Обязательное правило маржинальности сделок, 1.3. Критерий стратегической сделки (+25 more)
 
 ### Community 4 - "Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)"
 Cohesion: 0.05
@@ -263,8 +270,8 @@ Cohesion: 0.29
 Nodes (7): Dual-Circuit Architecture, Voice Input Support, Consultant Scenario Flow, Bitrix24 Integration, @ReglamentSB_bot (Смотритель), @star_building_help_bot (Ом), Cross-Check Engine
 
 ### Community 6 - "strategy_bot.py"
-Cohesion: 0.26
-Nodes (21): allowed_user_ids(), deny(), extract_message(), get_p026_handler(), handle_clear(), handle_confirm_decision(), handle_export_draft(), handle_named_request() (+13 more)
+Cohesion: 0.17
+Nodes (30): allowed_user_ids(), build_system_prompt(), build_user_prompt(), deny(), extract_message(), generate_answer(), get_p026_handler(), get_strategy_context() (+22 more)
 
 ### Community 7 - "Битрикс24"
 Cohesion: 0.33
@@ -550,13 +557,13 @@ Nodes (3): 2.1. Главный принцип, 2.2. Стоп-факторы, 2. 
 Cohesion: 0.67
 Nodes (3): 3.1. Цель до конца 2026 года, 3.2. Цель 2027 года, 3. Цели и ключевые результаты
 
-### Community 151 - "P026Handler"
-Cohesion: 0.13
-Nodes (15): P026Handler, Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота., Сохраняется для совместимости: делегирует к is_unambiguous_confirmation., Файлы и вложенные документы расцениваются только как данные., Формирует сводный статус проекта P-026 со строгой actor/chat изоляцией решений., Проверяет строгое соответствие грамматике безусловного подтверждения.…, JournalCorruptionError, RuntimeError (+7 more)
+### Community 151 - "SubjectBaseIntegrityError"
+Cohesion: 0.26
+Nodes (6): Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота., RuntimeError, Предметная база знаний P-026 («Коммерческий департамент» — релиз P026v1) в…, Исключение при нарушении целостности, отсутствии или подмене нормативного…, SubjectBaseIntegrityError, load_bot()
 
 ### Community 152 - "P026Storage"
-Cohesion: 0.07
-Nodes (35): Any, Положительная структурная валидация решения (Star Building P-026 /…, Привязывает решение к конкретному обсуждаемому предметному вопросу., Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией., Явный метод подтверждения ожидающего предложения системы., Экспортирует версионный рабочий черновик документа КД со строгой проверкой…, Устанавливает точное ожидающее утверждения предложение для конкретного актора и…, Возвращает текущее ожидающее предложение для актора и чата. (+27 more)
+Cohesion: 0.18
+Nodes (15): P026Storage, Any, Path, Строгая fail-closed проверка на отсутствие символических ссылок на всех уровнях…, Создает изолированные каталоги с защитой от symlink-атак., Межпроцессная сериализация через flock с поддержкой реентерабельности и…, Строгая fail-closed валидация без доверия симлинкованным родителям., Атомарная запись с fsync временного файла и родительского каталога. (+7 more)
 
 ### Community 153 - "P026StorageTest"
 Cohesion: 0.05
@@ -567,8 +574,8 @@ Cohesion: 0.07
 Nodes (11): P026HandlerTest, R3 / F6: Отказ команды /project при нарушении целостности манифеста источников., R3 / F6: Отказ экспорта черновика при нарушении целостности манифеста…, S3 / R5: Вариации согласий без pending proposal обязаны отклоняться., S3 / R5: Двухшаговый механизм: подтверждение согласует точное ранее показанное…, T1 / S3: Без предложения запрещено сохранять псевдосогласия как решения., T1 / S3: Пустая строка, точки, отказ и условные фразы не должны утверждать…, T1 / S3: Привязка подтверждения к proposal_id, отказ для чужого и повторного ID. (+3 more)
 
 ### Community 155 - "P026SubjectBase"
-Cohesion: 0.12
-Nodes (9): P026SubjectBase, Any, Path, Нормативные константы, правила, версии документов и статус проекта P-026., Возвращает нормативный манифест 30 предметных источников P-026., Проверяет целостность всех 30 канонических источников (fail-closed)., Безопасное чтение нормативного документа со строгой fail-closed проверкой…, Форматирует сводный отчёт о статусе P-026 для команды /project. (+1 more)
+Cohesion: 0.17
+Nodes (5): P026SubjectBase, Any, Нормативные константы, правила, версии документов и статус проекта P-026 (база…, Возвращает нормативный манифест 40 предметных источников P-026 (база P026v1)., Форматирует сводный отчёт о статусе P-026 для команды /project.
 
 ### Community 156 - "3. Пошаговая процедура точного развертывания (Exact Release Deployment)"
 Cohesion: 0.10
@@ -576,26 +583,50 @@ Nodes (20): 1. Точный состав и инвентарь релиза (Exa
 
 ### Community 157 - "P026SecurityTest"
 Cohesion: 0.29
-Nodes (3): P026SecurityTest, AA1 & AA2: Точные регрессионные тесты одиннадцатой ревизии (AA1 identity и AA2…, Хранилище по умолчанию расположено изолированно вне репозитория и вне prod.
+Nodes (3): P026SecurityTest, R1 / F1: Проверяет блокировку symlink на любом уровне предков (выше…, Хранилище по умолчанию расположено изолированно вне репозитория и вне prod.
 
-### Community 159 - "P026DeepProbesReproTest"
+### Community 158 - "MANIFEST.json"
+Cohesion: 0.08
+Nodes (24): all_hashes_verified, delta_sources_count, ГД, КД, МОП, ОД, РОП, Старший МОП (+16 more)
+
+### Community 159 - "P026Handler"
+Cohesion: 0.07
+Nodes (20): P026Handler, Any, Сохраняется для совместимости: делегирует к is_unambiguous_confirmation., Положительная структурная валидация решения (Star Building P-026 /…, Файлы и вложенные документы расцениваются только как данные., Привязывает решение к конкретному обсуждаемому предметному вопросу., Фиксирует подтверждённое решение владельца с привязкой контекста и изоляцией., Явный метод подтверждения ожидающего предложения системы. (+12 more)
+
+### Community 181 - "JournalCorruptionError"
+Cohesion: 0.17
+Nodes (14): get_default_storage_dir(), JournalCorruptionError, PathTraversalError, RuntimeError, Изолированное защищённое файловое хранилище решений владельца и черновиков…, Определяет базовый путь хранилища с поддержкой systemd STATE_DIRECTORY., Исключение при попытке обхода каталога или использования некорректного пути., Исключение при синтаксическом или структурном повреждении журнала решений. (+6 more)
+
+### Community 182 - "Path"
 Cohesion: 0.18
-Nodes (5): P026DeepProbesReproTest, S3: Общие согласия отклоняются без pending proposal; конкретная норма…, S5: Карантин при пустом/невалидном журнале и безопасная обработка в consumer., S1: Отказ integrity gate останавливает модель и историю до SDK., S2: Содержательное чтение всех 30 источников и отсутствие пропусков норм.
+Nodes (6): Path, Безопасное чтение нормативного документа со строгой fail-closed проверкой…, Считывает канонический текст согласованной предметной базы SUBJECT_BASE.md., Считывает реестр неизвестного UNKNOWN_LIST.md., Считывает акт готовности базы READINESS_ACT.md., Считывает машиночитаемый манифест базы MANIFEST.json.
+
+### Community 184 - "Акт готовности предметной базы знаний P026v1"
+Cohesion: 0.29
+Nodes (6): 1. Состав и результаты проверки источников, 2. Разграничение статусов и защита нормативного ядра, 3. Контекстный бюджет и дедупликация, 4. Безопасность и секреты, 5. Заключение, Акт готовности предметной базы знаний P026v1
+
+### Community 185 - "Реестр неизвестного, открытых вопросов и незаполненных данных P-026v1"
+Cohesion: 0.29
+Nodes (6): 1. Отсутствие ответов на 112 вопросов интервью (SRC-32, SRC-33), 2. Пробелы в аналитической карточке «А-Профиль» (SRC-35, SRC-36, SRC-37), 3. Незаполненные графы чек-листа подготовки презентации (SRC-38, SRC-39, SRC-40), 4. Отложенные стратегические вопросы владельца, 5. Границы использования базы моделью и ассистентом, Реестр неизвестного, открытых вопросов и незаполненных данных P-026v1
+
+### Community 186 - "Договор передачи базы P026v1 Разработчику (Пондер Стиббонс)"
+Cohesion: 0.50
+Nodes (3): 1. Состав передаваемого пакета, 2. Требования к технической интеграции (Integration Phase), Договор передачи базы P026v1 Разработчику (Пондер Стиббонс)
 
 ## Knowledge Gaps
-- **427 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `Контекст Hermes`, `Текст черновика:`, `1.1. Назначение` (+422 more)
+- **489 isolated node(s):** `register_project.sh script`, `setup_profiles.sh script`, `version`, `package`, `function_id` (+484 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **91 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **92 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `P026Storage` connect `P026Storage` to `.test_lock_symlink_attack_rejected_fail_closed`, `P026StrategyBotIntegrationTest`, `.test_parent_directory_symlink_attack_rejected_fail_closed`, `.test_side_effects_before_refusal_prevented`, `strategy_bot.py`, `P026Handler`, `P026StorageTest`, `P026HandlerTest`, `P026SubjectBase`, `P026SecurityTest`, `.test_ancestor_symlink_attack_rejected_fail_closed`, `P026DeepProbesReproTest`?**
-  _High betweenness centrality (0.040) - this node is a cross-community bridge._
-- **Why does `P026SecurityTest` connect `P026SecurityTest` to `P026Storage`, `.test_ancestor_symlink_attack_rejected_fail_closed`, `.test_lock_symlink_attack_rejected_fail_closed`, `.test_no_hardcoded_secrets_or_tokens`, `.test_parent_directory_symlink_attack_rejected_fail_closed`, `.test_path_traversal_attack_matrix`, `.test_side_effects_before_refusal_prevented`, `.test_source_catalogs_sha256_unmodified`, `.test_symlink_attack_rejected`, `.test_t2_rollback_procedure_tampered_backup_fails_closed_without_mutations`, `.test_u2_u3_u4_rollback_comprehensive_matrix`, `.test_u5_backup_allowlist_and_symlink_protection`, `.test_v2_v3_v4_v5_deployment_plan_probes`, `.test_v5_consecutive_backup_switch_rollback_roundtrip`, `.test_w3_w4_backup_security_probes`, `.test_w4_destructive_recovery_roundtrip`, `.test_x1_x2_rollback_approved_roots_and_execstart_probes`, `.test_x3_backup_target_and_source_symlinks`, `.test_x4_manifest_incomplete_and_executable_recovery_e2e`, `.test_y1_execstart_identity_and_command_validation`, `.test_y2_backup_target_hardlink_protection`, `.test_y3_backup_full_preflight_before_first_mutation`, `.test_z1_z2_z3_z4_comprehensive_matrix`?**
+- **Why does `P026Storage` connect `P026Storage` to `.test_lock_symlink_attack_rejected_fail_closed`, `P026StrategyBotIntegrationTest`, `.test_parent_directory_symlink_attack_rejected_fail_closed`, `.test_side_effects_before_refusal_prevented`, `strategy_bot.py`, `JournalCorruptionError`, `SubjectBaseIntegrityError`, `P026StorageTest`, `P026HandlerTest`, `P026SubjectBase`, `P026SecurityTest`, `P026Handler`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `P026StorageTest` connect `P026StorageTest` to `P026Storage`, `JournalCorruptionError`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
+- **Why does `P026SubjectBase` connect `P026SubjectBase` to `P026StrategyBotIntegrationTest`, `P026SubjectBaseTest`, `strategy_bot.py`, `Path`, `.get_p026_prompt_context`, `SubjectBaseIntegrityError`, `P026HandlerTest`, `P026Handler`?**
   _High betweenness centrality (0.022) - this node is a cross-community bridge._
-- **Why does `P026SubjectBaseTest` connect `P026SubjectBaseTest` to `P026SubjectBase`, `P026Handler`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **Are the 6 inferred relationships involving `P026Storage` (e.g. with `P026Handler` and `P026DeepProbesReproTest`) actually correct?**
   _`P026Storage` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 4 inferred relationships involving `P026SubjectBase` (e.g. with `P026Handler` and `P026HandlerTest`) actually correct?**

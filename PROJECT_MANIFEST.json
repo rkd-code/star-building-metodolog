@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "696150bd81cb44d00e04bd0a994e66ec3cbc6b73ee76fbe6c90afcd24f259279",
+  "source_tree_hash": "e6abf29211a8f18b73d55bf18c6b9278ef7f084894e29a11564d3629f95c276e",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1067,6 +1067,41 @@
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/env.template"
     },
     {
+      "path": "37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md",
+      "name": "HANDOFF_TO_DEVELOPER.md",
+      "area": "37-strategy-bot",
+      "description": "Договор передачи базы P026v1 Разработчику (Пондер Стиббонс)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md"
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/MANIFEST.json",
+      "name": "MANIFEST.json",
+      "area": "37-strategy-bot",
+      "description": "{ \"version\": \"1.0.0\", \"package\": \"P-026v1\", \"function_id\": \"FN-014\", \"target\": \"existing @Dramknote_bot\", \"total_sources\": 40, \"original_sources_count\": 30, \"delta_sources_count\": 10, \"all_hashes_verified\": true, \"hash_mismatches_count\": 0,",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/MANIFEST.json"
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/READINESS_ACT.md",
+      "name": "READINESS_ACT.md",
+      "area": "37-strategy-bot",
+      "description": "Акт готовности предметной базы знаний P026v1",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/READINESS_ACT.md"
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/SUBJECT_BASE.md",
+      "name": "SUBJECT_BASE.md",
+      "area": "37-strategy-bot",
+      "description": "Предметная база знаний P-026v1 («Коммерческий департамент»)",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/SUBJECT_BASE.md"
+    },
+    {
+      "path": "37-strategy-bot/knowledge-base-v1/UNKNOWN_LIST.md",
+      "name": "UNKNOWN_LIST.md",
+      "area": "37-strategy-bot",
+      "description": "Реестр неизвестного, открытых вопросов и незаполненных данных P-026v1",
+      "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/UNKNOWN_LIST.md"
+    },
+    {
       "path": "37-strategy-bot/p026_handler.py",
       "name": "p026_handler.py",
       "area": "37-strategy-bot",
@@ -1084,7 +1119,7 @@
       "path": "37-strategy-bot/p026_subject_base.py",
       "name": "p026_subject_base.py",
       "area": "37-strategy-bot",
-      "description": "Предметная база знаний P-026 («Коммерческий департамент») в режиме read-only с контролем целостности.",
+      "description": "Предметная база знаний P-026 («Коммерческий департамент» — релиз P026v1) в режиме read-only с контролем целостности.",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_subject_base.py"
     },
     {

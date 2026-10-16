@@ -84,7 +84,7 @@ class P026DeepProbesReproTest(unittest.TestCase):
         content_read_files = [p for p, n in counts.items() if n > 1]
 
         self.assertEqual([], validation_only_files, f"Файлы только для верификации: {validation_only_files}")
-        self.assertEqual(30, len(content_read_files), "Все 30 файлов должны быть прочитаны более 1 раза")
+        self.assertEqual(len(sb.P026SubjectBase.CANONICAL_SOURCE_MANIFEST), len(content_read_files), "Все файлы должны быть прочитаны более 1 раза")
         self.assertGreater(len(ctx), 100_000, "Контекст должен быть содержательным")
 
         evidence = []

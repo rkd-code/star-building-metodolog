@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `696150bd81cb44d00e04bd0a994e66ec3cbc6b73ee76fbe6c90afcd24f259279`
+Отпечаток исходной структуры: `e6abf29211a8f18b73d55bf18c6b9278ef7f084894e29a11564d3629f95c276e`
 
 ## .git-templates
 
@@ -338,9 +338,14 @@
 | [`37-strategy-bot/DEPLOYMENT_PLAN.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/DEPLOYMENT_PLAN.md) | Офлайн-план развертывания расширения P-026 для @Dramknote_bot (FN-014) |
 | [`37-strategy-bot/README.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/README.md) | 37 — «Драмкнот»: стратегический бот Star Building |
 | [`37-strategy-bot/env.template`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/env.template) | Файл проекта: env.template. |
+| [`37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/HANDOFF_TO_DEVELOPER.md) | Договор передачи базы P026v1 Разработчику (Пондер Стиббонс) |
+| [`37-strategy-bot/knowledge-base-v1/MANIFEST.json`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/MANIFEST.json) | { "version": "1.0.0", "package": "P-026v1", "function_id": "FN-014", "target": "existing @Dramknote_bot", "total_sources": 40, "original_sources_count": 30, "delta_sources_count": 10, "all_hashes_verified": true, "hash_mismatches_count": 0, |
+| [`37-strategy-bot/knowledge-base-v1/READINESS_ACT.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/READINESS_ACT.md) | Акт готовности предметной базы знаний P026v1 |
+| [`37-strategy-bot/knowledge-base-v1/SUBJECT_BASE.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/SUBJECT_BASE.md) | Предметная база знаний P-026v1 («Коммерческий департамент») |
+| [`37-strategy-bot/knowledge-base-v1/UNKNOWN_LIST.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/knowledge-base-v1/UNKNOWN_LIST.md) | Реестр неизвестного, открытых вопросов и незаполненных данных P-026v1 |
 | [`37-strategy-bot/p026_handler.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_handler.py) | Обработчик диалогового взаимодействия и фиксации решений P-026 для Драмкнота. |
 | [`37-strategy-bot/p026_storage.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_storage.py) | Изолированное защищённое файловое хранилище решений владельца и черновиков P-026. |
-| [`37-strategy-bot/p026_subject_base.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_subject_base.py) | Предметная база знаний P-026 («Коммерческий департамент») в режиме read-only с контролем целостности. |
+| [`37-strategy-bot/p026_subject_base.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/p026_subject_base.py) | Предметная база знаний P-026 («Коммерческий департамент» — релиз P026v1) в режиме read-only с контролем целостности. |
 | [`37-strategy-bot/strategy_bot.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_bot.py) | Закрытый Telegram-бот «Драмкнот» для работы со стратегией Star Building. |
 | [`37-strategy-bot/strategy_healthcheck.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/strategy_healthcheck.py) | Проверяет Telegram API, службу и источники стратегического бота без вывода секретов. |
 | [`37-strategy-bot/systemd/star-building-strategy.service`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/systemd/star-building-strategy.service) | Файл проекта: star-building-strategy.service. |
