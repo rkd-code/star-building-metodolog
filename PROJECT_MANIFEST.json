@@ -4,7 +4,7 @@
   "repository": "https://github.com/rkd-code/star-building-metodolog",
   "github_slug": "rkd-code/star-building-metodolog",
   "default_branch": "work/dramknote-p026-handoff",
-  "source_tree_hash": "a64aa7685a0e3fcda7e71c02941aaa4248b835f02f4ccfd016799cbb8a87a0b2",
+  "source_tree_hash": "696150bd81cb44d00e04bd0a994e66ec3cbc6b73ee76fbe6c90afcd24f259279",
   "documentation_files": [
     "README.md",
     "AGENTS.md",
@@ -1133,7 +1133,7 @@
       "path": "37-strategy-bot/test_p026_security.py",
       "name": "test_p026_security.py",
       "area": "37-strategy-bot",
-      "description": "import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalError, get_defaul",
+      "description": "import shutil import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalErr",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_security.py"
     },
     {
@@ -1252,7 +1252,7 @@
       "path": "graphify-out/GRAPH_REPORT.md",
       "name": "GRAPH_REPORT.md",
       "area": "graphify-out",
-      "description": "Graph Report - t_7b954f30 (2026-10-15)",
+      "description": "Graph Report - t_7b954f30 (2026-10-16)",
       "github_url": "https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/GRAPH_REPORT.md"
     },
     {

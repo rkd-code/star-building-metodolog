@@ -1,5 +1,13 @@
 # История изменений
 
+## 2026-10-16
+
+- **Ограниченная модель установки на хосте и устранение findings AA1–AA2 одиннадцатой ревизии 8cd60b1 в процедурах развертывания и отката расширения P-026 для штаба @Dramknote_bot (FN-014):**
+  - **AA1 (Доверенная identity интерпретатора Python 3):** В `DEPLOYMENT_PLAN.md` (во всех трёх копиях `parse_and_validate_exec`) внедрена валидация канонического пути интерпретатора по доверенному пулу хоста (`/srv/hermes-agent/venv/bin/python3`, `/usr/bin/python3`, `sys.executable`, `/usr/bin/python3*`) и проверка identity через запуск probe (`import sys; print(sys.version_info[0], sys.version_info[1])`). Непитоновские бинарники и копии `/bin/echo` (включая `<fixture>/python3` и `<fixture>/python3.99`) отвергаются до остановки службы и системных мутаций (rc!=0, 0 мутаций). Поддержана каноническая политика стандартных symlinks для доверенного интерпретатора.
+  - **AA2 (Точное имя временных metadata и Zero-Mutation Preflight):** В preflight бэкапа синхронизировано имя временного файла метаданных (`.pinned_metadata.json.tmp_<PID>`); все временные цели полного инвентаря проверяются ДО создания каталогов `code/`, копирования unit и файлов кода с сохранением sentinels и mtime. Защита `O_CREAT | O_EXCL` непосредственно при open сохранена.
+  - **Ограниченная модель установки:** Зафиксирована модель хоста: host (`/home/roman`), интерпретаторы (`/srv/hermes-agent/venv/bin/python3` / `/usr/bin/python3`), unit `star-building-strategy.service`, пути релизов, бэкапов и состояния с политикой fail-closed.
+  - **Регрессионная стабильность:** 114/114 PASS тестов проекта, 100% PASS всех offline-проб ревизора (`identity.py`, `boundaries.py`, `focused.py`, `extra.py`, `probes.py`, `e2e-execution.py`).
+
 ## 2026-10-15
 
 - **Устранение findings Z1–Z4 десятой ревизии 73b013c в процедурах развертывания и отката расширения P-026 для штаба @Dramknote_bot (FN-014):**

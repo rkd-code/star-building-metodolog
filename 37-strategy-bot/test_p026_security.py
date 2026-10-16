@@ -1,3 +1,4 @@
+import shutil
 import hashlib
 import os
 import re
@@ -963,6 +964,8 @@ if "show" in a:
             "structured_same_basename",
             "python2",
             "multi_command",
+            "copied_echo_python3",
+            "copied_echo_python399",
         ]
         for phase, script in [("stop", stop_block), ("restore", restore_block)]:
             for case in cases:
@@ -1002,6 +1005,16 @@ if "show" in a:
                         curexec = f"/usr/bin/python2 {cur}/app.py"
                     elif case == "multi_command":
                         curexec = "{ path=" + sys.executable + " ; argv[]=" + sys.executable + " " + str(cur) + "/app.py ; } { path=/bin/echo ; argv[]=/bin/echo evil ; }"
+                    elif case == "copied_echo_python3":
+                        bad = p / "python3"
+                        shutil.copyfile("/bin/echo", bad)
+                        bad.chmod(0o700)
+                        curexec = f"{bad} {cur}/app.py"
+                    elif case == "copied_echo_python399":
+                        bad = p / "python3.99"
+                        shutil.copyfile("/bin/echo", bad)
+                        bad.chmod(0o700)
+                        curexec = f"{bad} {cur}/app.py"
 
                     unit = f"[Service]\nWorkingDirectory={dest}\nExecStart={oldexec}\n"
                     (backup / "star-building-strategy.service").write_text(unit, encoding="utf-8")
@@ -1211,5 +1224,88 @@ else:
         self.assertEqual("EXTERNAL_UNCHANGED\n", sentinel_z2.read_text(), "Внешний sentinel был изменён через временный symlink!")
         self.assertEqual(mtime_before, sentinel_z2.stat().st_mtime_ns, "mtime внешнего sentinel был изменён!")
         self.assertFalse((dst_z2 / "pinned_metadata.json").is_symlink() if (dst_z2 / "pinned_metadata.json").exists() else False, "Метаданные не должны публиковаться как symlink!")
+
+    def test_aa1_aa2_independent_recheck_coverage(self):
+        """AA1 & AA2: Точные регрессионные тесты одиннадцатой ревизии (AA1 identity и AA2 zero-mutation preflight)."""
+        import subprocess, json, shutil
+        plan_path = ROOT / "DEPLOYMENT_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        def get_block(title):
+            m = re.search(r"```bash\n(.*?)\n```", plan.split(title)[1], re.S)
+            assert m is not None
+            return m.group(1)
+
+        # 1. AA2: preflight с точным именем .pinned_metadata.json.tmp_<PID> обязан завершаться fail-closed ДО мутации
+        p_aa2 = Path(self.temp_dir.name) / "aa2_preflight"
+        src_aa2 = p_aa2 / "src"; dst_aa2 = p_aa2 / "dst"; ext_aa2 = p_aa2 / "ext"
+        for d in [src_aa2, dst_aa2, ext_aa2]: d.mkdir(parents=True)
+        (src_aa2 / "app.py").write_text("import p026_storage\n")
+        (src_aa2 / "p026_storage.py").write_text("X = 1\n")
+        sentinel = ext_aa2 / "sentinel"
+        sentinel.write_text("EXTERNAL_SENTINEL_ORIGINAL\n")
+        st_before = sentinel.stat()
+        unit_aa2 = p_aa2 / "unit.service"; unit_aa2.write_text("[Service]\n")
+
+        m_code = re.search(r"python3 -c \"\n(.*?)\n\"", get_block("### Шаг 2. Фиксация и полный бэкап"), re.S)
+        assert m_code is not None
+        bp_code = m_code.group(1)
+        for a, b in {
+            "$LIVE_WORK_DIR": str(src_aa2),
+            "$PINNED_BACKUP_DIR": str(dst_aa2),
+            "$BACKUP_TIMESTAMP": "FIXTURE",
+            "$LIVE_UNIT_PATH": str(unit_aa2),
+            "$LIVE_EXEC_START": f"{sys.executable} {src_aa2}/app.py",
+        }.items():
+            bp_code = bp_code.replace(a, b)
+
+        # Создаём именно .pinned_metadata.json.tmp_<PID>
+        setup_sym = f"import pathlib, os\n(pathlib.Path({repr(str(dst_aa2))}) / ('.pinned_metadata.json.tmp_' + str(os.getpid()))).symlink_to({repr(str(sentinel))})\n"
+        r_aa2_sym = subprocess.run([sys.executable, "-c", setup_sym + bp_code], capture_output=True, text=True, timeout=15)
+        self.assertNotEqual(0, r_aa2_sym.returncode, "AA2: preflight обязан завершаться fail-closed (rc!=0) при наличии .pinned_metadata.json.tmp_<PID>")
+        self.assertEqual("EXTERNAL_SENTINEL_ORIGINAL\n", sentinel.read_text(), "AA2: внешний sentinel не должен изменяться")
+        self.assertEqual(st_before.st_mtime_ns, sentinel.stat().st_mtime_ns, "AA2: mtime внешнего sentinel не должен меняться")
+        self.assertFalse((dst_aa2 / "code").exists(), "AA2: каталог code/ НЕ должен создаваться при сбое preflight временного файла!")
+        self.assertFalse((dst_aa2 / "star-building-strategy.service").exists(), "AA2: unit-файл бэкапа НЕ должен создаваться при сбое preflight временного файла!")
+
+        # 2. AA1: регулярный бинарник /bin/echo с именем python3 отвергается в preflight stop и restore
+        p_aa1 = Path(self.temp_dir.name) / "aa1_identity"
+        home_aa1 = p_aa1 / "home"; old_aa1 = home_aa1 / "old"; cur_aa1 = home_aa1 / "cur"; bk_aa1 = home_aa1 / "bk"; code_aa1 = bk_aa1 / "code"; bin_aa1 = p_aa1 / "bin"
+        for d in [home_aa1, old_aa1, cur_aa1, bk_aa1, code_aa1, bin_aa1]: d.mkdir(parents=True)
+        for d in [old_aa1, cur_aa1, code_aa1]: (d / "app.py").write_text("print('TEST_APP')\n")
+        bad_echo = p_aa1 / "python3"
+        shutil.copyfile("/bin/echo", bad_echo)
+        bad_echo.chmod(0o700)
+        curexec = f"{bad_echo} {cur_aa1}/app.py"
+        oldunit = f"[Service]\nWorkingDirectory={old_aa1}\nExecStart={sys.executable} {old_aa1}/app.py\n"
+        (bk_aa1 / "star-building-strategy.service").write_text(oldunit)
+        (bk_aa1 / "pinned_metadata.json").write_text(json.dumps({
+            "unit_sha256": hashlib.sha256(oldunit.encode()).hexdigest(),
+            "code_files_count": 1,
+            "live_work_dir": str(old_aa1),
+            "files": {"app.py": hashlib.sha256((code_aa1 / "app.py").read_bytes()).hexdigest()}
+        }))
+        log_aa1 = p_aa1 / "calls.log"
+        (bin_aa1 / "systemctl").write_text(f"""#!/usr/bin/python3
+import sys
+a = sys.argv[1:]
+if "show" in a:
+    print({repr(curexec)} if "ExecStart" in a else {repr(str(cur_aa1))})
+else:
+    with open({repr(str(log_aa1))}, "a") as f:
+        f.write(" ".join(a) + "\n")
+""")
+        (bin_aa1 / "systemctl").chmod(0o700)
+        (bin_aa1 / "python3").symlink_to(sys.executable)
+        env_aa1 = {
+            "HOME": str(home_aa1),
+            "PINNED_BACKUP_DIR": str(bk_aa1),
+            "PATH": str(bin_aa1) + ":/usr/bin:/bin",
+            "LANG": "C.UTF-8",
+            "PYTHONDONTWRITEBYTECODE": "1"
+        }
+        stop_blk = get_block("### Шаг 1. Остановка службы")
+        r_aa1_stop = subprocess.run(["/bin/bash", "-c", stop_blk], env=env_aa1, capture_output=True, text=True, timeout=15)
+        self.assertNotEqual(0, r_aa1_stop.returncode, "AA1: скопированный /bin/echo обязан отвергаться до остановки службы (rc!=0)")
+        self.assertFalse(log_aa1.exists(), "AA1: служба не должна быть остановлена при не-Python ExecStart")
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 # Структура проекта: Агент «Кодификатор» (Codifier Agent v1.0 MVP)
 
-Отпечаток исходной структуры: `a64aa7685a0e3fcda7e71c02941aaa4248b835f02f4ccfd016799cbb8a87a0b2`
+Отпечаток исходной структуры: `696150bd81cb44d00e04bd0a994e66ec3cbc6b73ee76fbe6c90afcd24f259279`
 
 ## .git-templates
 
@@ -347,7 +347,7 @@
 | [`37-strategy-bot/test_p026_deep_probes_repro.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_deep_probes_repro.py) | Воспроизведение независимых deep_probes ревизии f9ae76f8 в изолированных фикстурах. |
 | [`37-strategy-bot/test_p026_handler.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_handler.py) | import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_handler import P026Handler from p026_storage import P026Storage, JournalCorruptionError from p026_subject |
 | [`37-strategy-bot/test_p026_integration.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_integration.py) | import importlib.util import os import sys import tempfile import unittest from pathlib import Path from unittest.mock import AsyncMock, MagicMock, patch ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) BOT = ROOT / "str |
-| [`37-strategy-bot/test_p026_security.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_security.py) | import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalError, get_defaul |
+| [`37-strategy-bot/test_p026_security.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_security.py) | import shutil import hashlib import os import re import sys import tempfile import unittest from pathlib import Path ROOT = Path(__file__).resolve().parent sys.path.insert(0, str(ROOT)) from p026_storage import P026Storage, PathTraversalErr |
 | [`37-strategy-bot/test_p026_storage.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_storage.py) | import os import sys import tempfile import threading import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_storage import JournalCorruptionError, P026Storage, PathTraversalError class P |
 | [`37-strategy-bot/test_p026_subject_base.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_p026_subject_base.py) | import os import sys import tempfile import unittest from pathlib import Path sys.path.insert(0, str(Path(__file__).resolve().parent)) from p026_subject_base import P026SubjectBase, SubjectBaseIntegrityError class P026SubjectBaseTest(unitte |
 | [`37-strategy-bot/test_strategy_bot.py`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/37-strategy-bot/test_strategy_bot.py) | import importlib.util import os import sys import tempfile import unittest from pathlib import Path from unittest.mock import patch ROOT = Path(__file__).resolve().parent if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT)) BOT = ROO |
@@ -357,7 +357,7 @@
 
 | Файл | Назначение |
 |---|---|
-| [`graphify-out/GRAPH_REPORT.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/GRAPH_REPORT.md) | Graph Report - t_7b954f30 (2026-10-15) |
+| [`graphify-out/GRAPH_REPORT.md`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/GRAPH_REPORT.md) | Graph Report - t_7b954f30 (2026-10-16) |
 | [`graphify-out/graph.html`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.html) | <!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <title>graphify - graphify-out/graph.html</title> <script src="https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js" integrity="sha384-Ux6phic9PEHJ38YtrijhkzyJ8 |
 | [`graphify-out/graph.json`](https://github.com/rkd-code/star-building-metodolog/blob/work%2Fdramknote-p026-handoff/graphify-out/graph.json) | { "directed": false, "multigraph": false, "graph": { "hyperedges": [ { "id": "home_roman::home_roman::home_roman::home_roman::home_roman::home_roman::marketing_automation_flow", "label": "Marketing Automation Flow", "nodes": [ "home_roman:: |
 

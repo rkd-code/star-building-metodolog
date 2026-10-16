@@ -70,6 +70,15 @@
 
 Перед развертыванием оператор обязан проверить выполнение следующих условий:
 
+### Ограниченная модель установки на этом хосте (Bounded Host Installation Model)
+Вместо универсального runbook зафиксирована жесткая модель установки исключительно для данного хоста:
+1. **Хост:** рабочий хост Star Building (`/home/roman`).
+2. **Доверенные интерпретаторы Python:** строго `/srv/hermes-agent/venv/bin/python3` и `/usr/bin/python3` (версия Python >= 3.11).
+3. **Служба systemd:** пользовательский сервис `star-building-strategy.service`.
+4. **Пути релизов и бэкапов:** `/home/roman/srv/star-building-strategy/releases` и `/home/roman/srv/star-building-strategy/backups`.
+5. **Пути состояния (state):** `/home/roman/.local/share/star-building/dramknote-p026`.
+6. **Политика Fail-Closed:** Любое неизвестное или расходящееся состояние (неподдерживаемый хост, неподдерживаемый интерпретатор, несоответствие unit или путей) означает немедленную fail-closed остановку (exit != 0) с понятным диагностическим сообщением в stderr. Попытки угадывания, молчаливого fallback или ремонта live-окружения категорически запрещены. Проверенный релиз неизменяем — процедура никогда не генерирует и не чинит исполняемый код.
+
 1. **Сервер:** рабочий хост Star Building (`/home/roman`).
 2. **Пользователь:** `roman` (без запроса root/sudo).
 3. **Виртуальное окружение Python:** `/srv/hermes-agent/venv/bin/python3` (версия Python >= 3.11).
@@ -166,7 +175,7 @@ fi
 
 # 2. Полный префлайт инвентаря и безопасное сохранение unit и кода службы СТРОГО по allowlist
 python3 -c "
-import ast, hashlib, json, os, pathlib, re, shlex, shutil, stat, sys
+import ast, hashlib, json, os, pathlib, re, shlex, shutil, stat, subprocess, sys
 
 live_unit_raw = '$LIVE_UNIT_PATH'
 src_dir_raw = '$LIVE_WORK_DIR'
@@ -332,6 +341,43 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
         sys.exit(1)
     if not re.match(r'^python3(?:\.\d+)?$', canon_name):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_name} для {label} не является доверенным интерпретатором Python 3!', file=sys.stderr)
+        sys.exit(1)
+
+    # AA1: Ограниченная модель доверенной identity интерпретатора Python 3 данного хоста
+    trusted_interpreters = set()
+    interpreter_candidates = [
+        pathlib.Path('/srv/hermes-agent/venv/bin/python3'),
+        pathlib.Path('/srv/hermes-agent/venv/bin/python'),
+        pathlib.Path('/usr/bin/python3'),
+        pathlib.Path(sys.executable),
+    ]
+    for p_cand in pathlib.Path('/usr/bin').glob('python3*'):
+        if p_cand.is_file() and os.access(str(p_cand), os.X_OK) and re.match(r'^python3(?:\.\d+)?$', p_cand.name):
+            interpreter_candidates.append(p_cand)
+    for c in interpreter_candidates:
+        try:
+            if c.exists() and c.is_file() and os.access(str(c), os.X_OK):
+                res_c = c.resolve()
+                if res_c.exists() and res_c.is_file() and os.access(str(res_c), os.X_OK):
+                    trusted_interpreters.add(res_c)
+                    trusted_interpreters.add(c)
+        except Exception:
+            pass
+
+    if canon_exec not in trusted_interpreters and target_exec not in trusted_interpreters:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_exec} для {label} не входит в доверенную модель интерпретаторов Python 3 хоста!', file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        ver_proc = subprocess.run(
+            [str(canon_exec), '-c', 'import sys; print(sys.version_info[0], sys.version_info[1])'],
+            capture_output=True, text=True, timeout=5
+        )
+        if ver_proc.returncode != 0 or not re.match(r'^3\s+\d+', ver_proc.stdout.strip()):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл {canon_exec} для {label} не подтвердил identity Python 3!', file=sys.stderr)
+            sys.exit(1)
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Сбой верификации identity Python 3 для {canon_exec} ({label}): {err}', file=sys.stderr)
         sys.exit(1)
 
     script_tok = None
@@ -589,10 +635,15 @@ if meta_target.exists() or os.path.lexists(str(meta_target)):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Целевой файл метаданных {meta_target} существует с st_nlink={st_m.st_nlink} != 1 (hardlink attack)!', file=sys.stderr)
         sys.exit(1)
 
-# Z2: Защита предсказуемых временных путей до мутации
+# AA2 & Z2: Защита предсказуемых временных путей до мутации
 tmp_u_check = backup_dir / f'.star-building-strategy.service.tmp_{os.getpid()}'
 if tmp_u_check.exists() or tmp_u_check.is_symlink() or os.path.lexists(str(tmp_u_check)):
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Временный unit-файл {tmp_u_check} уже существует или является ссылкой!', file=sys.stderr)
+    sys.exit(1)
+
+tmp_m_check_json = backup_dir / f'.pinned_metadata.json.tmp_{os.getpid()}'
+if tmp_m_check_json.exists() or tmp_m_check_json.is_symlink() or os.path.lexists(str(tmp_m_check_json)):
+    print(f'КРИТИЧЕСКАЯ ОШИБКА: Временный файл метаданных {tmp_m_check_json} уже существует или является ссылкой!', file=sys.stderr)
     sys.exit(1)
 
 tmp_m_check = backup_dir / f'.pinned_metadata.tmp_{os.getpid()}'
@@ -687,6 +738,20 @@ missing_copied_mandatory = mandatory_files - backup_names
 if missing_copied_mandatory:
     print(f'КРИТИЧЕСКАЯ ОШИБКА: Не все обязательные файлы были сохранены в бэкап: {sorted(missing_copied_mandatory)}!', file=sys.stderr)
     sys.exit(1)
+
+# AA2: Полная предварительная проверка всех временных путей до создания каталогов и мутаций
+candidate_tmp_targets = [
+    unit_target.parent / f'.{unit_target.name}.tmp_{os.getpid()}',
+    meta_target.parent / f'.{meta_target.name}.tmp_{os.getpid()}',
+    meta_target.parent / f'.pinned_metadata.tmp_{os.getpid()}',
+]
+for _, _, tgt in files_to_backup:
+    candidate_tmp_targets.append(tgt.parent / f'.{tgt.name}.tmp_{os.getpid()}')
+
+for tmp_check in candidate_tmp_targets:
+    if tmp_check.exists() or tmp_check.is_symlink() or os.path.lexists(str(tmp_check)):
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Временный файл {tmp_check} уже существует или является ссылкой!', file=sys.stderr)
+        sys.exit(1)
 
 # Z2: Безопасное эксклюзивное создание временных файлов с O_CREAT | O_EXCL без следования symlinks
 def safe_write_file(target_path, data_bytes, mode=0o644):
@@ -1250,6 +1315,43 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_name} для {label} не является доверенным интерпретатором Python 3!', file=sys.stderr)
         sys.exit(1)
 
+    # AA1: Ограниченная модель доверенной identity интерпретатора Python 3 данного хоста
+    trusted_interpreters = set()
+    interpreter_candidates = [
+        pathlib.Path('/srv/hermes-agent/venv/bin/python3'),
+        pathlib.Path('/srv/hermes-agent/venv/bin/python'),
+        pathlib.Path('/usr/bin/python3'),
+        pathlib.Path(sys.executable),
+    ]
+    for p_cand in pathlib.Path('/usr/bin').glob('python3*'):
+        if p_cand.is_file() and os.access(str(p_cand), os.X_OK) and re.match(r'^python3(?:\.\d+)?$', p_cand.name):
+            interpreter_candidates.append(p_cand)
+    for c in interpreter_candidates:
+        try:
+            if c.exists() and c.is_file() and os.access(str(c), os.X_OK):
+                res_c = c.resolve()
+                if res_c.exists() and res_c.is_file() and os.access(str(res_c), os.X_OK):
+                    trusted_interpreters.add(res_c)
+                    trusted_interpreters.add(c)
+        except Exception:
+            pass
+
+    if canon_exec not in trusted_interpreters and target_exec not in trusted_interpreters:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_exec} для {label} не входит в доверенную модель интерпретаторов Python 3 хоста!', file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        ver_proc = subprocess.run(
+            [str(canon_exec), '-c', 'import sys; print(sys.version_info[0], sys.version_info[1])'],
+            capture_output=True, text=True, timeout=5
+        )
+        if ver_proc.returncode != 0 or not re.match(r'^3\s+\d+', ver_proc.stdout.strip()):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл {canon_exec} для {label} не подтвердил identity Python 3!', file=sys.stderr)
+            sys.exit(1)
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Сбой верификации identity Python 3 для {canon_exec} ({label}): {err}', file=sys.stderr)
+        sys.exit(1)
+
     script_tok = None
     idx = 1
     while idx < len(tokens):
@@ -1732,6 +1834,43 @@ def parse_and_validate_exec(exec_str: str, work_dir: pathlib.Path, label: str, i
         sys.exit(1)
     if not re.match(r'^python3(?:\.\d+)?$', canon_name):
         print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_name} для {label} не является доверенным интерпретатором Python 3!', file=sys.stderr)
+        sys.exit(1)
+
+    # AA1: Ограниченная модель доверенной identity интерпретатора Python 3 данного хоста
+    trusted_interpreters = set()
+    interpreter_candidates = [
+        pathlib.Path('/srv/hermes-agent/venv/bin/python3'),
+        pathlib.Path('/srv/hermes-agent/venv/bin/python'),
+        pathlib.Path('/usr/bin/python3'),
+        pathlib.Path(sys.executable),
+    ]
+    for p_cand in pathlib.Path('/usr/bin').glob('python3*'):
+        if p_cand.is_file() and os.access(str(p_cand), os.X_OK) and re.match(r'^python3(?:\.\d+)?$', p_cand.name):
+            interpreter_candidates.append(p_cand)
+    for c in interpreter_candidates:
+        try:
+            if c.exists() and c.is_file() and os.access(str(c), os.X_OK):
+                res_c = c.resolve()
+                if res_c.exists() and res_c.is_file() and os.access(str(res_c), os.X_OK):
+                    trusted_interpreters.add(res_c)
+                    trusted_interpreters.add(c)
+        except Exception:
+            pass
+
+    if canon_exec not in trusted_interpreters and target_exec not in trusted_interpreters:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Канонический исполняемый файл {canon_exec} для {label} не входит в доверенную модель интерпретаторов Python 3 хоста!', file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        ver_proc = subprocess.run(
+            [str(canon_exec), '-c', 'import sys; print(sys.version_info[0], sys.version_info[1])'],
+            capture_output=True, text=True, timeout=5
+        )
+        if ver_proc.returncode != 0 or not re.match(r'^3\s+\d+', ver_proc.stdout.strip()):
+            print(f'КРИТИЧЕСКАЯ ОШИБКА: Исполняемый файл {canon_exec} для {label} не подтвердил identity Python 3!', file=sys.stderr)
+            sys.exit(1)
+    except Exception as err:
+        print(f'КРИТИЧЕСКАЯ ОШИБКА: Сбой верификации identity Python 3 для {canon_exec} ({label}): {err}', file=sys.stderr)
         sys.exit(1)
 
     script_tok = None
