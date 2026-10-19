@@ -56,15 +56,17 @@ def _validate_telegram_response(response: object, method_name: str) -> tuple[dic
     """Строго валидирует структуру ответа Telegram Bot API на уровне границы (fail-closed)."""
     if not isinstance(response, dict):
         return None, f"Telegram API {method_name}: некорректный ответ (не является словарем)"
-    if response.get("ok") is not True:
-        desc = response.get("description")
-        code = response.get("error_code")
-        if desc and code:
+    desc = response.get("description")
+    code = response.get("error_code")
+    if desc is not None or code is not None:
+        if desc and code is not None:
             return None, f"Telegram API {method_name} вернул ошибку ({code}): {desc}"
         if desc:
             return None, f"Telegram API {method_name} вернул ошибку: {desc}"
-        if code:
+        if code is not None:
             return None, f"Telegram API {method_name} вернул ошибку с кодом {code}"
+        return None, f"Telegram API {method_name} вернул ошибку (пустое описание)"
+    if response.get("ok") is not True:
         return None, f"Telegram API {method_name} вернул неуспешный ответ (ok={response.get('ok')!r})"
     result = response.get("result")
     if not isinstance(result, dict):

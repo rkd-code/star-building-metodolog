@@ -205,6 +205,58 @@ class StrategyHealthcheckTest(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("источники стратегии недоступны", result["problems"])
 
+    def test_me_contradictory_error_code_fails_closed(self):
+        """H1-R: getMe с ok=True, валидным result, но error_code=401 обязан приводить к fail-closed."""
+        module = load_module()
+        result = module.evaluate_bot(
+            "strategy_bot",
+            {"ok": True, "result": {"username": "strategy_bot"}, "error_code": 401},
+            {"ok": True, "result": {"url": "", "pending_update_count": 0}},
+            True,
+            True,
+        )
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("401" in p for p in result["problems"]))
+
+    def test_me_contradictory_description_fails_closed(self):
+        """H1-R: getMe с ok=True, валидным result, но description='synthetic failure' обязан приводить к fail-closed."""
+        module = load_module()
+        result = module.evaluate_bot(
+            "strategy_bot",
+            {"ok": True, "result": {"username": "strategy_bot"}, "description": "synthetic failure"},
+            {"ok": True, "result": {"url": "", "pending_update_count": 0}},
+            True,
+            True,
+        )
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("synthetic failure" in p for p in result["problems"]))
+
+    def test_webhook_contradictory_error_code_fails_closed(self):
+        """H1-R: getWebhookInfo с ok=True, валидным result, но error_code=401 обязан приводить к fail-closed."""
+        module = load_module()
+        result = module.evaluate_bot(
+            "strategy_bot",
+            {"ok": True, "result": {"username": "strategy_bot"}},
+            {"ok": True, "result": {"url": "", "pending_update_count": 0}, "error_code": 401},
+            True,
+            True,
+        )
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("401" in p for p in result["problems"]))
+
+    def test_webhook_contradictory_description_fails_closed(self):
+        """H1-R: getWebhookInfo с ok=True, валидным result, но description='synthetic failure' обязан приводить к fail-closed."""
+        module = load_module()
+        result = module.evaluate_bot(
+            "strategy_bot",
+            {"ok": True, "result": {"username": "strategy_bot"}},
+            {"ok": True, "result": {"url": "", "pending_update_count": 0}, "description": "synthetic failure"},
+            True,
+            True,
+        )
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("synthetic failure" in p for p in result["problems"]))
+
 
 if __name__ == "__main__":
     unittest.main()

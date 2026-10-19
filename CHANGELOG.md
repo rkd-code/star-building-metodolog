@@ -1,5 +1,13 @@
 # История изменений
 
+## 2026-10-19
+
+- **Устранение дефектов H1 и H1-R (boundary Telegram API в evaluate_bot) и дефекта D1 (CHANGELOG) (FN-014):**
+  - **Строгая fail-closed boundary-валидация ответов Telegram API (H1, H1-R):** В функции `_validate_telegram_response` и `evaluate_bot` (`strategy_healthcheck.py`) внедрена строгая fail-closed валидация границ контрактных ответов Telegram API (`getMe`, `getWebhookInfo`). Ответ признаётся успешным исключительно при `isinstance(response, dict)`, `response.get("ok") is True`, `isinstance(response.get("result"), dict)` и полном отсутствии полей ошибки (`error_code` и `description`).
+  - **Отклонение противоречивых ответов Telegram (H1-R):** Противоречивые ответы Telegram, где `ok=True`, но одновременно переданы поля ошибки `error_code` или `description`, категорически отклоняются в fail-closed (`ok: False`), а текст ошибки и код ошибки гарантированно сохраняются в списке `problems` на обеих границах (`getMe` и `getWebhookInfo`) без маскировки под ошибки имени бота. Позитивный контроль (`ok=True` с валидным `result` без полей ошибки) при активной службе и готовых источниках возвращает `ok: True, problems: []`.
+  - **Честные эксплуатационные обозначения сетевого статуса и охвата (H1):** В `strategy_healthcheck.py` задокументированы честные контракты функций: `main()` честно обозначена как сетевая онлайн-диагностика, читающая `strategy-bot.env` и отправляющая внешние запросы к `api.telegram.org` (не является офлайн-диагностикой); функция `sources_are_ready()` честно ограничена проверкой 3 базовых стратегических markdown-файлов и не заявляет о проверке 40 источников корпуса P-026.
+  - **Тестовый комплекс (161+ unit-тестов PASS):** Добавлены 4 изолированных офлайн-теста в `test_strategy_healthcheck.py` на противоречивые payload (`ok=True` с `error_code=401` и `description='synthetic failure'` для `getMe` и `getWebhookInfo`). Все тесты выполняются строго офлайн в памяти без сетевых вызовов и без секретов. Общий набор тестов расширен со 148 до 161 теста (161/161 PASS).
+
 ## 2026-10-16
 
 - **Устранение остаточных дефектов P1 и P2 (MEDIUM PROVENANCE) ревизии 38bda5b: полный inventory графа, строгая disk-проверка и удаление staged claims (FN-014):**
