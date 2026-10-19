@@ -151,6 +151,7 @@ class P026Storage:
         self.decisions_file = self.decisions_dir / "decisions.json"
         self.decisions_lock_file = self.decisions_dir / ".decisions.lock"
         self.drafts_lock_file = self.drafts_dir / ".drafts.lock"
+        self.outbox_dir = self.base_dir / "outbox"
 
         # Предвалидация всех целевых путей до создания каталогов
         for target in (
@@ -159,6 +160,7 @@ class P026Storage:
             self.decisions_file,
             self.decisions_lock_file,
             self.drafts_lock_file,
+            self.outbox_dir,
         ):
             self._assert_no_symlinks(target)
 
@@ -197,6 +199,7 @@ class P026Storage:
             self.decisions_file,
             self.decisions_lock_file,
             self.drafts_lock_file,
+            self.outbox_dir,
         ):
             self._assert_no_symlinks(p)
 
@@ -208,6 +211,9 @@ class P026Storage:
 
         self.drafts_dir.mkdir(parents=True, exist_ok=True)
         self._assert_no_symlinks(self.drafts_dir)
+
+        self.outbox_dir.mkdir(parents=True, exist_ok=True)
+        self._assert_no_symlinks(self.outbox_dir)
 
         if not self.decisions_file.exists():
             with self._exclusive_lock(self.decisions_lock_file):
@@ -608,3 +614,73 @@ class P026Storage:
                 raise PermissionError(f"Доступ к черновику из другого чата запрещён: {draft_chat_id} != {chat_id}")
 
         return content
+
+    def queue_decision_package(
+        self,
+        decision_id: str,
+        user_id: int | None = None,
+        chat_id: int | None = None,
+        audience: list[str] | None = None,
+        outbox_dir: Path | str | None = None,
+    ) -> dict[str, Any]:
+        """Формирует пакет разработки из зафиксированного решения для регистрации в общей базе (FN-015)."""
+        from p026_knowledge_sync import (
+            DEFAULT_ALLOWED_AUDIENCE,
+            DramknoteProducer,
+            STATUS_CONFIRMED_DECISION,
+        )
+
+        self._ensure_dirs()
+        user_id = validate_ownership_id(user_id, "user_id")
+        chat_id = validate_ownership_id(chat_id, "chat_id")
+
+        decisions = self.list_decisions(user_id=user_id, chat_id=chat_id)
+        target = next((d for d in decisions if d["id"] == decision_id), None)
+        if not target:
+            raise FileNotFoundError(f"Решение с ID '{decision_id}' не найдено в журнале решений")
+
+        markdown_content = (
+            f"# Подтверждённое решение владельца P-026: {target['id']}\n\n"
+            f"- **Автор:** {target['author']}\n"
+            f"- **Контекст:** {target['question_context']}\n"
+            f"- **Дата:** {target['timestamp']}\n\n"
+            f"## Формулировка решения\n{target['exact_text']}\n"
+        )
+
+        producer = DramknoteProducer(outbox_dir=outbox_dir or self.outbox_dir)
+        return producer.create_package(
+            material_id=target["id"],
+            project="P-026",
+            author=target["author"],
+            content=markdown_content,
+            filename=f"{target['id']}.md",
+            material_type="decision",
+            version=1,
+            status=STATUS_CONFIRMED_DECISION,
+            audience=audience or DEFAULT_ALLOWED_AUDIENCE,
+            user_id=target.get("user_id"),
+            chat_id=target.get("chat_id"),
+            metadata={"question_context": target["question_context"]},
+        )
+
+    def queue_draft_package(
+        self,
+        filename: str,
+        user_id: int | None = None,
+        chat_id: int | None = None,
+        audience: list[str] | None = None,
+        outbox_dir: Path | str | None = None,
+    ) -> dict[str, Any]:
+        """Формирует пакет разработки из сохраненного черновика для регистрации в общей базе (FN-015)."""
+        from p026_knowledge_sync import DEFAULT_ALLOWED_AUDIENCE, DramknoteProducer, STATUS_DRAFT
+
+        self._ensure_dirs()
+        content = self.read_draft(filename, user_id=user_id, chat_id=chat_id)
+        pkg_id = f"pkg_{filename.rsplit('.', 1)[0]}"
+        producer = DramknoteProducer(outbox_dir=outbox_dir or self.outbox_dir)
+        return producer.create_package(
+            material_id=pkg_id, project="P-026", author="Руководитель",
+            content=content, filename=filename, material_type="draft",
+            version=1, status=STATUS_DRAFT, audience=audience or DEFAULT_ALLOWED_AUDIENCE,
+            user_id=user_id, chat_id=chat_id, metadata={"source_draft": filename},
+        )

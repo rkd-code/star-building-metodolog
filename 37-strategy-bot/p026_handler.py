@@ -550,3 +550,42 @@ class P026Handler:
                 f"({draft_info['bytes']} байт). Исходные файлы защищены."
             ),
         }
+
+    def export_and_queue_development(
+        self,
+        doc_type: str,
+        author: str = "Руководитель",
+        user_id: int | None = None,
+        chat_id: int | None = None,
+        audience: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Экспортирует черновик и ставит его в outbox для регистрации в общей базе (FN-015)."""
+        export_res = self.export_draft(
+            doc_type=doc_type,
+            author=author,
+            user_id=user_id,
+            chat_id=chat_id,
+        )
+        if not export_res.get("ok"):
+            return export_res
+
+        filename = export_res["draft"]["filename"]
+        package = self.storage.queue_draft_package(
+            filename=filename,
+            user_id=user_id,
+            chat_id=chat_id,
+            audience=audience,
+        )
+        return {
+            "ok": True,
+            "export": export_res,
+            "package": package,
+            "message": (
+                f"Черновик {export_res['role']} экспортирован и поставлен в очередь обмена знаниями: "
+                f"пакет {package['package_id']}."
+            ),
+        }
+
+    def queue_decision_development(self, decision_id: str, user_id: int | None = None, chat_id: int | None = None, audience: list[str] | None = None) -> dict[str, Any]:
+        """Ставит ранее зафиксированное решение в очередь обмена знаниями (FN-015)."""
+        return self.storage.queue_decision_package(decision_id=decision_id, user_id=user_id, chat_id=chat_id, audience=audience)
